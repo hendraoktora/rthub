@@ -8,7 +8,7 @@ async function main() {
   const salt = await bcrypt.genSalt(10);
   const defaultPasswordHash = await bcrypt.hash('Password123!', salt);
 
-  // 1. Superadmin Platform
+  // 1. Superadmin Platform (UP)
   const superadmin = await prisma.user.upsert({
     where: { phone: '081111111111' },
     update: {},

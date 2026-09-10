@@ -41,7 +41,13 @@ async function bootstrap() {
         .addTag('CCTV Lingkungan (Live Stream RT & RW)', 'Pemantauan CCTV live stream')
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('api/docs', app, document);
+    swagger_1.SwaggerModule.setup('api/docs', app, document, {
+        customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
+        customJs: [
+            'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js',
+        ],
+    });
     await app.init();
     isAppInitialized = true;
     return app;

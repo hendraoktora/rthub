@@ -1,50 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { Store, Plus, Search, Phone, Tag, ShoppingBag, RefreshCw } from 'lucide-react';
+import { ShoppingBag, Search, Plus, ExternalLink, Phone, MessageCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { api, UserSession } from '../services/api';
+import { showAlert } from '../services/swal';
 
-interface LapakWargaProps {
+interface LapakProps {
   user?: UserSession | null;
 }
 
-export const LapakWarga: React.FC<LapakWargaProps> = ({ user }) => {
+export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
   const rtNomor = user?.rtNomor || '03';
   const wilayahLabel = user?.wilayah || `RT ${rtNomor}`;
   const userName = user?.name || 'Warga RT';
   const userPhone = user?.phone || '081234567890';
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [lapakList, setLapakList] = useState<any[]>([
     {
       id: '1',
-      seller: `Warga (${wilayahLabel})`,
-      judul: 'Katering Nasi Kotak & Tumpeng Mini',
-      deskripsi: 'Menerima pesanan katering nasi box, tumpeng syukuran, dan snack box arisan. Rasa dijamin lezat!',
-      harga: 25000,
+      seller: `Dapur Mama Nadia (${wilayahLabel})`,
+      judul: 'Nasi Kuning Komplit & Tumpeng Mini',
+      deskripsi: 'Menerima pesanan catering arisan, syukuran, sarapan pagi. Higienis dan lezat.',
+      harga: 18000,
       kategori: 'KULINER',
-      kontakWa: userPhone,
+      kontakWa: '081234567890',
       status: 'TERSEDIA',
     },
     {
       id: '2',
-      seller: `Warga (${wilayahLabel})`,
-      judul: 'Jasa Servis & Cuci AC Rumah',
-      deskripsi: 'Melayani cuci AC, tambah freon, dan perbaikan AC split bergaransi wilayah sekitar.',
-      harga: 75000,
+      seller: `Bpk. Hendra (${wilayahLabel})`,
+      judul: 'Jasa Cuci AC & Servis Elektronik',
+      deskripsi: 'Cuci AC split 0.5 - 2 PK, tambah freon, perbaikan kulkas & mesin cuci bergaransi.',
+      harga: 65000,
       kategori: 'JASA',
-      kontakWa: '081211110004',
+      kontakWa: '081288880001',
       status: 'TERSEDIA',
     },
+    {
+      id: '3',
+      seller: `Ibu Retno (${wilayahLabel})`,
+      judul: 'Sewa Paviliun Kontrakan 2 Kamar Siap Huni',
+      deskripsi: 'Listrik 1300W token, air PDAM jernih, parkir mobil aman, lingkungan tenang dan asri.',
+      harga: 1200000,
+      kategori: 'KONTRAKAN',
+      kontakWa: '081398765432',
+      status: 'TERSEDIA',
+    }
   ]);
 
   const loadLapak = async () => {
     try {
       setLoading(true);
       const res = await api.getLapakList();
-      if (res && res.data && res.data.length > 0) {
+      if (Array.isArray(res) && res.length > 0) {
+        setLapakList(res);
+      } else if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
         setLapakList(res.data);
       }
     } catch (err) {
@@ -279,16 +293,19 @@ export const LapakWarga: React.FC<LapakWargaProps> = ({ user }) => {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition flex items-center gap-2"
                 >
-                  Publikasikan ke Lapak
+                  {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                  <span>{isSubmitting ? 'Mempublikasikan...' : 'Publikasikan ke Lapak'}</span>
                 </button>
               </div>
             </form>

@@ -16,9 +16,11 @@ import {
   UserCheck, 
   X,
   MessageCircle,
-  CreditCard
+  CreditCard,
+  Loader2
 } from 'lucide-react';
 import { api, UserSession } from '../services/api';
+import { showAlert } from '../services/swal';
 
 interface TagihanBillingProps {
   user?: UserSession | null;
@@ -48,10 +50,8 @@ export const TagihanBilling: React.FC<TagihanBillingProps> = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriode, setSelectedPeriode] = useState('September 2026');
   const [isLoading, setIsLoading] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
-
-  // Default initial resident billing list
   const [billingList, setBillingList] = useState<WargaBillingItem[]>([
     {
       id: 'w1',
@@ -121,21 +121,16 @@ export const TagihanBilling: React.FC<TagihanBillingProps> = ({ user }) => {
     }
   ]);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const fetchLiveWargaBilling = async () => {
+  const fetchBillingData = async () => {
     if (!activeRtId) return;
     setIsLoading(true);
     try {
       const data = await api.getWargaList(activeRtId);
-      if (data && data.rumahList && data.rumahList.length > 0) {
+      if (data && data.rumahList) {
         const mapped: WargaBillingItem[] = data.rumahList.map((r: any, idx: number) => {
           const kk = r.kartuKeluarga?.[0];
           const tagihan = r.tagihanWarga?.[0];
-          const isLunas = tagihan?.status === 'PAID' || idx % 2 === 0; // if newly registered, demonstrate alternating status
+          const isLunas = tagihan?.status === 'PAID' || idx % 2 === 0;
 
           return {
             id: r.id || `w-${idx}`,
@@ -143,9 +138,9 @@ export const TagihanBilling: React.FC<TagihanBillingProps> = ({ user }) => {
             noRumah: r.noRumah || `Rumah No. ${idx + 1}`,
             phone: kk?.anggota?.find((a: any) => a.noHp)?.noHp || user?.phone || '081234567890',
             statusHunian: r.statusHunian || 'TETAP',
-            nominalIuran: 50000,
-            nominalPlatform: 2000,
-            totalTagihan: 52000,
+            nominalIuran: tagihan ? Number(tagihan.nominalPokok) : 50000,
+            nominalPlatform: tagihan ? Number(tagihan.adminFee) : 2000,
+            totalTagihan: tagihan ? Number(tagihan.totalBayar) : 52000,
             status: isLunas ? 'LUNAS' : 'BELUM_BAYAR',
             metodeBayar: isLunas ? (idx % 2 === 0 ? 'QRIS RtHub' : 'Tunai ke Bendahara') : undefined,
             tanggalBayar: isLunas ? '05 Sep 2026, 10:00' : undefined,
@@ -155,17 +150,17 @@ export const TagihanBilling: React.FC<TagihanBillingProps> = ({ user }) => {
         setBillingList(mapped);
       }
     } catch (e) {
-      console.warn('Using default billing list:', e);
+      console.error('Error fetching billing data:', e);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLiveWargaBilling();
+    fetchBillingData();
   }, [activeRtId, selectedPeriode]);
 
-  const handleToggleLunas = (item: WargaBillingItem) => {
+  const handleToggleStatus = (item: WargaBillingItem) => {
     const isNowLunas = item.status === 'BELUM_BAYAR';
     const updated = billingList.map((b) => {
       if (b.id === item.id) {
@@ -181,15 +176,22 @@ export const TagihanBilling: React.FC<TagihanBillingProps> = ({ user }) => {
 
     setBillingList(updated);
     if (isNowLunas) {
-      showToast(`✅ Pembayaran iuran ${item.namaKepala} (${item.noRumah}) berhasil ditandai LUNAS!`);
+      showAlert.toastSuccess(`Pembayaran iuran ${item.namaKepala} (${item.noRumah}) ditandai LUNAS.`);
     } else {
-      showToast(`ℹ️ Status iuran ${item.namaKepala} diubah menjadi BELUM BAYAR.`);
+      showAlert.toastSuccess(`Status iuran ${item.namaKepala} diubah menjadi BELUM BAYAR.`);
     }
   };
 
   const handleGenerateMassal = () => {
-    setShowGenerateModal(false);
-    showToast(`📢 Tagihan Massal periode ${selectedPeriode} berhasil diterbitkan dan disiarkan ke WhatsApp semua warga!`);
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setShowGenerateModal(false);
+      setIsSubmitting(false);
+      showAlert.success(
+        'Tagihan Massal Diterbitkan!',
+        `Tagihan periode ${selectedPeriode} berhasil diterbitkan dan disiarkan ke WhatsApp seluruh warga.`
+      );
+    }, 500);
   };
 
   // Calculations
@@ -214,19 +216,6 @@ export const TagihanBilling: React.FC<TagihanBillingProps> = ({ user }) => {
 
   return (
     <div className="space-y-6">
-      {/* Toast Alert */}
-      {toastMessage && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center justify-between shadow-sm animate-fade-in">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-emerald-600" />
-            <span>{toastMessage}</span>
-          </div>
-          <button onClick={() => setToastMessage(null)} className="text-emerald-600 hover:text-emerald-800">
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
       {/* Header & Main Controls */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
@@ -247,7 +236,7 @@ export const TagihanBilling: React.FC<TagihanBillingProps> = ({ user }) => {
           </select>
 
           <button 
-            onClick={fetchLiveWargaBilling}
+            onClick={fetchBillingData}
             className="p-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs hover:bg-slate-50 shadow-sm transition"
             title="Refresh Data"
           >
@@ -445,7 +434,7 @@ export const TagihanBilling: React.FC<TagihanBillingProps> = ({ user }) => {
                         <div className="flex items-center justify-center gap-2">
                           {isLunas ? (
                             <button
-                              onClick={() => handleToggleLunas(item)}
+                              onClick={() => handleToggleStatus(item)}
                               className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[11px] font-semibold transition"
                               title="Ubah status ke Belum Bayar jika ada koreksi"
                             >
@@ -455,7 +444,7 @@ export const TagihanBilling: React.FC<TagihanBillingProps> = ({ user }) => {
                             <>
                               {/* Mark Paid Manually */}
                               <button
-                                onClick={() => handleToggleLunas(item)}
+                                onClick={() => handleToggleStatus(item)}
                                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-sm"
                                 title="Tandai warga telah bayar tunai ke Bendahara/RT"
                               >
@@ -540,17 +529,24 @@ export const TagihanBilling: React.FC<TagihanBillingProps> = ({ user }) => {
             <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
+                disabled={isSubmitting}
                 onClick={() => setShowGenerateModal(false)}
-                className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
               >
                 Batal
               </button>
               <button
                 type="button"
+                disabled={isSubmitting}
                 onClick={handleGenerateMassal}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition flex items-center gap-2 shadow-sm"
               >
-                <Check size={14} /> Terbitkan & Broadcast Sekarang
+                {isSubmitting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Check size={14} />
+                )}
+                <span>{isSubmitting ? 'Menerbitkan...' : 'Terbitkan & Broadcast Sekarang'}</span>
               </button>
             </div>
           </div>

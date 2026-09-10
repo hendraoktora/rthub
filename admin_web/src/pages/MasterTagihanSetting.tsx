@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Settings, Save, CheckCircle2, DollarSign, Plus } from 'lucide-react';
+import { Settings, Save, CheckCircle2, DollarSign, Plus, Loader2 } from 'lucide-react';
 import { UserSession } from '../services/api';
+import { showAlert } from '../services/swal';
 
 interface MasterTagihanProps {
   user?: UserSession | null;
@@ -16,15 +17,21 @@ export const MasterTagihanSetting: React.FC<MasterTagihanProps> = ({ user }) => 
     { id: '3', nama: 'Dana Sosial & Kematian', nominal: 5000, keterangan: 'Santunan warga sakit/berduka (Opsional/Rutin)' },
   ]);
 
-  const [saved, setSaved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const adminFeePlatform = 2000;
 
   const totalPokok = tagihanItems.reduce((acc, curr) => acc + curr.nominal, 0);
   const totalWargaBayar = totalPokok + adminFeePlatform;
 
   const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      showAlert.success(
+        'Tarif Berhasil Disimpan!',
+        `Pengaturan tarif iuran ${wilayahLabel} berhasil disimpan. Tagihan periode berikutnya akan otomatis menggunakan nominal baru ini.`
+      );
+    }, 450);
   };
 
   return (
@@ -36,18 +43,17 @@ export const MasterTagihanSetting: React.FC<MasterTagihanProps> = ({ user }) => 
         </div>
         <button 
           onClick={handleSave}
-          className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 flex items-center gap-2 shadow-sm transition"
+          disabled={isSubmitting}
+          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm transition"
         >
-          <Save size={16} /> Simpan Perubahan Tarif
+          {isSubmitting ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Save size={16} />
+          )}
+          <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan Tarif'}</span>
         </button>
       </div>
-
-      {saved && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 size={16} className="text-emerald-600" />
-          <span>Pengaturan tarif iuran berhasil disimpan! Tagihan bulan depan otomatis menggunakan nominal baru ini.</span>
-        </div>
-      )}
 
       {/* Breakdown Card */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

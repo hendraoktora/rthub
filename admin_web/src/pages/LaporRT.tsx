@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquarePlus, Search, CheckCircle2, Clock, AlertTriangle, MessageCircle, Send, Check, RefreshCw } from 'lucide-react';
+import { MessageSquarePlus, Search, CheckCircle2, Clock, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Loader2 } from 'lucide-react';
 import { api, UserSession } from '../services/api';
+import { showAlert } from '../services/swal';
 
 interface LaporRTProps {
   user?: UserSession | null;
@@ -16,6 +17,7 @@ export const LaporRT: React.FC<LaporRTProps> = ({ user }) => {
   const [selectedLaporan, setSelectedLaporan] = useState<any | null>(null);
   const [tanggapanText, setTanggapanText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [laporanList, setLaporanList] = useState<any[]>([
     {
@@ -67,7 +69,10 @@ export const LaporRT: React.FC<LaporRTProps> = ({ user }) => {
 
   const handleAddLaporan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newLaporan.judul || !newLaporan.deskripsi) return;
+    if (!newLaporan.judul || !newLaporan.deskripsi) {
+      showAlert.error('Input Tidak Lengkap', 'Judul dan isi laporan pengaduan wajib diisi.');
+      return;
+    }
 
     const payload = {
       judul: newLaporan.judul,
@@ -76,10 +81,11 @@ export const LaporRT: React.FC<LaporRTProps> = ({ user }) => {
       isAnonymous: newLaporan.isAnonymous,
     };
 
+    setIsSubmitting(true);
     try {
       await api.createLaporan(payload);
     } catch (err) {
-      console.warn('API createLaporan failed, using local insert', err);
+      console.warn('API createLaporan fallback to local state', err);
     }
 
     setLaporanList([
@@ -98,6 +104,8 @@ export const LaporRT: React.FC<LaporRTProps> = ({ user }) => {
 
     setShowAddModal(false);
     setNewLaporan({ judul: '', deskripsi: '', kategori: 'FASILITAS_UMUM', isAnonymous: false });
+    setIsSubmitting(false);
+    showAlert.success('Laporan Diterima', 'Laporan pengaduan berhasil dicatat dan masuk ke antrean pengurus RT.');
   };
 
   const handleBeriTanggapan = (id: string) => {
@@ -109,6 +117,7 @@ export const LaporRT: React.FC<LaporRTProps> = ({ user }) => {
     );
     setSelectedLaporan(null);
     setTanggapanText('');
+    showAlert.toastSuccess('Tanggapan laporan warga berhasil dikirim.');
   };
 
   const filtered = laporanList.filter(
@@ -272,16 +281,19 @@ export const LaporRT: React.FC<LaporRTProps> = ({ user }) => {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition flex items-center gap-2"
                 >
-                  Kirim Laporan
+                  {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                  <span>{isSubmitting ? 'Mengirim...' : 'Kirim Laporan'}</span>
                 </button>
               </div>
             </form>

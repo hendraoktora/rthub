@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Search, CheckCircle, Home, Phone, ChevronDown, ChevronUp, UserPlus, RefreshCw, AlertCircle } from 'lucide-react';
+import { Users, Plus, Search, CheckCircle, Home, Phone, ChevronDown, ChevronUp, UserPlus, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
 import { api, UserSession } from '../services/api';
+import { showAlert } from '../services/swal';
 
 interface WargaProps {
   user?: UserSession | null;
@@ -11,6 +12,7 @@ export const WargaManagement: React.FC<WargaProps> = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [wargaList, setWargaList] = useState<any[]>([]);
 
   const [newWarga, setNewWarga] = useState({
@@ -66,8 +68,12 @@ export const WargaManagement: React.FC<WargaProps> = ({ user }) => {
 
   const handleAddWarga = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newWarga.namaKepala || !newWarga.phone || !newWarga.noRumah) return;
+    if (!newWarga.namaKepala || !newWarga.phone || !newWarga.noRumah) {
+      showAlert.error('Input Tidak Lengkap', 'Nama Kepala Keluarga, No WhatsApp, dan No Rumah wajib diisi.');
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       const anakList = newWarga.anggotaKeluarga
         ? newWarga.anggotaKeluarga.split(',').map((s) => s.trim()).filter(Boolean)
@@ -96,9 +102,11 @@ export const WargaManagement: React.FC<WargaProps> = ({ user }) => {
         anggotaKeluarga: '',
       });
       await fetchWargaList();
-      alert('Warga baru berhasil disimpan ke Database MySQL!');
+      showAlert.success('Berhasil Ditambahkan', `Data warga ${newWarga.namaKepala} (Rumah ${newWarga.noRumah}) berhasil disimpan.`);
     } catch (err: any) {
-      alert(err.message || 'Gagal menyimpan warga ke database');
+      showAlert.error('Gagal Menyimpan Warga', err.message || 'Terjadi kesalahan saat menyimpan data warga.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -353,16 +361,19 @@ export const WargaManagement: React.FC<WargaProps> = ({ user }) => {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition flex items-center gap-2"
                 >
-                  Simpan ke Database
+                  {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                  <span>{isSubmitting ? 'Menyimpan...' : 'Simpan ke Database'}</span>
                 </button>
               </div>
             </form>

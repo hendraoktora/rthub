@@ -46,8 +46,8 @@ __decorate([
 ], KasController.prototype, "getSummary", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.SUPERADMIN),
-    (0, swagger_1.ApiOperation)({ summary: 'Mencatat transaksi kas / set saldo awal (Khusus Bendahara RT)' }),
+    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.ADMIN_RT, client_1.Role.SEKRETARIS_RT, client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Mencatat transaksi kas / set saldo awal (Khusus Pengurus RT)' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -56,8 +56,8 @@ __decorate([
 ], KasController.prototype, "createKas", null);
 __decorate([
     (0, common_1.Post)('catat'),
-    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.SUPERADMIN),
-    (0, swagger_1.ApiOperation)({ summary: 'Mencatat transaksi kas masuk atau keluar (Khusus Bendahara RT)' }),
+    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.ADMIN_RT, client_1.Role.SEKRETARIS_RT, client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Mencatat transaksi kas masuk atau keluar (Khusus Pengurus RT)' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

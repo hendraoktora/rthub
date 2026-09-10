@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Plus, UserCheck, Phone, Mail, Edit3, Trash2, HeartHandshake, Sparkles, Users2, Shield, Trees, Baby, X, Check, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Plus, UserCheck, Phone, Mail, Edit3, Trash2, HeartHandshake, Sparkles, Users2, Shield, Trees, Baby, X, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { UserSession } from '../services/api';
+import { showAlert } from '../services/swal';
 
 interface PengurusProps {
   user?: UserSession | null;
@@ -37,42 +38,43 @@ export const PengurusManagement: React.FC<PengurusProps> = ({ user }) => {
   ]);
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ 
     jabatan: '', 
     kategori: 'SEKSI', 
     nama: '', 
     phone: '', 
-    email: '',
-    rumah: '',
+    email: '', 
+    rumah: '', 
     status: 'AKTIF' 
   });
-
   const [editingPengurus, setEditingPengurus] = useState<PengurusItem | null>(null);
-  const [notification, setNotification] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(null), 3000);
-  };
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nama || !formData.jabatan) return;
-    const newItem: PengurusItem = {
-      id: Date.now().toString(),
-      jabatan: formData.jabatan,
-      kategori: formData.kategori,
-      nama: formData.nama,
-      phone: formData.phone || '-',
-      email: formData.email || `${formData.nama.toLowerCase().replace(/\s+/g, '.')}@rthub.id`,
-      rumah: formData.rumah || '-',
-      status: formData.status || 'AKTIF',
-      icon: 'UserCheck',
-    };
-    setPengurusList([...pengurusList, newItem]);
-    setShowAddModal(false);
-    setFormData({ jabatan: '', kategori: 'SEKSI', nama: '', phone: '', email: '', rumah: '', status: 'AKTIF' });
-    showToast('Posisi pengurus baru berhasil ditambahkan!');
+    if (!formData.nama || !formData.jabatan) {
+      showAlert.error('Input Tidak Lengkap', 'Nama Pejabat dan Nama Jabatan wajib diisi.');
+      return;
+    }
+    setIsSubmitting(true);
+    setTimeout(() => {
+      const newItem: PengurusItem = {
+        id: Date.now().toString(),
+        jabatan: formData.jabatan,
+        kategori: formData.kategori,
+        nama: formData.nama,
+        phone: formData.phone || '-',
+        email: formData.email || `${formData.nama.toLowerCase().replace(/\s+/g, '.')}@rthub.id`,
+        rumah: formData.rumah || '-',
+        status: formData.status || 'AKTIF',
+        icon: 'UserCheck',
+      };
+      setPengurusList([...pengurusList, newItem]);
+      setShowAddModal(false);
+      setFormData({ jabatan: '', kategori: 'SEKSI', nama: '', phone: '', email: '', rumah: '', status: 'AKTIF' });
+      setIsSubmitting(false);
+      showAlert.success('Berhasil Ditambahkan', `Posisi "${newItem.jabatan}" berhasil ditambahkan ke struktur.`);
+    }, 400);
   };
 
   const handleStartEdit = (item: PengurusItem) => {
@@ -83,34 +85,32 @@ export const PengurusManagement: React.FC<PengurusProps> = ({ user }) => {
     e.preventDefault();
     if (!editingPengurus) return;
 
-    setPengurusList(
-      pengurusList.map((p) => (p.id === editingPengurus.id ? editingPengurus : p))
-    );
-    setEditingPengurus(null);
-    showToast(`Data "${editingPengurus.jabatan}" berhasil diperbarui!`);
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setPengurusList(
+        pengurusList.map((p) => (p.id === editingPengurus.id ? editingPengurus : p))
+      );
+      const jbt = editingPengurus.jabatan;
+      setEditingPengurus(null);
+      setIsSubmitting(false);
+      showAlert.success('Berhasil Diperbarui', `Data "${jbt}" berhasil diperbarui.`);
+    }, 400);
   };
 
-  const handleDelete = (id: string, nama: string) => {
-    if (window.confirm(`Apakah Anda yakin ingin menghapus posisi pengurus "${nama}"?`)) {
-      setPengurusList(pengurusList.filter((p) => p.id !== id));
-      showToast(`Pengurus "${nama}" telah dihapus.`);
-    }
+  const handleDelete = async (id: string, nama: string) => {
+    const confirmed = await showAlert.confirm(
+      'Hapus Posisi Pengurus?',
+      `Apakah Anda yakin ingin menghapus pengurus "${nama}"?`,
+      'Ya, Hapus'
+    );
+    if (!confirmed) return;
+
+    setPengurusList(pengurusList.filter((p) => p.id !== id));
+    showAlert.toastSuccess(`Pengurus "${nama}" telah dihapus.`);
   };
 
   return (
     <div className="space-y-6">
-      {/* Toast Notification */}
-      {notification && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center justify-between shadow-sm animate-fade-in">
-          <div className="flex items-center gap-2">
-            <Check size={16} className="text-emerald-600" />
-            <span>{notification}</span>
-          </div>
-          <button onClick={() => setNotification(null)} className="text-emerald-600 hover:text-emerald-800">
-            <X size={14} />
-          </button>
-        </div>
-      )}
 
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
@@ -397,16 +397,19 @@ export const PengurusManagement: React.FC<PengurusProps> = ({ user }) => {
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition flex items-center gap-2"
                 >
-                  Simpan Pengurus
+                  {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                  <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Pengurus'}</span>
                 </button>
               </div>
             </form>

@@ -18,9 +18,11 @@ import {
   MessageCircle,
   TrendingDown,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { api, UserSession } from '../services/api';
+import { showAlert } from '../services/swal';
 
 interface DashboardProps {
   user?: UserSession | null;
@@ -40,10 +42,10 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [filterType, setFilterType] = useState<'ALL' | 'PEMASUKAN' | 'PENGELUARAN'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [newMutasi, setNewMutasi] = useState({
     tipe: 'PENGELUARAN',
@@ -53,11 +55,6 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
     picPengurus: user?.name || 'Bendahara RT',
     noBuktiNota: '',
   });
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
 
   const loadKasSummary = async () => {
     setIsLoading(true);
@@ -77,8 +74,12 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
 
   const handleCatatKas = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMutasi.nominal || !newMutasi.keterangan) return;
+    if (!newMutasi.nominal || !newMutasi.keterangan) {
+      showAlert.error('Input Tidak Lengkap', 'Nominal dan rincian transaksi wajib diisi.');
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       const keteranganFull = `${newMutasi.keterangan}${
         newMutasi.noBuktiNota ? ` [Nota: ${newMutasi.noBuktiNota}]` : ''
@@ -93,10 +94,11 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
 
       setShowModal(false);
       const isOut = newMutasi.tipe === 'PENGELUARAN';
-      showToast(
+      showAlert.success(
+        'Berhasil Dicatat!',
         isOut
-          ? `✅ Pengeluaran kas sebesar Rp ${Number(newMutasi.nominal).toLocaleString('id-ID')} berhasil dicatat & dipublikasikan ke warga!`
-          : `✅ Pemasukan kas sebesar Rp ${Number(newMutasi.nominal).toLocaleString('id-ID')} berhasil dicatat!`
+          ? `Pengeluaran kas sebesar Rp ${Number(newMutasi.nominal).toLocaleString('id-ID')} berhasil dicatat & dipublikasikan ke warga.`
+          : `Pemasukan kas sebesar Rp ${Number(newMutasi.nominal).toLocaleString('id-ID')} berhasil dicatat & masuk pembukuan RT.`
       );
       setNewMutasi({
         tipe: 'PENGELUARAN',
@@ -108,7 +110,9 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
       });
       await loadKasSummary();
     } catch (err: any) {
-      alert(err.message || 'Gagal mencatat mutasi kas');
+      showAlert.error('Gagal Mencatat Kas', err.message || 'Terjadi kesalahan saat mencatat mutasi kas.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,19 +142,6 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
 
   return (
     <div className="space-y-6">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center justify-between shadow-sm animate-fade-in">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-emerald-600" />
-            <span>{toastMessage}</span>
-          </div>
-          <button onClick={() => setToastMessage(null)} className="text-emerald-600 hover:text-emerald-800">
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
       {/* Top Banner & Action Controls */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
         <div>
@@ -534,16 +525,19 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-2"
                 >
-                  Simpan & Publikasikan
+                  {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                  <span>{isSubmitting ? 'Menyimpan...' : 'Simpan & Publikasikan'}</span>
                 </button>
               </div>
             </form>

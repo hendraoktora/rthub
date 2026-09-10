@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Search, Edit3, Trash2, MapPin, Clock, RefreshCw } from 'lucide-react';
+import { Calendar, Plus, Search, Edit3, Trash2, MapPin, Clock, RefreshCw, Loader2 } from 'lucide-react';
 import { api, UserSession } from '../services/api';
+import { showAlert } from '../services/swal';
 
 interface AgendaProps {
   user?: UserSession | null;
@@ -12,6 +13,7 @@ export const AgendaManagement: React.FC<AgendaProps> = ({ user }) => {
 
   const [agendaList, setAgendaList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('SEMUA');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -53,13 +55,14 @@ export const AgendaManagement: React.FC<AgendaProps> = ({ user }) => {
   const handleOpenAdd = () => {
     setIsEditing(false);
     setEditingId(null);
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
     setFormData({
       judul: '',
       kategori: 'KERJA_BAKTI',
-      tanggalMulai: today,
+      tanggalMulai: todayStr,
       jamMulai: '08:00',
-      tanggalSelesai: today,
+      tanggalSelesai: todayStr,
       jamSelesai: '11:00',
       lokasi: `Lingkungan RT ${rtNomor}`,
       deskripsi: '',
@@ -71,21 +74,22 @@ export const AgendaManagement: React.FC<AgendaProps> = ({ user }) => {
   const handleOpenEdit = (item: any) => {
     setIsEditing(true);
     setEditingId(item.id);
-    const start = new Date(item.tanggalMulai);
-    const tglMulai = start.toISOString().split('T')[0];
-    const jmMulai = start.toTimeString().substring(0, 5);
 
-    let tglSelesai = tglMulai;
-    let jmSelesai = '12:00';
+    const startObj = new Date(item.tanggalMulai);
+    const tglMulai = startObj.toISOString().split('T')[0];
+    const jmMulai = startObj.toTimeString().substring(0, 5);
+
+    let tglSelesai = '';
+    let jmSelesai = '';
     if (item.tanggalSelesai) {
-      const end = new Date(item.tanggalSelesai);
-      tglSelesai = end.toISOString().split('T')[0];
-      jmSelesai = end.toTimeString().substring(0, 5);
+      const endObj = new Date(item.tanggalSelesai);
+      tglSelesai = endObj.toISOString().split('T')[0];
+      jmSelesai = endObj.toTimeString().substring(0, 5);
     }
 
     setFormData({
-      judul: item.judul || '',
-      kategori: item.kategori || 'KERJA_BAKTI',
+      judul: item.judul,
+      kategori: item.kategori,
       tanggalMulai: tglMulai,
       jamMulai: jmMulai,
       tanggalSelesai: tglSelesai,
@@ -100,7 +104,7 @@ export const AgendaManagement: React.FC<AgendaProps> = ({ user }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.judul || !formData.tanggalMulai) {
-      alert('Judul agenda dan tanggal mulai wajib diisi.');
+      showAlert.error('Input Tidak Lengkap', 'Judul agenda dan tanggal mulai wajib diisi.');
       return;
     }
 
@@ -119,26 +123,38 @@ export const AgendaManagement: React.FC<AgendaProps> = ({ user }) => {
       scope: formData.scope,
     };
 
+    setIsSubmitting(true);
     try {
       if (isEditing && editingId) {
         await api.updateAgenda(editingId, payload);
+        showAlert.success('Berhasil Diperbarui', `Agenda "${formData.judul}" berhasil diubah.`);
       } else {
         await api.createAgenda(payload);
+        showAlert.success('Berhasil Diterbitkan', `Agenda "${formData.judul}" berhasil dipublikasikan.`);
       }
       setShowModal(false);
       await loadAgenda();
     } catch (err: any) {
-      alert(err.message || 'Gagal menyimpan agenda kegiatan');
+      showAlert.error('Gagal Menyimpan Agenda', err.message || 'Terjadi kesalahan saat menyimpan agenda.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string, judul: string) => {
-    if (!window.confirm(`Yakin ingin menghapus agenda "${judul}"?`)) return;
+    const confirmed = await showAlert.confirm(
+      'Hapus Agenda Kegiatan?',
+      `Apakah Anda yakin ingin menghapus agenda "${judul}"? Tindakan ini tidak dapat dibatalkan.`,
+      'Ya, Hapus'
+    );
+    if (!confirmed) return;
+
     try {
       await api.deleteAgenda(id);
+      showAlert.toastSuccess(`Agenda "${judul}" telah dihapus.`);
       await loadAgenda();
     } catch (err: any) {
-      alert(err.message || 'Gagal menghapus agenda kegiatan');
+      showAlert.error('Gagal Menghapus Agenda', err.message || 'Terjadi kesalahan saat menghapus agenda.');
     }
   };
 
@@ -487,6 +503,7 @@ export const AgendaManagement: React.FC<AgendaProps> = ({ user }) => {
               <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition"
                 >
@@ -494,9 +511,11 @@ export const AgendaManagement: React.FC<AgendaProps> = ({ user }) => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition shadow-md shadow-blue-500/20"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition shadow-md shadow-blue-500/20 flex items-center gap-2"
                 >
-                  {isEditing ? 'Simpan Perubahan' : 'Terbitkan Agenda'}
+                  {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                  <span>{isSubmitting ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan' : 'Terbitkan Agenda'}</span>
                 </button>
               </div>
             </form>

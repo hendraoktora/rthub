@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Shield, Clock, MapPin, CheckCircle, FileText, Send, AlertTriangle } from 'lucide-react';
+import { Shield, Clock, MapPin, CheckCircle, FileText, Send, AlertTriangle, Loader2 } from 'lucide-react';
 import { UserSession } from '../services/api';
+import { showAlert } from '../services/swal';
 
 interface SecurityProps {
   user?: UserSession | null;
@@ -12,6 +13,7 @@ export const SecurityAbsensiLaporan: React.FC<SecurityProps> = ({ user }) => {
 
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [laporanTitle, setLaporanTitle] = useState('');
   const [laporanDesc, setLaporanDesc] = useState('');
@@ -21,25 +23,40 @@ export const SecurityAbsensiLaporan: React.FC<SecurityProps> = ({ user }) => {
   ]);
 
   const handleCheckIn = () => {
-    setIsCheckedIn(true);
-    setCheckInTime(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
+    setIsSubmitting(true);
+    setTimeout(() => {
+      const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      setIsCheckedIn(true);
+      setCheckInTime(timeStr);
+      setIsSubmitting(false);
+      showAlert.success('Check-In Berhasil!', `Kehadiran shift jaga pos ronda tercatat pukul ${timeStr} WIB.`);
+    }, 400);
   };
 
   const handleSendLaporan = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!laporanTitle || !laporanDesc) return;
-    setLaporanList([
-      {
-        id: Date.now().toString(),
-        waktu: 'Baru saja',
-        judul: laporanTitle,
-        desc: laporanDesc,
-        status: 'TERKIRIM_KE_RT',
-      },
-      ...laporanList,
-    ]);
-    setLaporanTitle('');
-    setLaporanDesc('');
+    if (!laporanTitle || !laporanDesc) {
+      showAlert.error('Input Tidak Lengkap', 'Judul dan rincian laporan patroli wajib diisi.');
+      return;
+    }
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setLaporanList([
+        {
+          id: Date.now().toString(),
+          waktu: 'Baru saja',
+          judul: laporanTitle,
+          desc: laporanDesc,
+          status: 'TERKIRIM_KE_RT',
+        },
+        ...laporanList,
+      ]);
+      const title = laporanTitle;
+      setLaporanTitle('');
+      setLaporanDesc('');
+      setIsSubmitting(false);
+      showAlert.success('Laporan Terkirim!', `Laporan "${title}" berhasil dikirim ke pengurus RT.`);
+    }, 400);
   };
 
   return (
@@ -70,9 +87,11 @@ export const SecurityAbsensiLaporan: React.FC<SecurityProps> = ({ user }) => {
           {!isCheckedIn ? (
             <button 
               onClick={handleCheckIn}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-md shadow-blue-600/30"
+              disabled={isSubmitting}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-md shadow-blue-600/30"
             >
-              <Clock size={16} /> Check-In Masuk Jaga
+              {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />}
+              <span>{isSubmitting ? 'Memproses Check-In...' : 'Check-In Masuk Jaga'}</span>
             </button>
           ) : (
             <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center space-y-1">
@@ -114,9 +133,11 @@ export const SecurityAbsensiLaporan: React.FC<SecurityProps> = ({ user }) => {
             </div>
             <button 
               type="submit"
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm"
             >
-              <Send size={14} /> Kirim Laporan ke Ketua RT
+              {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              <span>{isSubmitting ? 'Mengirim...' : 'Kirim Laporan ke Ketua RT'}</span>
             </button>
           </form>
         </div>

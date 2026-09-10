@@ -21,8 +21,8 @@ export class KasController {
   }
 
   @Post()
-  @Roles(Role.BENDAHARA_RT, Role.SUPERADMIN)
-  @ApiOperation({ summary: 'Mencatat transaksi kas / set saldo awal (Khusus Bendahara RT)' })
+  @Roles(Role.BENDAHARA_RT, Role.ADMIN_RT, Role.SEKRETARIS_RT, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Mencatat transaksi kas / set saldo awal (Khusus Pengurus RT)' })
   async createKas(
     @CurrentUser() user: any,
     @Body() body: { tipe: TipeKas; kategori: string; nominal: number; keterangan: string; buktiNotaUrl?: string },
@@ -31,8 +31,8 @@ export class KasController {
   }
 
   @Post('catat')
-  @Roles(Role.BENDAHARA_RT, Role.SUPERADMIN)
-  @ApiOperation({ summary: 'Mencatat transaksi kas masuk atau keluar (Khusus Bendahara RT)' })
+  @Roles(Role.BENDAHARA_RT, Role.ADMIN_RT, Role.SEKRETARIS_RT, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Mencatat transaksi kas masuk atau keluar (Khusus Pengurus RT)' })
   async createKasAlias(
     @CurrentUser() user: any,
     @Body() body: { tipe: TipeKas; kategori: string; nominal: number; keterangan: string; buktiNotaUrl?: string },

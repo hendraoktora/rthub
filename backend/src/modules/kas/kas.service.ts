@@ -50,22 +50,33 @@ export class KasService {
     keterangan: string;
     buktiNotaUrl?: string;
   }) {
-    if (data.nominal <= 0) {
+    const nominalNum = Number(data.nominal);
+    if (!nominalNum || nominalNum <= 0) {
       throw new BadRequestException('Nominal kas harus lebih dari 0.');
     }
 
-    const currentSummary = await this.getKasSummary(rtId);
+    let targetRtId = rtId;
+    if (!targetRtId) {
+      const defaultRt = await this.prisma.rT.findFirst();
+      targetRtId = defaultRt?.id;
+    }
+
+    if (!targetRtId) {
+      throw new BadRequestException('Wilayah RT tidak ditemukan.');
+    }
+
+    const currentSummary = await this.getKasSummary(targetRtId);
     const newSaldo = data.tipe === TipeKas.PEMASUKAN
-      ? currentSummary.saldoKas + Number(data.nominal)
-      : currentSummary.saldoKas - Number(data.nominal);
+      ? currentSummary.saldoKas + nominalNum
+      : currentSummary.saldoKas - nominalNum;
 
     return this.prisma.kasRT.create({
       data: {
-        rtId,
+        rtId: targetRtId,
         createdById: userId,
         tipe: data.tipe,
         kategori: data.kategori,
-        nominal: data.nominal,
+        nominal: nominalNum,
         saldoBerjalan: newSaldo,
         keterangan: data.keterangan,
         buktiNotaUrl: data.buktiNotaUrl || null,

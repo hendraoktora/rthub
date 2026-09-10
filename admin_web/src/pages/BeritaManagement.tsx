@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Megaphone, Plus, Search, Edit3, Trash2, Pin, PinOff, RefreshCw, Calendar, Globe, Building } from 'lucide-react';
+import { Newspaper, Megaphone, Plus, Search, Pin, PinOff, Edit3, Trash2, Globe, Building, Calendar, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { api, UserSession } from '../services/api';
+import { showAlert } from '../services/swal';
 
 interface BeritaProps {
   user?: UserSession | null;
@@ -12,6 +13,7 @@ export const BeritaManagement: React.FC<BeritaProps> = ({ user }) => {
 
   const [beritaList, setBeritaList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modal State
@@ -74,7 +76,7 @@ export const BeritaManagement: React.FC<BeritaProps> = ({ user }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.judul || !formData.konten) {
-      alert('Judul dan isi pengumuman wajib diisi.');
+      showAlert.error('Input Tidak Lengkap', 'Judul dan isi pengumuman wajib diisi.');
       return;
     }
 
@@ -86,35 +88,48 @@ export const BeritaManagement: React.FC<BeritaProps> = ({ user }) => {
       isPinned: formData.isPinned,
     };
 
+    setIsSubmitting(true);
     try {
       if (isEditing && editingId) {
         await api.updateBerita(editingId, payload);
+        showAlert.success('Berhasil Diperbarui', `Pengumuman "${formData.judul}" berhasil diubah.`);
       } else {
         await api.createBerita(payload);
+        showAlert.success('Berhasil Dipublikasikan', `Pengumuman "${formData.judul}" berhasil disiarkan ke warga.`);
       }
       setShowModal(false);
       await loadBerita();
     } catch (err: any) {
-      alert(err.message || 'Gagal menyimpan pengumuman');
+      showAlert.error('Gagal Menyimpan Pengumuman', err.message || 'Terjadi kesalahan saat menyimpan pengumuman.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string, judul: string) => {
-    if (!window.confirm(`Yakin ingin menghapus pengumuman "${judul}"?`)) return;
+    const confirmed = await showAlert.confirm(
+      'Hapus Pengumuman?',
+      `Apakah Anda yakin ingin menghapus pengumuman "${judul}"?`,
+      'Ya, Hapus'
+    );
+    if (!confirmed) return;
+
     try {
       await api.deleteBerita(id);
+      showAlert.toastSuccess(`Pengumuman "${judul}" telah dihapus.`);
       await loadBerita();
     } catch (err: any) {
-      alert(err.message || 'Gagal menghapus pengumuman');
+      showAlert.error('Gagal Menghapus Pengumuman', err.message || 'Terjadi kesalahan saat menghapus pengumuman.');
     }
   };
 
   const handleTogglePin = async (item: any) => {
     try {
       await api.updateBerita(item.id, { isPinned: !item.isPinned });
+      showAlert.toastSuccess(item.isPinned ? 'Pin dilepas.' : 'Pengumuman disematkan di posisi teratas.');
       await loadBerita();
     } catch (err: any) {
-      alert(err.message || 'Gagal mengubah status pin');
+      showAlert.error('Gagal Mengubah Pin', err.message || 'Terjadi kesalahan saat mengubah status pin.');
     }
   };
 
@@ -363,6 +378,7 @@ export const BeritaManagement: React.FC<BeritaProps> = ({ user }) => {
               <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition"
                 >
@@ -370,9 +386,11 @@ export const BeritaManagement: React.FC<BeritaProps> = ({ user }) => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition shadow-md shadow-blue-500/20"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition shadow-md shadow-blue-500/20 flex items-center gap-2"
                 >
-                  {isEditing ? 'Simpan Perubahan' : 'Publikasikan Pengumuman'}
+                  {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                  <span>{isSubmitting ? 'Memproses...' : isEditing ? 'Simpan Perubahan' : 'Publikasikan Pengumuman'}</span>
                 </button>
               </div>
             </form>

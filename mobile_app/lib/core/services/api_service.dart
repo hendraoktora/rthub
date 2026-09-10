@@ -16,7 +16,15 @@ class ApiService {
 
   static Future<String> getBaseUrl() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('server_base_url') ?? defaultUrl;
+    final saved = prefs.getString('server_base_url');
+    if (saved == null ||
+        saved.contains('localhost') ||
+        saved.contains('10.0.2.2') ||
+        saved.contains('192.168.') ||
+        saved.contains('127.0.0.1')) {
+      return defaultUrl;
+    }
+    return saved;
   }
 
   static Future<void> setBaseUrl(String url) async {

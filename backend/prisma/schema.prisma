@@ -1,0 +1,475 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPERADMIN
+  ADMIN_KELURAHAN
+  ADMIN_RW
+  ADMIN_RT
+  SEKRETARIS_RT
+  BENDAHARA_RT
+  SECURITY
+  WARGA
+}
+
+enum StatusTagihan {
+  UNPAID
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  QRIS
+  VA_BCA
+  VA_MANDIRI
+  VA_BRI
+  VA_BNI
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+}
+
+enum TipeKas {
+  PEMASUKAN
+  PENGELUARAN
+}
+
+enum ScopeWilayah {
+  KELURAHAN
+  RW
+  RT
+}
+
+enum StatusLaporan {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum StatusAlert {
+  ACTIVE
+  RESPONDED
+  RESOLVED
+}
+
+// -------------------------------------------------------------
+// WILAYAH & STRUKTUR HIERARKI
+// -------------------------------------------------------------
+model Kelurahan {
+  id          String   @id @default(uuid())
+  nama        String   @db.VarChar(100)
+  kecamatan   String?  @db.VarChar(100)
+  kota        String?  @db.VarChar(100)
+  provinsi    String?  @db.VarChar(100)
+  kodePos     String?  @db.VarChar(10)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rws         RW[]
+  users       User[]
+  berita      Berita[]
+  lapak       LapakProduk[]
+  kontrakan   InfoKontrakan[]
+  agenda      AgendaKegiatan[]
+
+  @@unique([nama, kecamatan, kota])
+}
+
+model RW {
+  id          String   @id @default(uuid())
+  nomor       String   @db.VarChar(10) // e.g. "01", "05"
+  kelurahanId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  kelurahan   Kelurahan @relation(fields: [kelurahanId], references: [id], onDelete: Cascade)
+  rts         RT[]
+  users       User[]
+  berita      Berita[]
+  lapak       LapakProduk[]
+  kontrakan   InfoKontrakan[]
+  agenda      AgendaKegiatan[]
+  cctv        CCTV[]
+
+  @@unique([nomor, kelurahanId])
+}
+
+model RT {
+  id          String   @id @default(uuid())
+  nomor       String   @db.VarChar(10) // e.g. "01", "03"
+  namaJalan   String?  @db.VarChar(150)
+  skDokumenUrl String? @db.LongText
+  rwId        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rw          RW       @relation(fields: [rwId], references: [id], onDelete: Cascade)
+  users       User[]
+  rumah       Rumah[]
+  kas         KasRT[]
+  masterTagihan MasterTagihan[]
+  berita      Berita[]
+  lapak       LapakProduk[]
+  kontrakan   InfoKontrakan[]
+  agenda      AgendaKegiatan[]
+  cctv        CCTV[]
+  alertPanic  AlertPanic[]
+  absensiSecurity AbsensiSecurity[]
+  laporanWarga LaporanWarga[]
+  systemFeeLogs SystemFeeLog[]
+
+  @@unique([nomor, rwId])
+}
+
+// -------------------------------------------------------------
+// USER & AUTENTIKASI
+// -------------------------------------------------------------
+model User {
+  id           String    @id @default(uuid())
+  phone        String    @unique @db.VarChar(20) // No. WhatsApp
+  email        String?   @unique @db.VarChar(100)
+  passwordHash String    @db.VarChar(255)
+  role         Role      @default(WARGA)
+  isActive     Boolean   @default(true)
+  
+  kelurahanId  String?
+  rwId         String?
+  rtId         String?
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  kelurahan    Kelurahan? @relation(fields: [kelurahanId], references: [id], onDelete: SetNull)
+  rw           RW?        @relation(fields: [rwId], references: [id], onDelete: SetNull)
+  rt           RT?        @relation(fields: [rtId], references: [id], onDelete: SetNull)
+  
+  profile      Profile?
+  transaksi    TransaksiPembayaran[]
+  lapak        LapakProduk[]
+  kontrakan    InfoKontrakan[]
+  berita       Berita[]
+  laporan      LaporanWarga[]
+  alerts       AlertPanic[]
+  absensi      AbsensiSecurity[]
+  kasInput     KasRT[]
+}
+
+model Profile {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  namaLengkap  String   @db.VarChar(150)
+  nik          String?  @db.VarChar(20)
+  noKk         String?  @db.VarChar(20)
+  noRumah      String?  @db.VarChar(30)
+  avatarUrl    String?  @db.LongText
+  skDokumenUrl String?  @db.LongText
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// DATA RUMAH & KELUARGA
+// -------------------------------------------------------------
+model Rumah {
+  id           String   @id @default(uuid())
+  rtId         String
+  noRumah      String   @db.VarChar(30) // e.g. "Blok C3 No. 12"
+  alamatLengkap String? @db.Text
+  statusHunian String?  @default("TETAP") @db.VarChar(20) // TETAP / KONTRAK / KOSONG
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  rt           RT       @relation(fields: [rtId], references: [id], onDelete: Cascade)
+  kartuKeluarga KartuKeluarga[]
+  tagihanWarga  TagihanWarga[]
+  alertPanic    AlertPanic[]
+
+  @@unique([rtId, noRumah])
+}
+
+model KartuKeluarga {
+  id             String   @id @default(uuid())
+  noKk           String   @unique @db.VarChar(20)
+  rumahId        String
+  namaKepala     String   @db.VarChar(150)
+  fotoKkUrl      String?  @db.VarChar(255)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  rumah          Rumah    @relation(fields: [rumahId], references: [id], onDelete: Cascade)
+  anggota        AnggotaKeluarga[]
+}
+
+model AnggotaKeluarga {
+  id             String   @id @default(uuid())
+  kkId           String
+  nama           String   @db.VarChar(150)
+  nik            String?  @db.VarChar(20)
+  hubungan       String   @db.VarChar(50) // KEPALA_KELUARGA, ISTRI, ANAK, DLL
+  noHp           String?  @db.VarChar(20)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  kartuKeluarga  KartuKeluarga @relation(fields: [kkId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// KEUANGAN, IURAN, TAGIHAN & FEE ADMIN TRANSAKSI
+// -------------------------------------------------------------
+model MasterTagihan {
+  id           String   @id @default(uuid())
+  rtId         String
+  namaTagihan  String   @db.VarChar(100) // e.g. "Iuran Kas & Kebersihan"
+  nominalPokok Decimal  @db.Decimal(12, 2) // e.g. 50000.00
+  adminFee     Decimal  @default(2000.00) @db.Decimal(12, 2)
+  deskripsi    String?  @db.Text
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  rt           RT       @relation(fields: [rtId], references: [id], onDelete: Cascade)
+  tagihanWarga TagihanWarga[]
+}
+
+model TagihanWarga {
+  id              String        @id @default(uuid())
+  masterTagihanId String
+  rumahId         String
+  periodeBulan    Int           // 1 - 12
+  periodeTahun    Int           // e.g. 2026
+  nominalPokok    Decimal       @db.Decimal(12, 2) // e.g. 50000.00 (Hak Kas RT)
+  adminFee        Decimal       @default(2000.00) @db.Decimal(12, 2) // Hak Platform
+  totalBayar      Decimal       @db.Decimal(12, 2) // e.g. 52000.00
+  status          StatusTagihan @default(UNPAID)
+  jatuhTempo      DateTime
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  masterTagihan   MasterTagihan @relation(fields: [masterTagihanId], references: [id], onDelete: Cascade)
+  rumah           Rumah         @relation(fields: [rumahId], references: [id], onDelete: Cascade)
+  transaksi       TransaksiPembayaran[]
+
+  @@unique([masterTagihanId, rumahId, periodeBulan, periodeTahun])
+}
+
+model TransaksiPembayaran {
+  id            String        @id @default(uuid())
+  tagihanId     String
+  userId        String
+  nominalPokok  Decimal       @db.Decimal(12, 2)
+  adminFee      Decimal       @db.Decimal(12, 2)
+  totalBayar    Decimal       @db.Decimal(12, 2)
+  paymentMethod PaymentMethod @default(QRIS)
+  status        PaymentStatus @default(PENDING)
+  paymentCode   String?       @db.VarChar(100) // QR string or VA number
+  referenceId   String?       @db.VarChar(100) // Midtrans/Xendit transaction ID
+  buktiBayarUrl String?       @db.VarChar(255) // For manual cash/transfer verification
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  tagihan       TagihanWarga  @relation(fields: [tagihanId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feeLog        SystemFeeLog?
+}
+
+model SystemFeeLog {
+  id           String   @id @default(uuid())
+  transaksiId  String   @unique
+  rtId         String
+  nominalFee   Decimal  @db.Decimal(12, 2) // e.g. 2000.00
+  isSettled    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  transaksi    TransaksiPembayaran @relation(fields: [transaksiId], references: [id], onDelete: Cascade)
+  rt           RT                  @relation(fields: [rtId], references: [id], onDelete: Cascade)
+}
+
+model KasRT {
+  id            String   @id @default(uuid())
+  rtId          String
+  createdById   String
+  tipe          TipeKas  @default(PEMASUKAN)
+  kategori      String   @db.VarChar(50) // "Iuran Warga", "Operasional", "Kebersihan", "Lainnya"
+  nominal       Decimal  @db.Decimal(12, 2)
+  saldoBerjalan Decimal  @db.Decimal(14, 2)
+  keterangan    String   @db.Text
+  buktiNotaUrl  String?  @db.VarChar(255)
+  createdAt     DateTime @default(now())
+
+  rt            RT       @relation(fields: [rtId], references: [id], onDelete: Cascade)
+  createdBy     User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// KOMUNITAS, BERITA, LAPAK, KONTRAKAN & AGENDA
+// -------------------------------------------------------------
+model Berita {
+  id          String       @id @default(uuid())
+  scope       ScopeWilayah @default(RT)
+  kelurahanId String?
+  rwId        String?
+  rtId        String?
+  authorId    String
+  judul       String       @db.VarChar(200)
+  konten      String       @db.Text
+  coverUrl    String?      @db.VarChar(255)
+  isPinned    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  kelurahan   Kelurahan?   @relation(fields: [kelurahanId], references: [id], onDelete: Cascade)
+  rw          RW?          @relation(fields: [rwId], references: [id], onDelete: Cascade)
+  rt          RT?          @relation(fields: [rtId], references: [id], onDelete: Cascade)
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model LapakProduk {
+  id          String   @id @default(uuid())
+  sellerId    String
+  rtId        String
+  rwId        String
+  kelurahanId String
+  judul       String   @db.VarChar(150)
+  deskripsi   String   @db.Text
+  harga       Decimal  @db.Decimal(12, 2)
+  kategori    String   @default("PRODUK") @db.VarChar(50) // PRODUK / JASA
+  fotoUrl     String?  @db.LongText
+  kontakWa    String   @db.VarChar(20)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seller      User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  rt          RT        @relation(fields: [rtId], references: [id], onDelete: Cascade)
+  rw          RW        @relation(fields: [rwId], references: [id], onDelete: Cascade)
+  kelurahan   Kelurahan @relation(fields: [kelurahanId], references: [id], onDelete: Cascade)
+}
+
+model InfoKontrakan {
+  id          String   @id @default(uuid())
+  ownerId     String
+  rtId        String
+  rwId        String
+  kelurahanId String
+  judul       String   @db.VarChar(150) // e.g. "Kontrakan Paviliun 2 Kamar"
+  deskripsi   String   @db.Text
+  hargaSewa   Decimal  @db.Decimal(12, 2)
+  periodeSewa String   @default("BULAN") @db.VarChar(20) // BULAN / TAHUN
+  alamat      String   @db.Text
+  fasilitas   String?  @db.Text
+  kontakWa    String   @db.VarChar(20)
+  fotoUrl     String?  @db.VarChar(255)
+  status      String   @default("TERSEDIA") @db.VarChar(20) // TERSEDIA / TERSEWA
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  rt          RT        @relation(fields: [rtId], references: [id], onDelete: Cascade)
+  rw          RW        @relation(fields: [rwId], references: [id], onDelete: Cascade)
+  kelurahan   Kelurahan @relation(fields: [kelurahanId], references: [id], onDelete: Cascade)
+}
+
+model AgendaKegiatan {
+  id             String       @id @default(uuid())
+  scope          ScopeWilayah @default(RT)
+  kelurahanId    String?
+  rwId           String?
+  rtId           String?
+  judul          String       @db.VarChar(150) // e.g. "Kerja Bakti Saluran Air"
+  kategori       String       @default("KERJA_BAKTI") @db.VarChar(50) // KERJA_BAKTI, RAPAT_RT, FOGGING, POSYANDU, RONDA
+  deskripsi      String?      @db.Text
+  tanggalMulai   DateTime
+  tanggalSelesai DateTime?
+  lokasi         String?      @db.VarChar(150)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  kelurahan      Kelurahan?   @relation(fields: [kelurahanId], references: [id], onDelete: Cascade)
+  rw             RW?          @relation(fields: [rwId], references: [id], onDelete: Cascade)
+  rt             RT?          @relation(fields: [rtId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// KEAMANAN, ALERT PANIC, CCTV, ABSENSI & LAPORAN
+// -------------------------------------------------------------
+model AlertPanic {
+  id          String      @id @default(uuid())
+  userId      String
+  rtId        String
+  rumahId     String?
+  latitude    Float?
+  longitude   Float?
+  catatan     String?     @db.Text
+  status      StatusAlert @default(ACTIVE)
+  triggeredAt DateTime    @default(now())
+  resolvedAt  DateTime?
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rt          RT          @relation(fields: [rtId], references: [id], onDelete: Cascade)
+  rumah       Rumah?      @relation(fields: [rumahId], references: [id], onDelete: SetNull)
+}
+
+model AbsensiSecurity {
+  id           String   @id @default(uuid())
+  securityId   String
+  rtId         String
+  posName      String   @db.VarChar(100) // "Pos Ronda Utama", "Gerbang Depan"
+  latitude     Float?
+  longitude    Float?
+  fotoUrl      String?  @db.VarChar(255)
+  checkInTime  DateTime @default(now())
+  catatan      String?  @db.Text
+
+  security     User     @relation(fields: [securityId], references: [id], onDelete: Cascade)
+  rt           RT       @relation(fields: [rtId], references: [id], onDelete: Cascade)
+}
+
+model CCTV {
+  id          String   @id @default(uuid())
+  rtId        String?
+  rwId        String?
+  namaTitik   String   @db.VarChar(100) // "Gerbang Masuk RT 03"
+  streamUrl   String   @db.VarChar(255) // RTSP / HLS / Embed link
+  thumbnailUrl String? @db.VarChar(255)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  rt          RT?      @relation(fields: [rtId], references: [id], onDelete: Cascade)
+  rw          RW?      @relation(fields: [rwId], references: [id], onDelete: Cascade)
+}
+
+model LaporanWarga {
+  id          String        @id @default(uuid())
+  userId      String
+  rtId        String
+  judul       String        @db.VarChar(150)
+  deskripsi   String        @db.Text
+  kategori    String        @db.VarChar(50) // KEAMANAN, KEBERSIHAN, FASILITAS, DLL
+  fotoUrl     String?       @db.VarChar(255)
+  isAnonymous Boolean       @default(false)
+  status      StatusLaporan @default(PENDING)
+  tanggapanRT String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rt          RT            @relation(fields: [rtId], references: [id], onDelete: Cascade)
+}

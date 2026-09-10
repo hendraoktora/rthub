@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "380262700656",
+    "project_id": "rthub-byhendraoktora",
+    "storage_bucket": "rthub-byhendraoktora.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:380262700656:android:fe9bad67ed594251b386b5",
+        "android_client_info": {
+          "package_name": "com.rthub.rthub_byhendraoktora"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKoupKZ8SsMbNRi-gSXINeBvnsDTEKfSo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

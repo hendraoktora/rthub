@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RtHub</string>
+    <string name="widget_name">RTHub - Panic Alert RT</string>
+    <string name="widget_description">Tombol Cepat Panic Alert &amp; SOS Darurat RT</string>
+</resources>

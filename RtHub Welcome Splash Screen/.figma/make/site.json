@@ -1,0 +1,10 @@
+{
+  "description": "Streamline community management with a user-friendly interface for residents to access digital contributions, announcements, and report issues.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

@@ -56,8 +56,17 @@ async function bootstrap() {
 }
 
 export default async function handler(req: any, res: any) {
-  if (!isAppInitialized) {
-    await bootstrap();
+  try {
+    if (!isAppInitialized) {
+      await bootstrap();
+    }
+    server(req, res);
+  } catch (error: any) {
+    console.error('SERVERLESS INIT ERROR:', error);
+    res.status(500).json({
+      error: 'Initialization Error',
+      message: error?.message || String(error),
+      stack: error?.stack,
+    });
   }
-  server(req, res);
 }

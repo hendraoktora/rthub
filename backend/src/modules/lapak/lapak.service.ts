@@ -7,12 +7,14 @@ export class LapakService {
 
   // Marketplace cross-RT (Shared se-RW atau se-Kelurahan)
   async getFeedLapak(user: any) {
+    const filters: any[] = [];
+    if (user?.rwId) filters.push({ rwId: user.rwId });
+    if (user?.kelurahanId) filters.push({ kelurahanId: user.kelurahanId });
+    if (user?.rtId) filters.push({ rtId: user.rtId });
+
     return this.prisma.lapakProduk.findMany({
       where: {
-        OR: [
-          { rwId: user.rwId },
-          { kelurahanId: user.kelurahanId },
-        ],
+        ...(filters.length > 0 ? { OR: filters } : {}),
         isActive: true,
       },
       include: {
@@ -25,12 +27,14 @@ export class LapakService {
 
   // Listing Kontrakan se-RW / Kelurahan
   async getFeedKontrakan(user: any) {
+    const filters: any[] = [];
+    if (user?.rwId) filters.push({ rwId: user.rwId });
+    if (user?.kelurahanId) filters.push({ kelurahanId: user.kelurahanId });
+    if (user?.rtId) filters.push({ rtId: user.rtId });
+
     return this.prisma.infoKontrakan.findMany({
       where: {
-        OR: [
-          { rwId: user.rwId },
-          { kelurahanId: user.kelurahanId },
-        ],
+        ...(filters.length > 0 ? { OR: filters } : {}),
         status: 'TERSEDIA',
       },
       include: {
@@ -41,17 +45,31 @@ export class LapakService {
   }
 
   async createProduk(user: any, data: { judul: string; deskripsi: string; harga: number; kategori: string; kontakWa: string; fotoUrl?: string }) {
+    let rtId = user?.rtId;
+    let rwId = user?.rwId;
+    let kelurahanId = user?.kelurahanId;
+
+    if (!rtId || !rwId || !kelurahanId) {
+      const defaultRt = await this.prisma.rT.findFirst();
+      if (defaultRt) {
+        rtId = rtId || defaultRt.id;
+        rwId = rwId || defaultRt.rwId;
+        const rw = await this.prisma.rW.findUnique({ where: { id: defaultRt.rwId } });
+        kelurahanId = kelurahanId || rw?.kelurahanId || null;
+      }
+    }
+
     return this.prisma.lapakProduk.create({
       data: {
         sellerId: user.id,
-        rtId: user.rtId,
-        rwId: user.rwId,
-        kelurahanId: user.kelurahanId,
+        rtId: rtId,
+        rwId: rwId,
+        kelurahanId: kelurahanId,
         judul: data.judul,
-        deskripsi: data.deskripsi,
-        harga: data.harga,
+        deskripsi: data.deskripsi || '',
+        harga: Number(data.harga) || 0,
         kategori: data.kategori || 'PRODUK',
-        kontakWa: data.kontakWa,
+        kontakWa: data.kontakWa || user.phone,
         fotoUrl: data.fotoUrl || null,
       },
     });

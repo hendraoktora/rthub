@@ -143,7 +143,12 @@ class _LapakScreenState extends State<LapakScreen> {
                                 ),
                                 onPressed: () async {
                                   try {
-                                    final img = await _picker.pickImage(source: ImageSource.camera, imageQuality: 70, maxWidth: 1024);
+                                    final img = await _picker.pickImage(
+                                      source: ImageSource.camera,
+                                      imageQuality: 50,
+                                      maxWidth: 600,
+                                      maxHeight: 600,
+                                    );
                                     if (img != null) {
                                       final bytes = await img.readAsBytes();
                                       setModalState(() {
@@ -168,7 +173,12 @@ class _LapakScreenState extends State<LapakScreen> {
                                 ),
                                 onPressed: () async {
                                   try {
-                                    final img = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70, maxWidth: 1024);
+                                    final img = await _picker.pickImage(
+                                      source: ImageSource.gallery,
+                                      imageQuality: 50,
+                                      maxWidth: 600,
+                                      maxHeight: 600,
+                                    );
                                     if (img != null) {
                                       final bytes = await img.readAsBytes();
                                       setModalState(() {
@@ -390,29 +400,33 @@ class _LapakScreenState extends State<LapakScreen> {
           child: _isLoading && _lapakList.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : _lapakList.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.storefront_outlined, size: 48, color: AppTheme.textMuted),
-                            const SizedBox(height: 12),
-                            const Text('Belum Ada Produk di Lapak Warga',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 4),
-                            const Text('Jadilah yang pertama memasarkan produk / makanan / jasa Anda di lingkungan RT & RW!',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: _showTambahProdukModal,
-                              icon: const Icon(Icons.add, size: 16),
-                              label: const Text('Pasang Jualan Sekarang'),
-                            ),
-                          ],
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+                        Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.storefront_outlined, size: 48, color: AppTheme.textMuted),
+                              const SizedBox(height: 12),
+                              const Text('Belum Ada Produk di Lapak Warga',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              const SizedBox(height: 4),
+                              const Text('Jadilah yang pertama memasarkan produk / makanan / jasa Anda di lingkungan RT & RW!',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: _showTambahProdukModal,
+                                icon: const Icon(Icons.add, size: 16),
+                                label: const Text('Pasang Jualan Sekarang'),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     )
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),

@@ -7,6 +7,8 @@ import { AppModule } from './app.module';
 import express, { Express } from 'express';
 
 const server: Express = express();
+server.use(express.json({ limit: '15mb' }));
+server.use(express.urlencoded({ limit: '15mb', extended: true }));
 let isAppInitialized = false;
 
 async function bootstrap() {

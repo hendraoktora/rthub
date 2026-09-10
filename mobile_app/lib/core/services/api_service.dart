@@ -66,57 +66,59 @@ class ApiService {
     await prefs.remove('user_data');
   }
 
-  /// Send request with auto-fallback through candidates if custom URL fails
+  /// Send request directly with automatic recovery to production domain
   static Future<http.Response> _postWithFallback(String path, Map<String, dynamic> body) async {
     final configuredUrl = await getBaseUrl();
-    final urlsToTry = <String>[configuredUrl];
-    for (final c in candidateUrls) {
-      if (!urlsToTry.contains(c)) urlsToTry.add(c);
-    }
-
-    Exception? lastException;
-
-    for (final base in urlsToTry) {
-      try {
-        final res = await http.post(
-          Uri.parse('$base$path'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(body),
-        ).timeout(const Duration(seconds: 3));
-
-        // If server responded (even if 400/401), we found an active server!
-        await setBaseUrl(base);
-        return res;
-      } catch (e) {
-        lastException = Exception(e.toString());
+    try {
+      final res = await http.post(
+        Uri.parse('$configuredUrl$path'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 15));
+      return res;
+    } catch (e) {
+      if (configuredUrl != defaultUrl) {
+        try {
+          final res = await http.post(
+            Uri.parse('$defaultUrl$path'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          ).timeout(const Duration(seconds: 15));
+          await setBaseUrl(defaultUrl);
+          return res;
+        } catch (_) {}
       }
+      throw Exception('Gagal menghubungi server backend: $e');
     }
-
-    throw lastException ?? Exception('Gagal menghubungi server backend di $configuredUrl');
   }
 
   static Future<http.Response> _getWithFallback(String path, {String? token}) async {
     final configuredUrl = await getBaseUrl();
-    final urlsToTry = <String>[configuredUrl];
-    for (final c in candidateUrls) {
-      if (!urlsToTry.contains(c)) urlsToTry.add(c);
+    try {
+      final res = await http.get(
+        Uri.parse('$configuredUrl$path'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 15));
+      return res;
+    } catch (e) {
+      if (configuredUrl != defaultUrl) {
+        try {
+          final res = await http.get(
+            Uri.parse('$defaultUrl$path'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+          ).timeout(const Duration(seconds: 15));
+          await setBaseUrl(defaultUrl);
+          return res;
+        } catch (_) {}
+      }
+      throw Exception('Gagal memuat data dari server backend: $e');
     }
-
-    for (final base in urlsToTry) {
-      try {
-        final res = await http.get(
-          Uri.parse('$base$path'),
-          headers: {
-            'Content-Type': 'application/json',
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
-        ).timeout(const Duration(seconds: 3));
-        await setBaseUrl(base);
-        return res;
-      } catch (_) {}
-    }
-
-    throw Exception('Gagal memuat data dari server backend');
   }
 
   /// Real Live Database Login

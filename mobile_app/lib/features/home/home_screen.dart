@@ -127,6 +127,15 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {}
   }
 
+  Future<void> _refreshAllData() async {
+    _loadUserData();
+    _loadKasSummary();
+    _loadAgendaData();
+    _loadBeritaData();
+    _loadLapakData();
+    await Future.delayed(const Duration(milliseconds: 600));
+  }
+
   String _getInitials(String name) {
     if (name.isEmpty) return 'U';
     final parts = name.replaceAll(RegExp(r'Bpk\.|Ibu|Hj\.|H\.'), '').trim().split(' ');
@@ -332,8 +341,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+        child: RefreshIndicator(
+          onRefresh: _refreshAllData,
+          color: AppTheme.primaryNavy,
+          backgroundColor: Colors.white,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -583,6 +597,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
       ),
       bottomNavigationBar: _buildBottomNav(),
     );

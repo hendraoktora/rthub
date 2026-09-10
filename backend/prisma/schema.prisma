@@ -464,7 +464,7 @@ model LaporanWarga {
   judul       String        @db.VarChar(150)
   deskripsi   String        @db.Text
   kategori    String        @db.VarChar(50) // KEAMANAN, KEBERSIHAN, FASILITAS, DLL
-  fotoUrl     String?       @db.VarChar(255)
+  fotoUrl     String?       @db.LongText
   isAnonymous Boolean       @default(false)
   status      StatusLaporan @default(PENDING)
   tanggapanRT String?       @db.Text

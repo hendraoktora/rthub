@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
 
@@ -12,6 +14,7 @@ class LaporScreen extends StatefulWidget {
 class _LaporScreenState extends State<LaporScreen> {
   List<dynamic> _laporanList = [];
   bool _isLoading = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -40,6 +43,7 @@ class _LaporScreenState extends State<LaporScreen> {
     String tujuan = 'KETUA_RT';
     String kategori = 'FASILITAS_UMUM';
     bool isAnonymous = false;
+    String? fotoBase64;
 
     showModalBottomSheet(
       context: context,
@@ -128,7 +132,90 @@ class _LaporScreenState extends State<LaporScreen> {
                     prefixIcon: Icon(Icons.notes_rounded),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+
+                // Foto Bukti Kejadian
+                const Text('Foto Bukti Kejadian (Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                if (fotoBase64 != null) ...[
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: _buildImageWidget(fotoBase64!, height: 130, width: double.infinity),
+                      ),
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: GestureDetector(
+                          onTap: () => setModalState(() => fotoBase64 = null),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            try {
+                              final img = await _picker.pickImage(
+                                source: ImageSource.camera,
+                                imageQuality: 50,
+                                maxWidth: 600,
+                                maxHeight: 600,
+                              );
+                              if (img != null) {
+                                final bytes = await img.readAsBytes();
+                                setModalState(() {
+                                  fotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                });
+                              }
+                            } catch (e) {
+                              messenger.showSnackBar(SnackBar(content: Text('Gagal kamera: $e')));
+                            }
+                          },
+                          icon: const Icon(Icons.camera_alt_rounded, size: 16),
+                          label: const Text('Foto Kamera', style: TextStyle(fontSize: 12)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            try {
+                              final img = await _picker.pickImage(
+                                source: ImageSource.gallery,
+                                imageQuality: 50,
+                                maxWidth: 600,
+                                maxHeight: 600,
+                              );
+                              if (img != null) {
+                                final bytes = await img.readAsBytes();
+                                setModalState(() {
+                                  fotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                });
+                              }
+                            } catch (e) {
+                              messenger.showSnackBar(SnackBar(content: Text('Gagal galeri: $e')));
+                            }
+                          },
+                          icon: const Icon(Icons.photo_library_rounded, size: 16),
+                          label: const Text('Pilih Galeri', style: TextStyle(fontSize: 12)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                ],
+
                 Row(
                   children: [
                     Checkbox(
@@ -146,7 +233,12 @@ class _LaporScreenState extends State<LaporScreen> {
                       final judul = judulController.text.trim();
                       final desc = deskripsiController.text.trim();
 
-                      if (judul.isEmpty || desc.isEmpty) return;
+                      if (judul.isEmpty || desc.isEmpty) {
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Judul dan rincian keluhan wajib diisi!'), backgroundColor: AppTheme.alertRed),
+                        );
+                        return;
+                      }
                       Navigator.pop(modalContext);
 
                       String tujuanLabel = 'Ketua RT';
@@ -162,6 +254,7 @@ class _LaporScreenState extends State<LaporScreen> {
                           'deskripsi': desc,
                           'kategori': kategori,
                           'isAnonymous': isAnonymous,
+                          'fotoUrl': fotoBase64,
                         });
                         messenger.showSnackBar(
                           SnackBar(
@@ -190,6 +283,33 @@ class _LaporScreenState extends State<LaporScreen> {
     );
   }
 
+  static Widget _buildImageWidget(String urlOrBase64, {double height = 150, double width = double.infinity}) {
+    if (urlOrBase64.startsWith('data:image') || urlOrBase64.length > 200) {
+      try {
+        final cleanBase64 = urlOrBase64.contains(',') ? urlOrBase64.split(',')[1] : urlOrBase64;
+        final bytes = base64Decode(cleanBase64.trim());
+        return Image.memory(
+          bytes,
+          height: height,
+          width: width,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+        );
+      } catch (_) {
+        return const SizedBox.shrink();
+      }
+    } else if (urlOrBase64.startsWith('http')) {
+      return Image.network(
+        urlOrBase64,
+        height: height,
+        width: width,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,29 +336,33 @@ class _LaporScreenState extends State<LaporScreen> {
           child: _isLoading && _laporanList.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : _laporanList.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.mark_email_read_outlined, size: 48, color: AppTheme.textMuted),
-                            const SizedBox(height: 12),
-                            const Text('Belum Ada Laporan Keluhan di Lingkungan RT',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 4),
-                            const Text('Jika Anda menemukan fasilitas rusak atau kendala kebersihan, laporkan langsung di sini.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: _showBuatLaporanModal,
-                              icon: const Icon(Icons.add, size: 16),
-                              label: const Text('Buat Laporan Baru'),
-                            ),
-                          ],
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+                        Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.mark_email_read_outlined, size: 48, color: AppTheme.textMuted),
+                              const SizedBox(height: 12),
+                              const Text('Belum Ada Laporan Keluhan di Lingkungan RT',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              const SizedBox(height: 4),
+                              const Text('Jika Anda menemukan fasilitas rusak atau kendala kebersihan, laporkan langsung di sini.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: _showBuatLaporanModal,
+                                icon: const Icon(Icons.add, size: 16),
+                                label: const Text('Buat Laporan Baru'),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     )
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -250,6 +374,7 @@ class _LaporScreenState extends State<LaporScreen> {
                         final isResolved = statusStr == 'RESOLVED';
                         final isInProgress = statusStr == 'IN_PROGRESS';
                         final isAnonymous = l['isAnonymous'] == true;
+                        final fotoUrl = l['fotoUrl'] as String?;
 
                         String pelaporName = isAnonymous
                             ? 'Warga Anonim'
@@ -319,6 +444,15 @@ class _LaporScreenState extends State<LaporScreen> {
                               Text(l['judul'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                               const SizedBox(height: 4),
                               Text(l['deskripsi'] ?? '-', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                              
+                              if (fotoUrl != null && fotoUrl.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: _buildImageWidget(fotoUrl, height: 140, width: double.infinity),
+                                ),
+                              ],
+
                               const SizedBox(height: 8),
                               Text('Kategori: ${l['kategori'] ?? 'Umum'} • Pelapor: $pelaporName',
                                   style: const TextStyle(fontSize: 10, color: AppTheme.textMuted, fontWeight: FontWeight.w500)),

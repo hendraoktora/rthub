@@ -13,20 +13,22 @@ export class LaporanService {
     fotoUrl?: string;
     isAnonymous?: boolean;
   }) {
-    if (user.role === Role.SUPERADMIN) {
-      throw new BadRequestException('Superadmin tidak diperkenankan membuat laporan lingkungan RT.');
+    let rtId = user?.rtId;
+    if (!rtId) {
+      const defaultRt = await this.prisma.rT.findFirst();
+      rtId = defaultRt?.id;
     }
 
-    if (!user.rtId) {
-      throw new BadRequestException('User tidak terdaftar pada unit RT manapun.');
+    if (!rtId) {
+      throw new BadRequestException('Unit RT tidak ditemukan.');
     }
 
     return this.prisma.laporanWarga.create({
       data: {
         userId: user.id,
-        rtId: user.rtId,
+        rtId: rtId,
         judul: data.judul,
-        deskripsi: data.deskripsi,
+        deskripsi: data.deskripsi || '',
         kategori: data.kategori || 'FASILITAS_UMUM',
         fotoUrl: data.fotoUrl || null,
         isAnonymous: Boolean(data.isAnonymous),
@@ -48,8 +50,21 @@ export class LaporanService {
   }
 
   async getLaporanList(user: any) {
-    if (user.role === Role.SUPERADMIN) {
+    if (user?.role === Role.SUPERADMIN || !user?.rtId) {
       return this.prisma.laporanWarga.findMany({
+        include: {
+          user: {
+            select: {
+              id: true,
+              profile: {
+                select: {
+                  namaLengkap: true,
+                  noRumah: true,
+                },
+              },
+            },
+          },
+        },
         orderBy: { createdAt: 'desc' },
         take: 50,
       });

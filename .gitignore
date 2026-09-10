@@ -1,6 +1,9 @@
 # Node / Backend
 node_modules/
 dist/
+!/backend/dist
+!/backend/dist/**
+admin_web/dist/
 .env
 .env.*
 !.env.example

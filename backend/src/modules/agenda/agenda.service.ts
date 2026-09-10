@@ -7,14 +7,13 @@ export class AgendaService {
   constructor(private prisma: PrismaService) {}
 
   async getAgenda(user: any) {
+    const orConditions: any[] = [];
+    if (user?.rtId) orConditions.push({ scope: ScopeWilayah.RT, rtId: user.rtId });
+    if (user?.rwId) orConditions.push({ scope: ScopeWilayah.RW, rwId: user.rwId });
+    if (user?.kelurahanId) orConditions.push({ scope: ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId });
+
     return this.prisma.agendaKegiatan.findMany({
-      where: {
-        OR: [
-          { scope: ScopeWilayah.RT, rtId: user.rtId },
-          { scope: ScopeWilayah.RW, rwId: user.rwId },
-          { scope: ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId },
-        ],
-      },
+      where: orConditions.length > 0 ? { OR: orConditions } : {},
       orderBy: { tanggalMulai: 'asc' },
     });
   }

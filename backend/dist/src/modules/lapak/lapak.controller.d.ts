@@ -13,16 +13,16 @@ export declare class LapakController {
             };
         };
     } & {
+        rtId: string;
         id: string;
         isActive: boolean;
         kelurahanId: string;
         rwId: string;
-        rtId: string;
         createdAt: Date;
         updatedAt: Date;
         deskripsi: string;
-        judul: string;
         kategori: string;
+        judul: string;
         sellerId: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
@@ -39,16 +39,16 @@ export declare class LapakController {
             };
         };
     } & {
+        rtId: string;
         id: string;
         isActive: boolean;
         kelurahanId: string;
         rwId: string;
-        rtId: string;
         createdAt: Date;
         updatedAt: Date;
         deskripsi: string;
-        judul: string;
         kategori: string;
+        judul: string;
         sellerId: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
@@ -59,14 +59,14 @@ export declare class LapakController {
             nomor: string;
         };
     } & {
+        rtId: string;
         id: string;
         kelurahanId: string;
         rwId: string;
-        rtId: string;
         createdAt: Date;
         updatedAt: Date;
-        deskripsi: string;
         status: string;
+        deskripsi: string;
         judul: string;
         fotoUrl: string | null;
         kontakWa: string;
@@ -84,16 +84,16 @@ export declare class LapakController {
         kontakWa: string;
         fotoUrl?: string;
     }): Promise<{
+        rtId: string;
         id: string;
         isActive: boolean;
         kelurahanId: string;
         rwId: string;
-        rtId: string;
         createdAt: Date;
         updatedAt: Date;
         deskripsi: string;
-        judul: string;
         kategori: string;
+        judul: string;
         sellerId: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
@@ -107,32 +107,32 @@ export declare class LapakController {
         kontakWa: string;
         fotoUrl?: string;
     }): Promise<{
+        rtId: string;
         id: string;
         isActive: boolean;
         kelurahanId: string;
         rwId: string;
-        rtId: string;
         createdAt: Date;
         updatedAt: Date;
         deskripsi: string;
-        judul: string;
         kategori: string;
+        judul: string;
         sellerId: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
         kontakWa: string;
     }>;
     deleteProduk(id: string, user: any): Promise<{
+        rtId: string;
         id: string;
         isActive: boolean;
         kelurahanId: string;
         rwId: string;
-        rtId: string;
         createdAt: Date;
         updatedAt: Date;
         deskripsi: string;
-        judul: string;
         kategori: string;
+        judul: string;
         sellerId: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;

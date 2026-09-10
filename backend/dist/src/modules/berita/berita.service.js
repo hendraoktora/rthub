@@ -18,14 +18,15 @@ let BeritaService = class BeritaService {
         this.prisma = prisma;
     }
     async getFeed(user) {
+        const orConditions = [];
+        if (user?.rtId)
+            orConditions.push({ scope: client_1.ScopeWilayah.RT, rtId: user.rtId });
+        if (user?.rwId)
+            orConditions.push({ scope: client_1.ScopeWilayah.RW, rwId: user.rwId });
+        if (user?.kelurahanId)
+            orConditions.push({ scope: client_1.ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId });
         return this.prisma.berita.findMany({
-            where: {
-                OR: [
-                    { scope: client_1.ScopeWilayah.RT, rtId: user.rtId },
-                    { scope: client_1.ScopeWilayah.RW, rwId: user.rwId },
-                    { scope: client_1.ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId },
-                ],
-            },
+            where: orConditions.length > 0 ? { OR: orConditions } : {},
             include: {
                 author: { select: { profile: { select: { namaLengkap: true } }, role: true } },
             },

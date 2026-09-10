@@ -3,13 +3,13 @@ import { TipeKas } from '@prisma/client';
 export declare class KasService {
     private prisma;
     constructor(prisma: PrismaService);
-    getKasSummary(rtId: string): Promise<{
+    getKasSummary(rtId?: string): Promise<{
         saldoKas: number;
         totalPemasukan: number;
         totalPengeluaran: number;
         recentTransactions: {
-            id: string;
             rtId: string;
+            id: string;
             createdAt: Date;
             nominal: import("@prisma/client/runtime/library").Decimal;
             saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
@@ -27,8 +27,8 @@ export declare class KasService {
         keterangan: string;
         buktiNotaUrl?: string;
     }): Promise<{
-        id: string;
         rtId: string;
+        id: string;
         createdAt: Date;
         nominal: import("@prisma/client/runtime/library").Decimal;
         saldoBerjalan: import("@prisma/client/runtime/library").Decimal;

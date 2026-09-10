@@ -5,24 +5,24 @@ export declare class BeritaController {
     constructor(beritaService: BeritaService);
     getFeed(user: any): Promise<({
         author: {
-            role: import(".prisma/client").$Enums.Role;
             profile: {
                 namaLengkap: string;
             };
+            role: import(".prisma/client").$Enums.Role;
         };
     } & {
+        rtId: string | null;
         id: string;
         kelurahanId: string | null;
         rwId: string | null;
-        rtId: string | null;
         createdAt: Date;
         updatedAt: Date;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
+        authorId: string;
         judul: string;
         konten: string;
         coverUrl: string | null;
         isPinned: boolean;
-        authorId: string;
     })[]>;
     createBerita(user: any, body: {
         judul: string;
@@ -31,18 +31,18 @@ export declare class BeritaController {
         coverUrl?: string;
         isPinned?: boolean;
     }): Promise<{
+        rtId: string | null;
         id: string;
         kelurahanId: string | null;
         rwId: string | null;
-        rtId: string | null;
         createdAt: Date;
         updatedAt: Date;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
+        authorId: string;
         judul: string;
         konten: string;
         coverUrl: string | null;
         isPinned: boolean;
-        authorId: string;
     }>;
     updateBerita(id: string, user: any, body: {
         judul?: string;
@@ -51,31 +51,31 @@ export declare class BeritaController {
         coverUrl?: string;
         isPinned?: boolean;
     }): Promise<{
+        rtId: string | null;
         id: string;
         kelurahanId: string | null;
         rwId: string | null;
-        rtId: string | null;
         createdAt: Date;
         updatedAt: Date;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
+        authorId: string;
         judul: string;
         konten: string;
         coverUrl: string | null;
         isPinned: boolean;
-        authorId: string;
     }>;
     deleteBerita(id: string, user: any): Promise<{
+        rtId: string | null;
         id: string;
         kelurahanId: string | null;
         rwId: string | null;
-        rtId: string | null;
         createdAt: Date;
         updatedAt: Date;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
+        authorId: string;
         judul: string;
         konten: string;
         coverUrl: string | null;
         isPinned: boolean;
-        authorId: string;
     }>;
 }

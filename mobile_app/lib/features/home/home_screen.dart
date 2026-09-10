@@ -87,9 +87,12 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final summary = await ApiService.getKasSummary();
       if (mounted) {
-        setState(() {
-          _kasSummary = summary;
-        });
+        final recent = summary['recentTransactions'] as List?;
+        if (summary['saldoKas'] != 0 || summary['totalPemasukan'] != 0 || (recent != null && recent.isNotEmpty) || _kasSummary == null) {
+          setState(() {
+            _kasSummary = summary;
+          });
+        }
       }
     } catch (_) {}
   }
@@ -1505,9 +1508,9 @@ class _HomeScreenState extends State<HomeScreen> {
           final rtNomor = _user?['rt']?['nomor'] ?? '03';
           _showTransparansiKasModal(rtNomor);
         } else if (index == 2) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const AgendaScreen()));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const AgendaScreen())).then((_) => _loadAgendaData());
         } else if (index == 3) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen())).then((_) => _loadLapakData());
         } else if (index == 4) {
           Navigator.push(
             context,

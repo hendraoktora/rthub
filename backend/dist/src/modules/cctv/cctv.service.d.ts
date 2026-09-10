@@ -3,10 +3,10 @@ export declare class CctvService {
     private prisma;
     constructor(prisma: PrismaService);
     getCctvList(user: any): Promise<{
+        rtId: string | null;
         id: string;
         isActive: boolean;
         rwId: string | null;
-        rtId: string | null;
         createdAt: Date;
         namaTitik: string;
         streamUrl: string;
@@ -17,10 +17,10 @@ export declare class CctvService {
         streamUrl: string;
         thumbnailUrl?: string;
     }): Promise<{
+        rtId: string | null;
         id: string;
         isActive: boolean;
         rwId: string | null;
-        rtId: string | null;
         createdAt: Date;
         namaTitik: string;
         streamUrl: string;

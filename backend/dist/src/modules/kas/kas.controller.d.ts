@@ -8,8 +8,8 @@ export declare class KasController {
         totalPemasukan: number;
         totalPengeluaran: number;
         recentTransactions: {
-            id: string;
             rtId: string;
+            id: string;
             createdAt: Date;
             nominal: import("@prisma/client/runtime/library").Decimal;
             saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
@@ -27,8 +27,8 @@ export declare class KasController {
         keterangan: string;
         buktiNotaUrl?: string;
     }): Promise<{
-        id: string;
         rtId: string;
+        id: string;
         createdAt: Date;
         nominal: import("@prisma/client/runtime/library").Decimal;
         saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
@@ -45,8 +45,8 @@ export declare class KasController {
         keterangan: string;
         buktiNotaUrl?: string;
     }): Promise<{
-        id: string;
         rtId: string;
+        id: string;
         createdAt: Date;
         nominal: import("@prisma/client/runtime/library").Decimal;
         saldoBerjalan: import("@prisma/client/runtime/library").Decimal;

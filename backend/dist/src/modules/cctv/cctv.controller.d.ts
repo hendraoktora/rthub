@@ -3,10 +3,10 @@ export declare class CctvController {
     private readonly cctvService;
     constructor(cctvService: CctvService);
     getCctvList(user: any): Promise<{
+        rtId: string | null;
         id: string;
         isActive: boolean;
         rwId: string | null;
-        rtId: string | null;
         createdAt: Date;
         namaTitik: string;
         streamUrl: string;
@@ -17,10 +17,10 @@ export declare class CctvController {
         streamUrl: string;
         thumbnailUrl?: string;
     }): Promise<{
+        rtId: string | null;
         id: string;
         isActive: boolean;
         rwId: string | null;
-        rtId: string | null;
         createdAt: Date;
         namaTitik: string;
         streamUrl: string;

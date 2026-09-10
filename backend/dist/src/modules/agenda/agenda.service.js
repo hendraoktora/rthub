@@ -18,14 +18,15 @@ let AgendaService = class AgendaService {
         this.prisma = prisma;
     }
     async getAgenda(user) {
+        const orConditions = [];
+        if (user?.rtId)
+            orConditions.push({ scope: client_1.ScopeWilayah.RT, rtId: user.rtId });
+        if (user?.rwId)
+            orConditions.push({ scope: client_1.ScopeWilayah.RW, rwId: user.rwId });
+        if (user?.kelurahanId)
+            orConditions.push({ scope: client_1.ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId });
         return this.prisma.agendaKegiatan.findMany({
-            where: {
-                OR: [
-                    { scope: client_1.ScopeWilayah.RT, rtId: user.rtId },
-                    { scope: client_1.ScopeWilayah.RW, rwId: user.rwId },
-                    { scope: client_1.ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId },
-                ],
-            },
+            where: orConditions.length > 0 ? { OR: orConditions } : {},
             orderBy: { tanggalMulai: 'asc' },
         });
     }

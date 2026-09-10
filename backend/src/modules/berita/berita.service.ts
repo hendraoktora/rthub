@@ -6,16 +6,14 @@ import { ScopeWilayah } from '@prisma/client';
 export class BeritaService {
   constructor(private prisma: PrismaService) {}
 
-  // Multi-tier hierarchical news feed (Kelurahan + RW + RT)
   async getFeed(user: any) {
+    const orConditions: any[] = [];
+    if (user?.rtId) orConditions.push({ scope: ScopeWilayah.RT, rtId: user.rtId });
+    if (user?.rwId) orConditions.push({ scope: ScopeWilayah.RW, rwId: user.rwId });
+    if (user?.kelurahanId) orConditions.push({ scope: ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId });
+
     return this.prisma.berita.findMany({
-      where: {
-        OR: [
-          { scope: ScopeWilayah.RT, rtId: user.rtId },
-          { scope: ScopeWilayah.RW, rwId: user.rwId },
-          { scope: ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId },
-        ],
-      },
+      where: orConditions.length > 0 ? { OR: orConditions } : {},
       include: {
         author: { select: { profile: { select: { namaLengkap: true } }, role: true } },
       },

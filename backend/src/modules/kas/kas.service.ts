@@ -6,20 +6,28 @@ import { TipeKas } from '@prisma/client';
 export class KasService {
   constructor(private prisma: PrismaService) {}
 
-  async getKasSummary(rtId: string) {
+  async getKasSummary(rtId?: string) {
+    let targetRtId = rtId;
+    if (!targetRtId) {
+      const defaultRt = await this.prisma.rT.findFirst();
+      targetRtId = defaultRt?.id;
+    }
+
+    const whereClause = targetRtId ? { rtId: targetRtId } : {};
+
     const kasList = await this.prisma.kasRT.findMany({
-      where: { rtId },
+      where: whereClause,
       orderBy: { createdAt: 'desc' },
       take: 20,
     });
 
     const totalPemasukan = await this.prisma.kasRT.aggregate({
-      where: { rtId, tipe: TipeKas.PEMASUKAN },
+      where: { ...whereClause, tipe: TipeKas.PEMASUKAN },
       _sum: { nominal: true },
     });
 
     const totalPengeluaran = await this.prisma.kasRT.aggregate({
-      where: { rtId, tipe: TipeKas.PENGELUARAN },
+      where: { ...whereClause, tipe: TipeKas.PENGELUARAN },
       _sum: { nominal: true },
     });
 

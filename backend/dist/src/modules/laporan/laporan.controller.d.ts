@@ -17,37 +17,37 @@ export declare class LaporanController {
             };
         };
     } & {
-        id: string;
         rtId: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        deskripsi: string;
         status: import(".prisma/client").$Enums.StatusLaporan;
-        judul: string;
+        deskripsi: string;
         kategori: string;
+        judul: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
         tanggapanRT: string | null;
     }>;
     getLaporanList(user: any): Promise<({
         user: {
-            id: string;
             profile: {
                 namaLengkap: string;
                 noRumah: string;
             };
+            id: string;
         };
     } & {
-        id: string;
         rtId: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        deskripsi: string;
         status: import(".prisma/client").$Enums.StatusLaporan;
-        judul: string;
+        deskripsi: string;
         kategori: string;
+        judul: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
         tanggapanRT: string | null;
@@ -56,15 +56,15 @@ export declare class LaporanController {
         status: StatusLaporan;
         tanggapanRT?: string;
     }): Promise<{
-        id: string;
         rtId: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        deskripsi: string;
         status: import(".prisma/client").$Enums.StatusLaporan;
-        judul: string;
+        deskripsi: string;
         kategori: string;
+        judul: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
         tanggapanRT: string | null;

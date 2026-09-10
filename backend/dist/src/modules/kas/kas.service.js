@@ -18,17 +18,23 @@ let KasService = class KasService {
         this.prisma = prisma;
     }
     async getKasSummary(rtId) {
+        let targetRtId = rtId;
+        if (!targetRtId) {
+            const defaultRt = await this.prisma.rT.findFirst();
+            targetRtId = defaultRt?.id;
+        }
+        const whereClause = targetRtId ? { rtId: targetRtId } : {};
         const kasList = await this.prisma.kasRT.findMany({
-            where: { rtId },
+            where: whereClause,
             orderBy: { createdAt: 'desc' },
             take: 20,
         });
         const totalPemasukan = await this.prisma.kasRT.aggregate({
-            where: { rtId, tipe: client_1.TipeKas.PEMASUKAN },
+            where: { ...whereClause, tipe: client_1.TipeKas.PEMASUKAN },
             _sum: { nominal: true },
         });
         const totalPengeluaran = await this.prisma.kasRT.aggregate({
-            where: { rtId, tipe: client_1.TipeKas.PENGELUARAN },
+            where: { ...whereClause, tipe: client_1.TipeKas.PENGELUARAN },
             _sum: { nominal: true },
         });
         const sumIn = Number(totalPemasukan._sum.nominal || 0);

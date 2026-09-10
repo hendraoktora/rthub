@@ -10,18 +10,18 @@ export declare class AlertController {
         message: string;
         alert: {
             user: {
-                phone: string;
                 profile: {
                     namaLengkap: string;
                     noRumah: string;
                 };
+                phone: string;
             };
         } & {
-            id: string;
             rtId: string;
+            id: string;
             userId: string;
-            rumahId: string | null;
             status: import(".prisma/client").$Enums.StatusAlert;
+            rumahId: string | null;
             latitude: number | null;
             longitude: number | null;
             catatan: string | null;
@@ -31,18 +31,18 @@ export declare class AlertController {
     }>;
     getActive(user: any): Promise<({
         user: {
-            phone: string;
             profile: {
                 namaLengkap: string;
                 noRumah: string;
             };
+            phone: string;
         };
     } & {
-        id: string;
         rtId: string;
+        id: string;
         userId: string;
-        rumahId: string | null;
         status: import(".prisma/client").$Enums.StatusAlert;
+        rumahId: string | null;
         latitude: number | null;
         longitude: number | null;
         catatan: string | null;
@@ -50,11 +50,11 @@ export declare class AlertController {
         resolvedAt: Date | null;
     })[]>;
     resolve(id: string): Promise<{
-        id: string;
         rtId: string;
+        id: string;
         userId: string;
-        rumahId: string | null;
         status: import(".prisma/client").$Enums.StatusAlert;
+        rumahId: string | null;
         latitude: number | null;
         longitude: number | null;
         catatan: string | null;

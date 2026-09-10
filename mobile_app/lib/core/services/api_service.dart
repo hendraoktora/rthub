@@ -3,13 +3,15 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String defaultUrl = 'http://192.168.100.49:3000/api';
+  static const String defaultUrl = 'https://rthub.hendraoktora.com/api';
 
   static const List<String> candidateUrls = [
-    'http://10.0.2.2:3000/api',     // Android Emulator
-    'http://127.0.0.1:3000/api',    // Local Loopback
-    'http://localhost:3000/api',    // Localhost
-    'http://192.168.100.49:3000/api', // WiFi LAN IP
+    'https://rthub.hendraoktora.com/api',
+    'https://rthub.vercel.app/api',
+    'http://192.168.100.49:3000/api',
+    'http://10.0.2.2:3000/api',
+    'http://127.0.0.1:3000/api',
+    'http://localhost:3000/api',
   ];
 
   static Future<String> getBaseUrl() async {

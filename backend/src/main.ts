@@ -1,10 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import express, { Express } from 'express';
+
+const server: Express = express();
+let isAppInitialized = false;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
   // Enable CORS for Flutter & Web Admin
   app.enableCors({
@@ -44,9 +49,27 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT || 3000;
-  await app.listen(port, '0.0.0.0');
-  console.log(`🚀 RtHub Backend running on: http://0.0.0.0:${port}`);
-  console.log(`📑 Swagger Documentation available at: http://0.0.0.0:${port}/api/docs`);
+  await app.init();
+  isAppInitialized = true;
+  return app;
 }
-bootstrap();
+
+// Export default handler for Vercel Serverless Function
+export default async function handler(req: any, res: any) {
+  if (!isAppInitialized) {
+    await bootstrap();
+  }
+  server(req, res);
+}
+
+// Standalone server mode for local dev / non-Vercel environments
+if (!process.env.VERCEL) {
+  bootstrap().then(() => {
+    const port = process.env.PORT || 3000;
+    server.listen(port, () => {
+      console.log(`🚀 RtHub Backend running on: http://0.0.0.0:${port}`);
+      console.log(`📑 Swagger Documentation available at: http://0.0.0.0:${port}/api/docs`);
+    });
+  });
+}
+

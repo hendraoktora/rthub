@@ -244,15 +244,29 @@ class ApiService {
   static Future<Map<String, dynamic>> getKasSummary() async {
     try {
       final token = await getToken();
-      final response = await _getWithFallback('/kas/summary', token: token);
-      if (response.statusCode == 200) {
-        final summary = jsonDecode(response.body);
-        final recent = summary['recentTransactions'] as List?;
-        if (summary['saldoKas'] != 0 || summary['totalPemasukan'] != 0 || (recent != null && recent.isNotEmpty)) {
-          return summary;
+      if (token != null) {
+        final response = await _getWithFallback('/kas/summary', token: token);
+        if (response.statusCode == 200) {
+          final summary = jsonDecode(response.body);
+          return {
+            'saldoKas': summary['saldoKas'] ?? 0,
+            'totalPemasukan': summary['totalPemasukan'] ?? 0,
+            'totalPengeluaran': summary['totalPengeluaran'] ?? 0,
+            'recentTransactions': summary['recentTransactions'] ?? [],
+          };
         }
       }
     } catch (_) {}
+
+    final token = await getToken();
+    if (token != null) {
+      return {
+        'saldoKas': 0,
+        'totalPemasukan': 0,
+        'totalPengeluaran': 0,
+        'recentTransactions': [],
+      };
+    }
 
     return {
       'saldoKas': 18450000,
@@ -305,7 +319,7 @@ class ApiService {
         if (token != null) 'Authorization': 'Bearer $token',
       },
       body: jsonEncode(data),
-    ).timeout(const Duration(seconds: 5));
+    ).timeout(const Duration(seconds: 10));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
@@ -315,38 +329,18 @@ class ApiService {
 
   static Future<List<dynamic>> getTagihanSaya() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final isLocallyPaid = prefs.getBool('tagihan_is_paid_sep2026') ?? true; // Default lunas for current demo user
-
       final token = await getToken();
-      final response = await _getWithFallback('/tagihan/saya', token: token);
-      if (response.statusCode == 200) {
-        final list = jsonDecode(response.body);
-        if (list is List && list.isNotEmpty) {
-          if (isLocallyPaid) {
-            list[0]['status'] = 'PAID';
-          }
-          return list;
+      if (token != null) {
+        final response = await _getWithFallback('/tagihan/saya', token: token);
+        if (response.statusCode == 200) {
+          final list = jsonDecode(response.body);
+          if (list is List) return list;
         }
       }
-
-      // Default fallback list
-      return [
-        {
-          'id': 'tagihan_sep_2026',
-          'namaTagihan': 'Iuran Kas & Kebersihan',
-          'nominalPokok': 50000,
-          'adminFee': 2000,
-          'totalBayar': 52000,
-          'periodeBulan': 9,
-          'periodeTahun': 2026,
-          'status': isLocallyPaid ? 'PAID' : 'UNPAID',
-          'jatuhTempo': '2026-09-10T00:00:00.000Z',
-          'metodePembayaran': 'QRIS',
-          'paidAt': '2026-09-08T14:20:00.000Z',
-        }
-      ];
     } catch (_) {}
+
+    final token = await getToken();
+    if (token != null) return [];
 
     return [
       {
@@ -369,12 +363,17 @@ class ApiService {
   static Future<List<dynamic>> getAgendaList() async {
     try {
       final token = await getToken();
-      final response = await _getWithFallback('/agenda', token: token);
-      if (response.statusCode == 200) {
-        final list = jsonDecode(response.body);
-        if (list is List && list.isNotEmpty) return list;
+      if (token != null) {
+        final response = await _getWithFallback('/agenda', token: token);
+        if (response.statusCode == 200) {
+          final list = jsonDecode(response.body);
+          if (list is List) return list;
+        }
       }
     } catch (_) {}
+
+    final token = await getToken();
+    if (token != null) return [];
 
     return [
       {
@@ -443,12 +442,17 @@ class ApiService {
   static Future<List<dynamic>> getBeritaFeed() async {
     try {
       final token = await getToken();
-      final response = await _getWithFallback('/berita/feed', token: token);
-      if (response.statusCode == 200) {
-        final list = jsonDecode(response.body);
-        if (list is List && list.isNotEmpty) return list;
+      if (token != null) {
+        final response = await _getWithFallback('/berita/feed', token: token);
+        if (response.statusCode == 200) {
+          final list = jsonDecode(response.body);
+          if (list is List) return list;
+        }
       }
     } catch (_) {}
+
+    final token = await getToken();
+    if (token != null) return [];
 
     return [
       {
@@ -527,7 +531,8 @@ class ApiService {
       }
     } catch (_) {}
 
-    if (liveList.isNotEmpty) {
+    final token = await getToken();
+    if (token != null || liveList.isNotEmpty) {
       // Merge unique local items
       final combined = [...localCustomList, ...liveList];
       final seenIds = <String>{};
@@ -768,7 +773,8 @@ class ApiService {
       }
     } catch (_) {}
 
-    if (liveList.isNotEmpty) {
+    final token = await getToken();
+    if (token != null || liveList.isNotEmpty) {
       final combined = [...localCustomList, ...liveList];
       final seenIds = <String>{};
       final uniqueList = <dynamic>[];
@@ -981,7 +987,8 @@ class ApiService {
       }
     } catch (_) {}
 
-    if (liveList.isNotEmpty) return liveList;
+    final token = await getToken();
+    if (token != null || liveList.isNotEmpty) return liveList;
 
     return [
       {
@@ -1118,10 +1125,21 @@ class ApiService {
       final response = await _getWithFallback('/wilayah/rt/$targetRtId/warga', token: token);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final list = data['rumahList'] as List?;
-        if (list != null && list.isNotEmpty) return data;
+        if (data is Map<String, dynamic>) return data;
       }
     } catch (_) {}
+
+    final token = await getToken();
+    if (token != null) {
+      return {
+        'totalRumah': 0,
+        'totalWarga': 0,
+        'totalLunas': 0,
+        'totalBelumLunas': 0,
+        'rumahList': [],
+        'userList': [],
+      };
+    }
 
     return {
       'totalRumah': 28,

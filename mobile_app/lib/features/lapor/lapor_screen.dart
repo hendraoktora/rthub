@@ -93,9 +93,9 @@ class _LaporScreenState extends State<LaporScreen> {
                     prefixIcon: Icon(Icons.person_pin_rounded),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'KETUA_RT', child: Text('👑 Ketua RT (Bpk. Hendra)')),
-                    DropdownMenuItem(value: 'SEKRETARIS_RT', child: Text('📝 Sekretaris RT (Bpk. Aditya)')),
-                    DropdownMenuItem(value: 'BENDAHARA_RT', child: Text('💰 Bendahara RT (Ibu Siti)')),
+                    DropdownMenuItem(value: 'KETUA_RT', child: Text('👑 Ketua RT')),
+                    DropdownMenuItem(value: 'SEKRETARIS_RT', child: Text('📝 Sekretaris RT')),
+                    DropdownMenuItem(value: 'BENDAHARA_RT', child: Text('💰 Bendahara RT')),
                     DropdownMenuItem(value: 'KEAMANAN', child: Text('🛡️ Seksi Keamanan & Ronda Malam')),
                     DropdownMenuItem(value: 'KEBERSIHAN', child: Text('🧹 Seksi Kebersihan Lingkungan')),
                     DropdownMenuItem(value: 'PEMBANGUNAN', child: Text('🏗️ Seksi Pembangunan & Sarana')),

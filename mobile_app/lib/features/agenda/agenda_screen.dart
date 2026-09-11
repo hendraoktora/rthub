@@ -36,61 +36,56 @@ class _AgendaScreenState extends State<AgendaScreen> {
     try {
       final data = await ApiService.getAgendaList();
       if (mounted) {
-        if (data.isNotEmpty) {
-          setState(() {
-            _agendaList = data.map((item) {
-              final start = item['tanggalMulai'] != null ? DateTime.tryParse(item['tanggalMulai']) : null;
-              final end = item['tanggalSelesai'] != null ? DateTime.tryParse(item['tanggalSelesai']) : null;
-              final kat = (item['kategori'] ?? 'KERJA_BAKTI').toString().toUpperCase();
+        setState(() {
+          _agendaList = data.map((item) {
+            final start = item['tanggalMulai'] != null ? DateTime.tryParse(item['tanggalMulai']) : null;
+            final end = item['tanggalSelesai'] != null ? DateTime.tryParse(item['tanggalSelesai']) : null;
+            final kat = (item['kategori'] ?? 'KERJA_BAKTI').toString().toUpperCase();
 
-              String dayName = 'Kegiatan';
-              String dateStr = '-';
-              String timeStr = '08:00 WIB';
+            String dayName = 'Kegiatan';
+            String dateStr = '-';
+            String timeStr = '08:00 WIB';
 
-              if (start != null) {
-                final days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-                final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-                dayName = days[start.weekday - 1];
-                dateStr = '${start.day} ${months[start.month]} ${start.year}';
-                timeStr = '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} WIB';
-                if (end != null) {
-                  timeStr = '$timeStr - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')} WIB';
-                }
+            if (start != null) {
+              final days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+              final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+              dayName = days[start.weekday - 1];
+              dateStr = '${start.day} ${months[start.month]} ${start.year}';
+              timeStr = '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} WIB';
+              if (end != null) {
+                timeStr = '$timeStr - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')} WIB';
               }
+            }
 
-              Color color = AppTheme.successGreen;
-              if (kat.contains('RAPAT')) {
-                color = AppTheme.primaryNavy;
-              } else if (kat.contains('POSYANDU')) {
-                color = AppTheme.purpleIndigo;
-              } else if (kat.contains('KESEHATAN') || kat.contains('FOGGING')) {
-                color = AppTheme.warningAmber;
-              } else if (kat.contains('KEAGAMAAN')) {
-                color = AppTheme.electricBlue;
-              }
+            Color color = AppTheme.successGreen;
+            if (kat.contains('RAPAT')) {
+              color = AppTheme.primaryNavy;
+            } else if (kat.contains('POSYANDU')) {
+              color = AppTheme.purpleIndigo;
+            } else if (kat.contains('KESEHATAN') || kat.contains('FOGGING')) {
+              color = AppTheme.warningAmber;
+            } else if (kat.contains('KEAGAMAAN')) {
+              color = AppTheme.electricBlue;
+            }
 
-              return {
-                'id': item['id']?.toString() ?? UniqueKey().toString(),
-                'title': item['judul'] ?? 'Agenda Lingkungan',
-                'date': dateStr,
-                'day': dayName,
-                'time': timeStr,
-                'location': item['lokasi'] ?? 'Wilayah RT',
-                'category': kat,
-                'level': 'Level ${item['scope'] ?? 'RT'}',
-                'levelColor': color,
-                'description': item['deskripsi'] ?? 'Kegiatan warga lingkungan bersama.',
-                'raw': item,
-                'startDate': start,
-              };
-            }).toList();
-          });
-        } else {
-          _setDefaultInitialAgenda();
-        }
+            return {
+              'id': item['id']?.toString() ?? UniqueKey().toString(),
+              'title': item['judul'] ?? 'Agenda Lingkungan',
+              'date': dateStr,
+              'day': dayName,
+              'time': timeStr,
+              'location': item['lokasi'] ?? 'Wilayah RT',
+              'category': kat,
+              'level': 'Level ${item['scope'] ?? 'RT'}',
+              'levelColor': color,
+              'description': item['deskripsi'] ?? 'Kegiatan warga lingkungan bersama.',
+              'raw': item,
+              'startDate': start,
+            };
+          }).toList();
+        });
       }
     } catch (_) {
-      if (_agendaList.isEmpty) _setDefaultInitialAgenda();
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

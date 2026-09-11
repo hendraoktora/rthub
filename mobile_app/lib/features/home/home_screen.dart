@@ -22,65 +22,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   static const _widgetChannel = MethodChannel('com.rthub.rthub_mobile/widget');
-  int _selectedDateIndex = 1; // Default to 'Sel 9'
+  int _selectedDateIndex = DateTime.now().weekday - 1; // Default to today's day of week
   Map<String, dynamic>? _user;
   Map<String, dynamic> _kasSummary = {
-    'saldoKas': 18450000,
-    'totalPemasukan': 19400000,
-    'totalPengeluaran': 950000,
-    'recentTransactions': [
-      {
-        'id': 'kas_demo_1',
-        'tipe': 'PEMASUKAN',
-        'kategori': 'Iuran Kas Bulanan',
-        'nominal': 2500000,
-        'keterangan': 'Penerimaan Iuran Warga Blok A & Blok B',
-        'createdAt': '2026-09-08T10:30:00.000Z',
-      },
-      {
-        'id': 'kas_demo_2',
-        'tipe': 'PENGELUARAN',
-        'kategori': 'Kebersihan & Sampah',
-        'nominal': 450000,
-        'keterangan': 'Honor Petugas Kebersihan Lingkungan RT',
-        'createdAt': '2026-09-06T09:00:00.000Z',
-      },
-      {
-        'id': 'kas_demo_3',
-        'tipe': 'PENGELUARAN',
-        'kategori': 'Keamanan & Pos Ronda',
-        'nominal': 500000,
-        'keterangan': 'Peremajaan CCTV & Lampu Pos Keamanan',
-        'createdAt': '2026-09-04T21:00:00.000Z',
-      },
-      {
-        'id': 'kas_demo_4',
-        'tipe': 'PEMASUKAN',
-        'kategori': 'Donasi Fasilitas',
-        'nominal': 1000000,
-        'keterangan': 'Sumbangan Warga untuk Pembelian Tenda',
-        'createdAt': '2026-09-01T14:15:00.000Z',
-      },
-    ],
+    'saldoKas': 0,
+    'totalPemasukan': 0,
+    'totalPengeluaran': 0,
+    'recentTransactions': [],
   };
   List<dynamic> _agendaDbList = [];
   List<dynamic> _beritaDbList = [];
   List<dynamic> _lapakDbList = [];
-  List<dynamic> _tagihanDbList = [
-    {
-      'id': 'tagihan_sep_2026',
-      'namaTagihan': 'Iuran Kas & Kebersihan',
-      'nominalPokok': 50000,
-      'adminFee': 2000,
-      'totalBayar': 52000,
-      'periodeBulan': 9,
-      'periodeTahun': 2026,
-      'status': 'PAID',
-      'jatuhTempo': '2026-09-10T00:00:00.000Z',
-      'metodePembayaran': 'QRIS',
-      'paidAt': '2026-09-08T14:20:00.000Z',
-    }
-  ];
+  List<dynamic> _tagihanDbList = [];
   final PageController _cardPageController = PageController();
   int _activeCardSlide = 0;
 
@@ -143,24 +96,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
         final summary = results[1] as Map<String, dynamic>?;
         if (summary != null) {
-          final recent = summary['recentTransactions'] as List?;
-          final saldo = summary['saldoKas'] ?? 0;
-          if (saldo != 0 || summary['totalPemasukan'] != 0 || (recent != null && recent.isNotEmpty)) {
-            _kasSummary = summary;
-          }
+          _kasSummary = summary;
         }
 
         final agendaList = results[2] as List<dynamic>?;
-        if (agendaList != null && agendaList.isNotEmpty) _agendaDbList = agendaList;
+        _agendaDbList = agendaList ?? [];
 
         final beritaList = results[3] as List<dynamic>?;
-        if (beritaList != null && beritaList.isNotEmpty) _beritaDbList = beritaList;
+        _beritaDbList = beritaList ?? [];
 
         final lapakList = results[4] as List<dynamic>?;
-        if (lapakList != null && lapakList.isNotEmpty) _lapakDbList = lapakList;
+        _lapakDbList = lapakList ?? [];
 
         final tagihanList = results[5] as List<dynamic>?;
-        if (tagihanList != null && tagihanList.isNotEmpty) _tagihanDbList = tagihanList;
+        _tagihanDbList = tagihanList ?? [];
       });
     } catch (_) {}
   }
@@ -1474,28 +1423,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildCalendarAgendaSection() {
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
-    final weekDays = List.generate(5, (i) => monday.add(Duration(days: i)));
+    final weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
     final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
     final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
-    final displayAgendas = _agendaDbList.isNotEmpty
-        ? _agendaDbList.take(2).toList()
-        : [
-            {
-              'judul': 'Kerja Bakti Bersih Saluran Air',
-              'lokasi': 'Jl. Melati Blok C & D',
-              'scope': 'RT',
-              'kategori': 'KERJA_BAKTI',
-              'tanggalMulai': '2026-09-09T07:00:00.000Z',
-            },
-            {
-              'judul': 'Fogging Nyamuk DBD Serentak',
-              'lokasi': 'Seluruh Wilayah RW 05',
-              'scope': 'RW',
-              'kategori': 'KESEHATAN',
-              'tanggalMulai': '2026-09-09T15:30:00.000Z',
-            }
-          ];
+    final displayAgendas = _agendaDbList.take(2).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1540,59 +1472,93 @@ class _HomeScreenState extends State<HomeScreen> {
           children: List.generate(weekDays.length, (index) {
             final dayDate = weekDays[index];
             final isToday = dayDate.year == now.year && dayDate.month == now.month && dayDate.day == now.day;
-            final isSelected = index == _selectedDateIndex || isToday;
+            final isSelected = index == _selectedDateIndex;
 
-            return GestureDetector(
-              onTap: () {
-                setState(() => _selectedDateIndex = index);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const AgendaScreen()));
-              },
-              child: Container(
-                width: 58,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.electricBlue : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected ? AppTheme.electricBlue : AppTheme.slateBorder,
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _selectedDateIndex = index);
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AgendaScreen()));
+                },
+                child: Container(
+                  margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppTheme.electricBlue
+                        : (isToday ? AppTheme.electricBlue.withValues(alpha: 0.08) : Colors.white),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppTheme.electricBlue
+                          : (isToday ? AppTheme.electricBlue : AppTheme.slateBorder),
+                      width: isToday ? 1.5 : 1.0,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppTheme.electricBlue.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            )
+                          ]
+                        : null,
                   ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppTheme.electricBlue.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
-                        ]
-                      : null,
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      dayNames[dayDate.weekday - 1],
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isSelected ? Colors.white.withValues(alpha: 0.85) : AppTheme.textSecondary,
-                        fontWeight: FontWeight.w500,
+                  child: Column(
+                    children: [
+                      Text(
+                        dayNames[dayDate.weekday - 1],
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isSelected
+                              ? Colors.white.withValues(alpha: 0.85)
+                              : (isToday ? AppTheme.electricBlue : AppTheme.textSecondary),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${dayDate.day}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isSelected ? Colors.white : AppTheme.textPrimary,
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 4),
+                      Text(
+                        '${dayDate.day}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: isSelected
+                              ? Colors.white
+                              : (isToday ? AppTheme.electricBlue : AppTheme.textPrimary),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
           }),
         ),
         const SizedBox(height: 14),
-        ...displayAgendas.map((item) {
+        if (displayAgendas.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.slateBorder),
+            ),
+            child: const Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.event_available_outlined, size: 20, color: AppTheme.textMuted),
+                  SizedBox(width: 8),
+                  Text(
+                    'Belum ada agenda kegiatan minggu ini',
+                    style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          ...displayAgendas.map((item) {
           final start = item['tanggalMulai'] != null ? DateTime.tryParse(item['tanggalMulai']) : null;
           final timeStr = start != null
               ? '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} WIB'

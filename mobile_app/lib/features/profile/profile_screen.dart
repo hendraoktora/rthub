@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/nik_service.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/utils/image_cache_helper.dart';
 import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -947,30 +948,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildAvatarWidget(String? avatarUrl, String namaLengkap) {
     if (avatarUrl != null && avatarUrl.isNotEmpty) {
-      if (avatarUrl.startsWith('data:image')) {
-        try {
-          final base64Str = avatarUrl.split(',').last;
-          final bytes = base64Decode(base64Str);
-          return ClipOval(
-            child: Image.memory(
-              bytes,
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
-            ),
-          );
-        } catch (_) {}
-      } else if (avatarUrl.startsWith('http')) {
-        return ClipOval(
-          child: Image.network(
-            avatarUrl,
-            width: 80,
-            height: 80,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(namaLengkap),
-          ),
-        );
-      }
+      return ImageCacheHelper.buildImage(
+        avatarUrl,
+        width: 80,
+        height: 80,
+        borderRadius: BorderRadius.circular(40),
+        placeholder: _buildInitialsAvatar(namaLengkap),
+      );
     }
     return _buildInitialsAvatar(namaLengkap);
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
+import '../../core/utils/image_cache_helper.dart';
 
 class LaporScreen extends StatefulWidget {
   const LaporScreen({super.key});
@@ -284,30 +285,13 @@ class _LaporScreenState extends State<LaporScreen> {
   }
 
   static Widget _buildImageWidget(String urlOrBase64, {double height = 150, double width = double.infinity}) {
-    if (urlOrBase64.startsWith('data:image') || urlOrBase64.length > 200) {
-      try {
-        final cleanBase64 = urlOrBase64.contains(',') ? urlOrBase64.split(',')[1] : urlOrBase64;
-        final bytes = base64Decode(cleanBase64.trim());
-        return Image.memory(
-          bytes,
-          height: height,
-          width: width,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-        );
-      } catch (_) {
-        return const SizedBox.shrink();
-      }
-    } else if (urlOrBase64.startsWith('http')) {
-      return Image.network(
-        urlOrBase64,
-        height: height,
-        width: width,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-      );
-    }
-    return const SizedBox.shrink();
+    return ImageCacheHelper.buildImage(
+      urlOrBase64,
+      height: height,
+      width: width,
+      borderRadius: BorderRadius.circular(12),
+      placeholder: const SizedBox.shrink(),
+    );
   }
 
   @override

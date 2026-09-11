@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
+import '../../core/utils/image_cache_helper.dart';
 import '../invoice/invoice_screen.dart';
 import '../panic/panic_screen.dart';
 import '../pengurus/pengurus_panel_screen.dart';
@@ -48,12 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserData();
-    _loadKasSummary();
-    _loadAgendaData();
-    _loadBeritaData();
-    _loadLapakData();
-    _loadTagihanData();
+    _loadInitialDataParallel();
     _checkWidgetLaunch();
   }
 
@@ -90,6 +85,46 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _loadInitialDataParallel() async {
+    try {
+      final results = await Future.wait([
+        ApiService.getUserData(),
+        ApiService.getKasSummary(),
+        ApiService.getAgendaList(),
+        ApiService.getBeritaFeed(),
+        ApiService.getLapakList(),
+        ApiService.getTagihanSaya(),
+      ]);
+
+      if (!mounted) return;
+
+      setState(() {
+        final userData = results[0] as Map<String, dynamic>?;
+        if (userData != null) _user = userData;
+
+        final summary = results[1] as Map<String, dynamic>?;
+        if (summary != null) {
+          final recent = summary['recentTransactions'] as List?;
+          if (summary['saldoKas'] != 0 || summary['totalPemasukan'] != 0 || (recent != null && recent.isNotEmpty) || _kasSummary == null) {
+            _kasSummary = summary;
+          }
+        }
+
+        final agendaList = results[2] as List<dynamic>?;
+        if (agendaList != null && agendaList.isNotEmpty) _agendaDbList = agendaList;
+
+        final beritaList = results[3] as List<dynamic>?;
+        if (beritaList != null && beritaList.isNotEmpty) _beritaDbList = beritaList;
+
+        final lapakList = results[4] as List<dynamic>?;
+        if (lapakList != null && lapakList.isNotEmpty) _lapakDbList = lapakList;
+
+        final tagihanList = results[5] as List<dynamic>?;
+        if (tagihanList != null && tagihanList.isNotEmpty) _tagihanDbList = tagihanList;
+      });
+    } catch (_) {}
+  }
+
   void _loadUserData() async {
     final userData = await ApiService.getUserData();
     if (mounted) {
@@ -99,37 +134,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _loadKasSummary() async {
-    try {
-      final summary = await ApiService.getKasSummary();
-      if (mounted) {
-        final recent = summary['recentTransactions'] as List?;
-        if (summary['saldoKas'] != 0 || summary['totalPemasukan'] != 0 || (recent != null && recent.isNotEmpty) || _kasSummary == null) {
-          setState(() {
-            _kasSummary = summary;
-          });
-        }
-      }
-    } catch (_) {}
-  }
-
   void _loadAgendaData() async {
     try {
       final list = await ApiService.getAgendaList();
       if (mounted && list.isNotEmpty) {
         setState(() {
           _agendaDbList = list;
-        });
-      }
-    } catch (_) {}
-  }
-
-  void _loadBeritaData() async {
-    try {
-      final feed = await ApiService.getBeritaFeed();
-      if (mounted && feed.isNotEmpty) {
-        setState(() {
-          _beritaDbList = feed;
         });
       }
     } catch (_) {}
@@ -158,13 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _refreshAllData() async {
-    _loadUserData();
-    _loadKasSummary();
-    _loadAgendaData();
-    _loadBeritaData();
-    _loadLapakData();
-    _loadTagihanData();
-    await Future.delayed(const Duration(milliseconds: 600));
+    await _loadInitialDataParallel();
   }
 
   String _getInitials(String name) {
@@ -1051,13 +1055,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                   ),
-                  child: ClipRRect(
+                  child: ImageCacheHelper.buildImage(
+                    fotoUrl,
+                    width: 58,
+                    height: 58,
                     borderRadius: BorderRadius.circular(12),
-                    child: (fotoUrl != null && fotoUrl.isNotEmpty)
-                        ? (fotoUrl.startsWith('data:image')
-                            ? Image.memory(base64Decode(fotoUrl.split(',').last), fit: BoxFit.cover)
-                            : Image.network(fotoUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.shopping_bag_rounded, color: Colors.white, size: 28)))
-                        : const Icon(Icons.shopping_bag_rounded, color: Colors.white, size: 28),
+                    placeholder: const Icon(Icons.shopping_bag_rounded, color: Colors.white, size: 28),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1718,29 +1721,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final nama = _user?['profile']?['namaLengkap'] ?? _user?['phone'] ?? 'User';
 
     if (avatarUrl != null && avatarUrl.isNotEmpty) {
-      if (avatarUrl.startsWith('http')) {
-        return ClipOval(
-          child: Image.network(
-            avatarUrl,
-            width: 36,
-            height: 36,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _buildFallbackAvatarIcon(nama),
-          ),
-        );
-      } else if (avatarUrl.startsWith('data:image')) {
-        try {
-          final bytes = base64Decode(avatarUrl.split(',').last);
-          return ClipOval(
-            child: Image.memory(
-              bytes,
-              width: 36,
-              height: 36,
-              fit: BoxFit.cover,
-            ),
-          );
-        } catch (_) {}
-      }
+      return ImageCacheHelper.buildImage(
+        avatarUrl,
+        width: 36,
+        height: 36,
+        borderRadius: BorderRadius.circular(18),
+        placeholder: _buildFallbackAvatarIcon(nama),
+      );
     }
     return _buildFallbackAvatarIcon(nama);
   }

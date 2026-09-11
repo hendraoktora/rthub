@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
+import '../../core/utils/image_cache_helper.dart';
 
 class LapakScreen extends StatefulWidget {
   const LapakScreen({super.key});
@@ -493,30 +494,13 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
   }
 
   static Widget _buildImageWidget(String urlOrBase64, {double height = 150, double width = double.infinity}) {
-    if (urlOrBase64.startsWith('data:image') || (urlOrBase64.length > 200 && !urlOrBase64.startsWith('http'))) {
-      try {
-        final cleanBase64 = urlOrBase64.contains(',') ? urlOrBase64.split(',')[1] : urlOrBase64;
-        final bytes = base64Decode(cleanBase64.trim());
-        return Image.memory(
-          bytes,
-          height: height,
-          width: width,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(height, width),
-        );
-      } catch (_) {
-        return _buildPlaceholder(height, width);
-      }
-    } else if (urlOrBase64.startsWith('http')) {
-      return Image.network(
-        urlOrBase64,
-        height: height,
-        width: width,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(height, width),
-      );
-    }
-    return _buildPlaceholder(height, width);
+    return ImageCacheHelper.buildImage(
+      urlOrBase64,
+      height: height,
+      width: width,
+      borderRadius: BorderRadius.circular(14),
+      placeholder: _buildPlaceholder(height, width),
+    );
   }
 
   static Widget _buildPlaceholder(double height, double width) {

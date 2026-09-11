@@ -5,6 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   static const String defaultUrl = 'https://rthub.hendraoktora.com/api';
 
+  static final http.Client _client = http.Client();
+  static String? _cachedBaseUrl;
+  static String? _cachedToken;
+  static Map<String, dynamic>? _cachedUserData;
+  static final Map<String, dynamic> _memoryCache = {};
+
   static const List<String> candidateUrls = [
     'https://rthub.hendraoktora.com/api',
     'https://rthub.vercel.app/api',
@@ -15,6 +21,7 @@ class ApiService {
   ];
 
   static Future<String> getBaseUrl() async {
+    if (_cachedBaseUrl != null) return _cachedBaseUrl!;
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString('server_base_url');
     if (saved == null ||
@@ -22,37 +29,46 @@ class ApiService {
         saved.contains('10.0.2.2') ||
         saved.contains('192.168.') ||
         saved.contains('127.0.0.1')) {
+      _cachedBaseUrl = defaultUrl;
       return defaultUrl;
     }
+    _cachedBaseUrl = saved;
     return saved;
   }
 
   static Future<void> setBaseUrl(String url) async {
+    _cachedBaseUrl = url.trim();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('server_base_url', url.trim());
   }
 
   static Future<String?> getToken() async {
+    if (_cachedToken != null) return _cachedToken;
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('access_token');
+    _cachedToken = prefs.getString('access_token');
+    return _cachedToken;
   }
 
   static Future<void> saveToken(String token) async {
+    _cachedToken = token;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('access_token', token);
   }
 
   static Future<void> saveUserData(Map<String, dynamic> user) async {
+    _cachedUserData = user;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_data', jsonEncode(user));
   }
 
   static Future<Map<String, dynamic>?> getUserData() async {
+    if (_cachedUserData != null) return _cachedUserData;
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString('user_data');
     if (raw == null) return null;
     try {
-      return jsonDecode(raw) as Map<String, dynamic>;
+      _cachedUserData = jsonDecode(raw) as Map<String, dynamic>;
+      return _cachedUserData;
     } catch (_) {
       return null;
     }
@@ -61,29 +77,36 @@ class ApiService {
   static Future<Map<String, dynamic>?> getCurrentUser() async => getUserData();
 
   static Future<void> clearSession() async {
+    _cachedToken = null;
+    _cachedUserData = null;
+    _memoryCache.clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');
     await prefs.remove('user_data');
   }
 
-  /// Send request directly with automatic recovery to production domain
+  static void invalidateCache(String keyPrefix) {
+    _memoryCache.removeWhere((k, v) => k.startsWith(keyPrefix));
+  }
+
+  /// Send request with fast fallback and connection reuse
   static Future<http.Response> _postWithFallback(String path, Map<String, dynamic> body) async {
     final configuredUrl = await getBaseUrl();
     try {
-      final res = await http.post(
+      final res = await _client.post(
         Uri.parse('$configuredUrl$path'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 5));
       return res;
     } catch (e) {
       if (configuredUrl != defaultUrl) {
         try {
-          final res = await http.post(
+          final res = await _client.post(
             Uri.parse('$defaultUrl$path'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(body),
-          ).timeout(const Duration(seconds: 15));
+          ).timeout(const Duration(seconds: 5));
           await setBaseUrl(defaultUrl);
           return res;
         } catch (_) {}
@@ -95,24 +118,24 @@ class ApiService {
   static Future<http.Response> _getWithFallback(String path, {String? token}) async {
     final configuredUrl = await getBaseUrl();
     try {
-      final res = await http.get(
+      final res = await _client.get(
         Uri.parse('$configuredUrl$path'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
         },
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 4));
       return res;
     } catch (e) {
       if (configuredUrl != defaultUrl) {
         try {
-          final res = await http.get(
+          final res = await _client.get(
             Uri.parse('$defaultUrl$path'),
             headers: {
               'Content-Type': 'application/json',
               if (token != null) 'Authorization': 'Bearer $token',
             },
-          ).timeout(const Duration(seconds: 15));
+          ).timeout(const Duration(seconds: 4));
           await setBaseUrl(defaultUrl);
           return res;
         } catch (_) {}

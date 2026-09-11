@@ -16,6 +16,7 @@ import {
   Calendar,
   Megaphone
 } from 'lucide-react';
+import { RtHubLogo } from './RtHubLogo';
 
 interface SidebarProps {
   activeTab: string;
@@ -63,14 +64,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role,
     <aside className="w-64 bg-slate-900 text-white flex flex-col justify-between shrink-0 min-h-screen">
       <div>
         {/* Brand */}
-        <div className="p-6 flex items-center gap-3 border-b border-slate-800">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-500/30">
-            Rt
-          </div>
-          <div>
-            <h1 className="font-bold text-lg tracking-tight">RtHub Admin</h1>
-            <p className="text-xs text-slate-400">Smart Neighborhood OS</p>
-          </div>
+        <div className="p-5 flex items-center border-b border-slate-800">
+          <RtHubLogo size={38} theme="dark" subtext="Smart Neighborhood OS" />
         </div>
 
         {/* Role Switcher */}

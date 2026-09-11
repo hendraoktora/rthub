@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, Phone, ArrowRight, UserCheck, Crown, Wallet, Shield, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
 import { api, UserSession } from '../services/api';
+import { RtHubLogo } from '../components/RtHubLogo';
 
 interface LoginProps {
   onLogin: (user: UserSession) => void;
@@ -55,9 +56,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
         )}
 
         {/* Brand Header */}
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-blue-600 mx-auto flex items-center justify-center font-extrabold text-2xl shadow-lg shadow-blue-500/30 mb-3">
-            Rt
+        <div className="flex flex-col items-center justify-center text-center mb-6">
+          <div className="mb-2">
+            <RtHubLogo size={52} theme="dark" showWordmark={false} />
           </div>
           <h2 className="text-2xl font-bold tracking-tight">RtHub Admin Portal</h2>
           <p className="text-xs text-slate-400 mt-1">Sistem Manajemen Lingkungan RT/RW & Platform Multi-Tenant (Live DB)</p>

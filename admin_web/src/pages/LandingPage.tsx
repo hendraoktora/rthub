@@ -26,6 +26,7 @@ import {
   LayoutDashboard,
   ShieldCheck
 } from 'lucide-react';
+import { RtHubLogo } from '../components/RtHubLogo';
 
 interface LandingPageProps {
   onGoToLogin: () => void;
@@ -78,16 +79,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-xl shadow-md shadow-blue-500/20">
-              Rt
-            </div>
-            <div>
-              <span className="text-xl font-extrabold tracking-tight text-slate-900">
-                Rt<span className="text-blue-600">Hub</span>
-              </span>
-              <p className="text-[10px] font-medium text-slate-500 -mt-0.5">Aplikasi Pengurus & Warga RT/RW</p>
-            </div>
+          <div className="cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <RtHubLogo size={42} theme="light" subtext="Aplikasi Pengurus & Warga RT/RW" />
           </div>
 
           {/* Navigation links */}
@@ -629,15 +622,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
       {/* 10. FOOTER */}
       <footer className="bg-slate-900 text-slate-400 py-12 text-xs border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-extrabold flex items-center justify-center text-sm">
-              Rt
-            </div>
-            <div>
-              <p className="font-bold text-slate-200 text-sm">RtHub Indonesia</p>
-              <p className="text-[11px] text-slate-500">Platform Komunitas & Administrasi RT/RW Terpadu</p>
-            </div>
-          </div>
+          <RtHubLogo size={36} theme="dark" subtext="Platform Komunitas & Administrasi RT/RW Terpadu" />
 
           <div className="flex items-center gap-6 text-slate-400 font-medium">
             <a href="#fitur" className="hover:text-white transition">Fitur</a>

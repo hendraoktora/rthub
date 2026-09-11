@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
+import '../../core/widgets/rthub_logo.dart';
 import '../home/home_screen.dart';
 import 'register_rt_screen.dart';
 
@@ -158,6 +159,13 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const RtHubLogo(
+                size: 38,
+                showWordmark: true,
+                isDark: false,
+                subtitle: 'Smart Neighborhood OS',
+              ),
+              const SizedBox(height: 20),
               const Text(
                 'Selamat Datang 👋',
                 style: TextStyle(

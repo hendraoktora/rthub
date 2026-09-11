@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
+import '../../core/widgets/rthub_logo.dart';
+import '../home/home_screen.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_rt_screen.dart';
 
@@ -97,47 +99,42 @@ class SplashScreen extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                // Glowing Logo Container
+                // Glowing Logo Container with Concept 1 Vector Logo
                 Container(
-                  width: 88,
-                  height: 88,
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: AppTheme.electricBlue.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(24),
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: AppTheme.skyAzure.withValues(alpha: 0.3),
+                      color: AppTheme.skyAzure.withValues(alpha: 0.35),
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.electricBlue.withValues(alpha: 0.25),
-                        blurRadius: 30,
-                        spreadRadius: 2,
+                        color: AppTheme.electricBlue.withValues(alpha: 0.35),
+                        blurRadius: 35,
+                        spreadRadius: 4,
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.home_work_rounded,
-                    size: 46,
-                    color: Colors.white,
+                  child: const RtHubLogo(
+                    size: 64,
+                    showWordmark: false,
+                    isDark: true,
                   ),
                 ),
-                const SizedBox(height: 24),
-                const Text(
-                  'RtHub',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
+                const SizedBox(height: 20),
+                const RtHubLogo(
+                  size: 40,
+                  showWordmark: true,
+                  isDark: true,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Text(
                   'Hunian Cerdas, Lingkungan Nyaman\n& Transparan',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.75),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 15,
                     height: 1.4,
                   ),

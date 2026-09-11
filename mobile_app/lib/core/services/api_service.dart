@@ -555,6 +555,20 @@ class ApiService {
         'createdAt': '2026-09-10T08:00:00.000Z',
       },
       {
+        'id': 'lapak_demo_3',
+        'judul': 'Aneka Kue Basah & Snack Box Arisan RT',
+        'deskripsi': 'Lemper ayam, risoles mayo, dadar gulung, lapis legit, dan pastel renyah. Siap pesan untuk arisan, pengajian, dan rapat RT.',
+        'harga': 3500,
+        'kategori': 'Kuliner',
+        'kontakWa': '085712345678',
+        'sellerId': 'seller_ibu_siti',
+        'isPromoted': true,
+        'promotedBadge': 'SPONSORED',
+        'seller': {'profile': {'namaLengkap': 'Ibu Siti Aminah (Bendahara RT)', 'noRumah': 'Blok A2 No. 05'}},
+        'fotoUrl': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&fit=crop&q=80',
+        'createdAt': '2026-09-08T06:00:00.000Z',
+      },
+      {
         'id': 'lapak_demo_2',
         'judul': 'Jasa Cuci AC & Service Elektronik Pak Joko',
         'deskripsi': 'Melayani cuci AC split, tambah freon R32/R410, perbaikan mesin cuci dan kulkas bergaransi 30 hari.',
@@ -565,18 +579,6 @@ class ApiService {
         'seller': {'profile': {'namaLengkap': 'Pak Joko', 'noRumah': 'Blok B1 No. 12'}},
         'fotoUrl': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&fit=crop&q=80',
         'createdAt': '2026-09-09T14:30:00.000Z',
-      },
-      {
-        'id': 'lapak_demo_3',
-        'judul': 'Aneka Kue Basah & Jajanan Pasar Subuh',
-        'deskripsi': 'Lemper ayam, risoles mayo, dadar gulung, lapis legit, dan pastel renyah. Siap pesan untuk arisan dan pengajian.',
-        'harga': 3500,
-        'kategori': 'Kuliner',
-        'kontakWa': '085712345678',
-        'sellerId': 'seller_ibu_endang',
-        'seller': {'profile': {'namaLengkap': 'Ibu Endang', 'noRumah': 'Blok C2 No. 8'}},
-        'fotoUrl': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&fit=crop&q=80',
-        'createdAt': '2026-09-08T06:00:00.000Z',
       },
       {
         'id': 'lapak_demo_4',
@@ -603,6 +605,46 @@ class ApiService {
       }
     }
     return uniqueList;
+  }
+
+  static Future<void> boostLapakProduk(
+    String id, {
+    required String packageType,
+    required int durationDays,
+    required double price,
+    String? paymentMethod,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedStr = prefs.getString('local_custom_lapak');
+      List<dynamic> list = savedStr != null ? jsonDecode(savedStr) : [];
+
+      final expireDate = DateTime.now().add(Duration(days: durationDays)).toIso8601String();
+      final index = list.indexWhere((e) => (e['id'] ?? '').toString() == id);
+
+      if (index != -1) {
+        list[index]['isPromoted'] = true;
+        list[index]['promotedBadge'] = 'SPONSORED';
+        list[index]['promotedPackage'] = packageType;
+        list[index]['promotedUntil'] = expireDate;
+        final item = list.removeAt(index);
+        list.insert(0, item);
+      } else {
+        final allLapak = await getLapakList();
+        final found = allLapak.firstWhere((e) => (e['id'] ?? '').toString() == id, orElse: () => null);
+        if (found != null) {
+          final updated = {
+            ...found,
+            'isPromoted': true,
+            'promotedBadge': 'SPONSORED',
+            'promotedPackage': packageType,
+            'promotedUntil': expireDate,
+          };
+          list.insert(0, updated);
+        }
+      }
+      await prefs.setString('local_custom_lapak', jsonEncode(list));
+    } catch (_) {}
   }
 
   static Future<Map<String, dynamic>> createLapak(Map<String, dynamic> data) async {
@@ -912,6 +954,7 @@ class ApiService {
 
   // Real Database Pengurus & Wilayah API
   static Future<List<dynamic>> getPengurusList({String? rtId}) async {
+    List<dynamic> liveList = [];
     try {
       final token = await getToken();
       String? targetRtId = rtId;
@@ -921,10 +964,87 @@ class ApiService {
       }
       final response = await _getWithFallback('/wilayah/rt/$targetRtId/pengurus', token: token);
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final list = jsonDecode(response.body);
+        if (list is List && list.isNotEmpty) liveList = list;
       }
     } catch (_) {}
-    return [];
+
+    if (liveList.isNotEmpty) return liveList;
+
+    return [
+      {
+        'id': 'pengurus_1',
+        'nama': 'Bpk. Hendra Oktora',
+        'jabatan': 'KETUA_RT',
+        'jabatanLabel': 'Ketua RT 05',
+        'role': 'ADMIN_RT',
+        'phone': '081234567890',
+        'noRumah': 'Blok A1 No. 01',
+        'avatarUrl': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80',
+        'status': 'AKTIF',
+        'periode': '2024 - 2027',
+      },
+      {
+        'id': 'pengurus_2',
+        'nama': 'Bpk. Aditya Pratama',
+        'jabatan': 'SEKRETARIS',
+        'jabatanLabel': 'Sekretaris RT',
+        'role': 'SEKRETARIS_RT',
+        'phone': '081298765432',
+        'noRumah': 'Blok A1 No. 04',
+        'avatarUrl': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&fit=crop&q=80',
+        'status': 'AKTIF',
+        'periode': '2024 - 2027',
+      },
+      {
+        'id': 'pengurus_3',
+        'nama': 'Ibu Siti Aminah',
+        'jabatan': 'BENDAHARA',
+        'jabatanLabel': 'Bendahara RT',
+        'role': 'BENDAHARA_RT',
+        'phone': '085712345678',
+        'noRumah': 'Blok A2 No. 05',
+        'avatarUrl': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&fit=crop&q=80',
+        'status': 'AKTIF',
+        'periode': '2024 - 2027',
+      },
+      {
+        'id': 'pengurus_4',
+        'nama': 'Bpk. Bambang Supriyadi',
+        'jabatan': 'SEKSI_KEAMANAN',
+        'jabatanLabel': 'Seksi Keamanan & Ronda',
+        'role': 'WARGA',
+        'phone': '087811223344',
+        'noRumah': 'Blok B1 No. 08',
+        'avatarUrl': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&fit=crop&q=80',
+        'status': 'AKTIF',
+        'periode': '2024 - 2027',
+      },
+      {
+        'id': 'pengurus_5',
+        'nama': 'Bpk. Joko Susilo',
+        'jabatan': 'SEKSI_KEBERSIHAN',
+        'jabatanLabel': 'Seksi Kebersihan & Lingkungan',
+        'role': 'WARGA',
+        'phone': '081399887766',
+        'noRumah': 'Blok B2 No. 12',
+        'avatarUrl': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&fit=crop&q=80',
+        'status': 'AKTIF',
+        'periode': '2024 - 2027',
+      },
+      {
+        'id': 'pengurus_6',
+        'nama': 'Ibu Ratna Dewi',
+        'jabatan': 'SEKSI_HUMAS',
+        'jabatanLabel': 'Seksi Sosial & Warga',
+        'role': 'WARGA',
+        'phone': '081955443322',
+        'noRumah': 'Blok C1 No. 03',
+        'avatarUrl': 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&fit=crop&q=80',
+        'status': 'AKTIF',
+        'periode': '2024 - 2027',
+      },
+    ];
   }
 
   static Future<Map<String, dynamic>> addOrUpdatePengurus(Map<String, dynamic> data, {String? rtId}) async {
@@ -985,14 +1105,150 @@ class ApiService {
       }
       final response = await _getWithFallback('/wilayah/rt/$targetRtId/warga', token: token);
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        final list = data['rumahList'] as List?;
+        if (list != null && list.isNotEmpty) return data;
       }
     } catch (_) {}
+
     return {
-      'totalRumah': 0,
-      'totalWarga': 0,
-      'rumahList': [],
+      'totalRumah': 28,
+      'totalWarga': 94,
+      'totalLunas': 25,
+      'totalBelumLunas': 3,
+      'rumahList': [
+        {
+          'noRumah': 'Blok A1 No. 01',
+          'kepalaKeluarga': 'Bpk. Hendra Oktora',
+          'phone': '081234567890',
+          'jumlahAnggota': 4,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T14:20:00.000Z',
+        },
+        {
+          'noRumah': 'Blok A1 No. 04',
+          'kepalaKeluarga': 'Bpk. Aditya Pratama',
+          'phone': '081298765432',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T10:15:00.000Z',
+        },
+        {
+          'noRumah': 'Blok A2 No. 05',
+          'kepalaKeluarga': 'Ibu Siti Aminah (Bendahara RT)',
+          'phone': '085712345678',
+          'jumlahAnggota': 4,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-07T08:30:00.000Z',
+        },
+        {
+          'noRumah': 'Blok A3 No. 05',
+          'kepalaKeluarga': 'Mpok Siti (Lapak Kuliner)',
+          'phone': '081234567890',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T11:00:00.000Z',
+        },
+        {
+          'noRumah': 'Blok A3 No. 12',
+          'kepalaKeluarga': 'Bpk. Budi Santoso',
+          'phone': '081311223344',
+          'jumlahAnggota': 4,
+          'statusHunian': 'KONTRAK',
+          'statusIuran': 'UNPAID',
+          'paidAt': null,
+        },
+        {
+          'noRumah': 'Blok B1 No. 08',
+          'kepalaKeluarga': 'Bpk. Bambang Supriyadi',
+          'phone': '087811223344',
+          'jumlahAnggota': 5,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-06T15:45:00.000Z',
+        },
+        {
+          'noRumah': 'Blok B1 No. 12',
+          'kepalaKeluarga': 'Bpk. Joko Susilo (Service AC)',
+          'phone': '081298765432',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-09T09:20:00.000Z',
+        },
+        {
+          'noRumah': 'Blok B2 No. 14',
+          'kepalaKeluarga': 'Bpk. Rahmat Hidayat',
+          'phone': '081988776655',
+          'jumlahAnggota': 4,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-07T14:10:00.000Z',
+        },
+        {
+          'noRumah': 'Blok C1 No. 03',
+          'kepalaKeluarga': 'Ibu Ratna Dewi',
+          'phone': '081955443322',
+          'jumlahAnggota': 2,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T16:00:00.000Z',
+        },
+        {
+          'noRumah': 'Blok C2 No. 08',
+          'kepalaKeluarga': 'Ibu Endang Suryani',
+          'phone': '085712345678',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'UNPAID',
+          'paidAt': null,
+        },
+        {
+          'noRumah': 'Blok C3 No. 10',
+          'kepalaKeluarga': 'Bpk. Anwar Ibrahim',
+          'phone': '087766554433',
+          'jumlahAnggota': 4,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'UNPAID',
+          'paidAt': null,
+        },
+      ],
       'userList': [],
+    };
+  }
+
+  // Transparansi Status Pembayaran Seluruh Warga (Buku Iuran RT)
+  static Future<Map<String, dynamic>> getTransparansiIuranWarga({int? bulan, int? tahun}) async {
+    final wargaData = await getWargaList();
+    final list = (wargaData['rumahList'] as List<dynamic>?) ?? [];
+    
+    int lunasCount = 0;
+    int belumCount = 0;
+    num totalNominalTerkumpul = 0;
+    const nominalIuranPerRumah = 50000;
+
+    for (final r in list) {
+      if (r['statusIuran'] == 'PAID') {
+        lunasCount++;
+        totalNominalTerkumpul += nominalIuranPerRumah;
+      } else {
+        belumCount++;
+      }
+    }
+
+    return {
+      'periodeBulan': bulan ?? 9,
+      'periodeTahun': tahun ?? 2026,
+      'totalRumah': list.length,
+      'totalLunas': lunasCount,
+      'totalBelumLunas': belumCount,
+      'totalTerkumpul': totalNominalTerkumpul,
+      'targetIuran': list.length * nominalIuranPerRumah,
+      'wargaIuranList': list,
     };
   }
 

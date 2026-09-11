@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
@@ -517,6 +518,29 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text('Belum ada riwayat mutasi kas pada filter ini.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
                         ),
                 ),
+                const SizedBox(height: 12),
+
+                // Button to check All Resident Payment Status
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const InvoiceScreen(initialTabIndex: 1)),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primaryNavy,
+                      side: const BorderSide(color: AppTheme.primaryNavy),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.people_alt_rounded, size: 16),
+                    label: const Text('📊 Cek Status Iuran Seluruh Warga (Lunas / Belum)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ),
               ],
             ),
           );
@@ -1012,12 +1036,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Slide 2: Produk & Jasa Baru di Lapak Warga (Sponsored / Terkini)
   Widget _buildLapakCard(String rtNomor) {
-    final item = _lapakDbList.isNotEmpty ? _lapakDbList.first : null;
+    final item = _lapakDbList.isNotEmpty
+        ? _lapakDbList.cast<dynamic>().firstWhere(
+            (it) => it['isPromoted'] == true || it['promotedBadge'] == 'SPONSORED',
+            orElse: () => _lapakDbList.first,
+          )
+        : null;
+
     final judul = item?['judul'] ?? 'Katering Tumpeng Mini & Snack Box';
     final harga = item?['harga'] ?? '25000';
     final kategori = item?['kategori'] ?? 'Kuliner RT';
-    final penjual = item?['user']?['profile']?['namaLengkap'] ?? 'Ibu Ratna (Blok B4)';
-    final fotoUrl = item?['fotoUrl'] as String?;
+    final penjual = item?['seller']?['profile']?['namaLengkap'] ?? item?['user']?['profile']?['namaLengkap'] ?? item?['sellerName'] ?? 'Ibu Siti (Blok A2)';
+    
+    dynamic rawFoto = item?['fotoUrl'];
+    String? fotoUrl;
+    if (rawFoto is List && rawFoto.isNotEmpty) {
+      fotoUrl = rawFoto.first.toString();
+    } else if (rawFoto is String && rawFoto.isNotEmpty) {
+      if (rawFoto.startsWith('[') && rawFoto.endsWith(']')) {
+        try {
+          final decoded = jsonDecode(rawFoto);
+          if (decoded is List && decoded.isNotEmpty) fotoUrl = decoded.first.toString();
+        } catch (_) {
+          fotoUrl = rawFoto;
+        }
+      } else if (rawFoto.contains('|||')) {
+        fotoUrl = rawFoto.split('|||').first;
+      } else {
+        fotoUrl = rawFoto;
+      }
+    }
+
+    final isSponsored = item?['isPromoted'] == true || item?['promotedBadge'] == 'SPONSORED';
 
     return GestureDetector(
       onTap: () {
@@ -1068,16 +1118,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.amberAccent.withValues(alpha: 0.2),
+                    color: (isSponsored ? Colors.amberAccent : Colors.white).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.amberAccent.withValues(alpha: 0.4)),
+                    border: Border.all(color: (isSponsored ? Colors.amberAccent : Colors.white).withValues(alpha: 0.4)),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.star_rounded, color: Colors.amberAccent, size: 12),
-                      SizedBox(width: 3),
-                      Text('Sponsored', style: TextStyle(color: Colors.amberAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                      if (isSponsored) ...[
+                        const Icon(Icons.star_rounded, color: Colors.amberAccent, size: 12),
+                        const SizedBox(width: 3),
+                      ],
+                      Text(
+                        isSponsored ? 'Sponsored' : 'Terbaru',
+                        style: TextStyle(
+                          color: isSponsored ? Colors.amberAccent : Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),

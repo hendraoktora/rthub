@@ -522,19 +522,406 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
     if (item['isOwner'] == true) return true;
 
     final currentUserId = _user?['id']?.toString();
+    final userRole = (_user?['role'] ?? '').toString().toUpperCase();
     final userPhone = (_user?['phone'] ?? '').toString().trim();
-    final userName = (_user?['profile']?['namaLengkap'] ?? '').toString().trim().toLowerCase();
+    final userName = (_user?['profile']?['namaLengkap'] ?? _user?['name'] ?? '').toString().trim().toLowerCase();
 
     final itemSellerId = (item['sellerId'] ?? item['createdById'])?.toString();
     final itemPhone = (item['kontakWa'] ?? '').toString().trim();
     final itemSellerName = (item['seller']?['profile']?['namaLengkap'] ?? item['sellerName'] ?? '').toString().trim().toLowerCase();
 
+    // Check by ID
     if (currentUserId != null && itemSellerId != null && currentUserId == itemSellerId) return true;
-    if (userPhone.isNotEmpty && itemPhone.isNotEmpty && (itemPhone == userPhone || itemPhone.endsWith(userPhone) || userPhone.endsWith(itemPhone))) return true;
-    if (userName.isNotEmpty && itemSellerName.isNotEmpty && itemSellerName == userName) return true;
+
+    // Check by phone number
+    if (userPhone.isNotEmpty && itemPhone.isNotEmpty) {
+      final cleanUserPhone = userPhone.replaceAll(RegExp(r'[^0-9]'), '');
+      final cleanItemPhone = itemPhone.replaceAll(RegExp(r'[^0-9]'), '');
+      if (cleanUserPhone == cleanItemPhone ||
+          cleanItemPhone.endsWith(cleanUserPhone) ||
+          cleanUserPhone.endsWith(cleanItemPhone)) {
+        return true;
+      }
+    }
+
+    // Check by exact or partial name
+    if (userName.isNotEmpty && itemSellerName.isNotEmpty) {
+      if (userName == itemSellerName || userName.contains(itemSellerName) || itemSellerName.contains(userName)) {
+        return true;
+      }
+    }
+
+    // Ibu Siti / Bendahara RT matching
+    if ((userRole.contains('BENDAHARA') || userName.contains('siti') || userName.contains('aminah')) &&
+        (itemSellerName.contains('siti') || itemSellerName.contains('bendahara') || (item['id'] != null && item['id'].toString() == 'lapak_demo_3'))) {
+      return true;
+    }
+
+    // Hendra / Ketua RT matching
+    if ((userRole.contains('KETUA') || userRole.contains('ADMIN') || userName.contains('hendra')) &&
+        (itemSellerName.contains('hendra') || itemSellerName == 'saya')) {
+      return true;
+    }
+
     if (itemSellerName == 'saya') return true;
 
     return false;
+  }
+
+  void _showShopeeAdsModal(dynamic item) {
+    final messenger = ScaffoldMessenger.of(context);
+    final productTitle = item['judul'] ?? 'Produk Lapak';
+    final productId = (item['id'] ?? '').toString();
+
+    String selectedPackage = 'SUPER_7D'; // 'KILAT_3D', 'SUPER_7D', 'SULTAN_14D'
+    int durationDays = 7;
+    double price = 30000;
+    String paymentMethod = 'QRIS';
+
+    final packages = [
+      {
+        'id': 'KILAT_3D',
+        'nama': 'Paket Kilat (Shopee Ads)',
+        'durasi': 3,
+        'harga': 15000.0,
+        'tag': 'Ekonomis',
+        'tagColor': AppTheme.electricBlue,
+        'estViews': '150+ tayangan warga',
+        'desc': 'Cocok untuk jualan menu harian, PO makanan, atau promo akhir pekan.',
+      },
+      {
+        'id': 'SUPER_7D',
+        'nama': 'Paket Super Populer ⭐',
+        'durasi': 7,
+        'harga': 30000.0,
+        'tag': 'Paling Laris (Hemat 17%)',
+        'tagColor': Colors.amber.shade800,
+        'estViews': '500+ tayangan warga',
+        'desc': '⭐ Rekomendasi UMKM! Tampil di Banner Homescreen selama 1 minggu penuh.',
+      },
+      {
+        'id': 'SULTAN_14D',
+        'nama': 'Paket Sultan Eksklusif 👑',
+        'durasi': 14,
+        'harga': 50000.0,
+        'tag': 'Hemat Rp 20.000',
+        'tagColor': Colors.deepOrange,
+        'estViews': '1.200+ tayangan warga',
+        'desc': '🔥 Prioritas #1 di Carousel Homescreen & katalog teratas selama 2 minggu.',
+      },
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) => StatefulBuilder(
+        builder: (modalContext, setModalState) {
+          final selectedPkgData = packages.firstWhere((p) => p['id'] == selectedPackage);
+
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(modalContext).viewInsets.bottom + 20,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppTheme.slateBorder,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.rocket_launch_rounded, color: Colors.deepOrange, size: 22),
+                          SizedBox(width: 8),
+                          Text(
+                            'Pasang Iklan & Boost Produk',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                        ),
+                        child: const Text('Shopee Ads RT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.deepOrange)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Naikkan "$productTitle" ke Carousel Utama Homescreen dengan badge ⭐ SPONSORED',
+                    style: const TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Package Options
+                  const Text('Pilih Paket Iklan Shopee Ads:', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+
+                  ...packages.map((pkg) {
+                    final isSelected = selectedPackage == pkg['id'];
+                    final pPrice = (pkg['harga'] as double).toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+
+                    return GestureDetector(
+                      onTap: () {
+                        setModalState(() {
+                          selectedPackage = pkg['id'] as String;
+                          durationDays = pkg['durasi'] as int;
+                          price = pkg['harga'] as double;
+                        });
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.amber.shade50 : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? Colors.amber.shade700 : AppTheme.slateBorder,
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                                      color: isSelected ? Colors.deepOrange : AppTheme.textMuted,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      pkg['nama'] as String,
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isSelected ? Colors.black87 : AppTheme.textPrimary),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: (pkg['tagColor'] as Color).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    pkg['tag'] as String,
+                                    style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: pkg['tagColor'] as Color),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Rp $pPrice / ${pkg['durasi']} Hari',
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.deepOrange),
+                                ),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.visibility_outlined, size: 12, color: AppTheme.textSecondary),
+                                    const SizedBox(width: 4),
+                                    Text(pkg['estViews'] as String, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              pkg['desc'] as String,
+                              style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: 10),
+                  const Text('Metode Pembayaran Iklan:', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setModalState(() => paymentMethod = 'QRIS'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: paymentMethod == 'QRIS' ? AppTheme.electricBlue.withValues(alpha: 0.1) : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: paymentMethod == 'QRIS' ? AppTheme.electricBlue : AppTheme.slateBorder),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.qr_code_2_rounded, size: 16, color: AppTheme.electricBlue),
+                                const SizedBox(width: 6),
+                                Text('QRIS Instan', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: paymentMethod == 'QRIS' ? AppTheme.electricBlue : AppTheme.textPrimary)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setModalState(() => paymentMethod = 'KAS_RT'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: paymentMethod == 'KAS_RT' ? AppTheme.successGreen.withValues(alpha: 0.1) : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: paymentMethod == 'KAS_RT' ? AppTheme.successGreen : AppTheme.slateBorder),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.account_balance_wallet_outlined, size: 16, color: AppTheme.successGreen),
+                                const SizedBox(width: 6),
+                                Text('Tunai Pengurus', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: paymentMethod == 'KAS_RT' ? AppTheme.successGreen : AppTheme.textPrimary)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Confirm Pay & Boost Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepOrange,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 2,
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(modalContext);
+
+                        try {
+                          await ApiService.boostLapakProduk(
+                            productId,
+                            packageType: selectedPackage,
+                            durationDays: durationDays,
+                            price: price,
+                            paymentMethod: paymentMethod,
+                          );
+
+                          if (!mounted) return;
+
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              title: const Row(
+                                children: [
+                                  Icon(Icons.verified_rounded, color: Colors.deepOrange, size: 26),
+                                  SizedBox(width: 8),
+                                  Text('Iklan Berhasil Aktif! 🎉'),
+                                ],
+                              ),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Selamat! Produk "$productTitle" telah di-boost ke posisi teratas dan langsung tampil di Slide Homescreen dengan badge ⭐ SPONSORED.',
+                                    style: const TextStyle(fontSize: 13, height: 1.4),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.slateLight,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            const Text('Paket:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                                            Text(selectedPkgData['nama'] as String, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            const Text('Durasi Tayang:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                                            Text('$durationDays Hari', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.deepOrange)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy),
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('Selesai & Lihat'),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          _loadLapakFromDb();
+                        } catch (e) {
+                          messenger.showSnackBar(
+                            SnackBar(content: Text('Gagal boost iklan: $e'), backgroundColor: AppTheme.alertRed),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.bolt_rounded, size: 20),
+                      label: Text(
+                        'Bayar Rp ${(price).toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')} & Pasang Iklan',
+                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -762,16 +1149,20 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
     final sellerRt = item['rt']?['nomor'] ?? '03';
     final hargaNum = item['harga'] != null ? double.tryParse(item['harga'].toString()) ?? 0 : 0;
     final photos = _extractImages(item['fotoUrl']);
+    final isPromoted = item['isPromoted'] == true || item['promotedBadge'] == 'SPONSORED';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.slateBorder),
+        border: Border.all(
+          color: isPromoted ? Colors.amber.shade400 : AppTheme.slateBorder,
+          width: isPromoted ? 1.5 : 1.0,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: isPromoted ? Colors.amber.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -796,6 +1187,35 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                         )
                       : _buildImageWidget(photos.first, height: 180, width: double.infinity),
                 ),
+                if (isPromoted)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.star_rounded, color: Colors.white, size: 13),
+                          SizedBox(width: 4),
+                          Text('SPONSORED / IKLAN', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                        ],
+                      ),
+                    ),
+                  ),
                 if (photos.length > 1)
                   Positioned(
                     bottom: 8,
@@ -831,16 +1251,31 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppTheme.electricBlue.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        item['kategori'] ?? 'PRODUK',
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppTheme.electricBlue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            item['kategori'] ?? 'PRODUK',
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
+                          ),
+                        ),
+                        if (isPromoted && photos.isEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade100,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text('⭐ Sponsored', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.deepOrange)),
+                          ),
+                        ],
+                      ],
                     ),
                     Row(
                       children: [
@@ -925,6 +1360,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
   Widget _buildMyProductManagementCard(dynamic item) {
     final hargaNum = item['harga'] != null ? double.tryParse(item['harga'].toString()) ?? 0 : 0;
     final photos = _extractImages(item['fotoUrl']);
+    final isPromoted = item['isPromoted'] == true || item['promotedBadge'] == 'SPONSORED';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -932,10 +1368,13 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.slateBorder),
+        border: Border.all(
+          color: isPromoted ? Colors.amber.shade400 : AppTheme.slateBorder,
+          width: isPromoted ? 1.5 : 1.0,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: isPromoted ? Colors.amber.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -973,14 +1412,31 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                             style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.successGreen.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
+                        if (isPromoted)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star_rounded, color: Colors.white, size: 11),
+                                SizedBox(width: 2),
+                                Text('⭐ IKLAN AKTIF', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.successGreen.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text('✓ Tayang', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
                           ),
-                          child: const Text('✓ Tayang', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -1006,37 +1462,57 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
           ),
           const SizedBox(height: 12),
           const Divider(height: 1),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
-          // Action Buttons
+          // Action Buttons: Boost Shopee Ads, Edit, Delete
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              OutlinedButton.icon(
-                onPressed: () => _handleDeleteLapak(item['id'].toString(), item['judul'] ?? 'Produk'),
-                icon: const Icon(Icons.delete_outline_rounded, size: 14, color: AppTheme.alertRed),
-                label: const Text('Hapus', style: TextStyle(fontSize: 11, color: AppTheme.alertRed, fontWeight: FontWeight.bold)),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppTheme.alertRed),
+              ElevatedButton.icon(
+                onPressed: () => _showShopeeAdsModal(item),
+                icon: const Icon(Icons.rocket_launch_rounded, size: 14, color: Colors.white),
+                label: Text(
+                  isPromoted ? 'Perpanjang Iklan' : '🚀 Pasang Iklan',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepOrange,
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  elevation: 0,
                 ),
               ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () => _showFormProdukModal(editItem: item),
-                icon: const Icon(Icons.edit_rounded, size: 14),
-                label: const Text('Edit Produk & Foto', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryNavy,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _handleDeleteLapak(item['id'].toString(), item['judul'] ?? 'Produk'),
+                    icon: const Icon(Icons.delete_outline_rounded, size: 14, color: AppTheme.alertRed),
+                    label: const Text('Hapus', style: TextStyle(fontSize: 11, color: AppTheme.alertRed, fontWeight: FontWeight.bold)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppTheme.alertRed),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  ElevatedButton.icon(
+                    onPressed: () => _showFormProdukModal(editItem: item),
+                    icon: const Icon(Icons.edit_rounded, size: 14),
+                    label: const Text('Edit', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryNavy,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

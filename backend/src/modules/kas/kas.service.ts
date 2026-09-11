@@ -7,13 +7,16 @@ export class KasService {
   constructor(private prisma: PrismaService) {}
 
   async getKasSummary(rtId?: string) {
-    let targetRtId = rtId;
-    if (!targetRtId) {
-      const defaultRt = await this.prisma.rT.findFirst();
-      targetRtId = defaultRt?.id;
+    if (!rtId) {
+      return {
+        saldoKas: 0,
+        totalPemasukan: 0,
+        totalPengeluaran: 0,
+        recentTransactions: [],
+      };
     }
 
-    const whereClause = targetRtId ? { rtId: targetRtId } : {};
+    const whereClause = { rtId };
 
     const kasList = await this.prisma.kasRT.findMany({
       where: whereClause,
@@ -55,24 +58,18 @@ export class KasService {
       throw new BadRequestException('Nominal kas harus lebih dari 0.');
     }
 
-    let targetRtId = rtId;
-    if (!targetRtId) {
-      const defaultRt = await this.prisma.rT.findFirst();
-      targetRtId = defaultRt?.id;
-    }
-
-    if (!targetRtId) {
+    if (!rtId) {
       throw new BadRequestException('Wilayah RT tidak ditemukan.');
     }
 
-    const currentSummary = await this.getKasSummary(targetRtId);
+    const currentSummary = await this.getKasSummary(rtId);
     const newSaldo = data.tipe === TipeKas.PEMASUKAN
       ? currentSummary.saldoKas + nominalNum
       : currentSummary.saldoKas - nominalNum;
 
     return this.prisma.kasRT.create({
       data: {
-        rtId: targetRtId,
+        rtId,
         createdById: userId,
         tipe: data.tipe,
         kategori: data.kategori,

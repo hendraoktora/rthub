@@ -25,8 +25,11 @@ let AgendaService = class AgendaService {
             orConditions.push({ scope: client_1.ScopeWilayah.RW, rwId: user.rwId });
         if (user?.kelurahanId)
             orConditions.push({ scope: client_1.ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId });
+        if (orConditions.length === 0) {
+            return [];
+        }
         return this.prisma.agendaKegiatan.findMany({
-            where: orConditions.length > 0 ? { OR: orConditions } : {},
+            where: { OR: orConditions },
             orderBy: { tanggalMulai: 'asc' },
         });
     }

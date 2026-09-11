@@ -52,7 +52,7 @@ let LaporanService = class LaporanService {
         });
     }
     async getLaporanList(user) {
-        if (user?.role === client_1.Role.SUPERADMIN || !user?.rtId) {
+        if (user?.role === client_1.Role.SUPERADMIN) {
             return this.prisma.laporanWarga.findMany({
                 include: {
                     user: {
@@ -71,7 +71,10 @@ let LaporanService = class LaporanService {
                 take: 50,
             });
         }
-        const list = await this.prisma.laporanWarga.findMany({
+        if (!user?.rtId) {
+            return [];
+        }
+        return this.prisma.laporanWarga.findMany({
             where: {
                 rtId: user.rtId,
             },
@@ -92,27 +95,6 @@ let LaporanService = class LaporanService {
             orderBy: { createdAt: 'desc' },
             take: 50,
         });
-        if (list.length === 0) {
-            return this.prisma.laporanWarga.findMany({
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            phone: true,
-                            profile: {
-                                select: {
-                                    namaLengkap: true,
-                                    noRumah: true,
-                                },
-                            },
-                        },
-                    },
-                },
-                orderBy: { createdAt: 'desc' },
-                take: 50,
-            });
-        }
-        return list;
     }
     async updateStatus(laporanId, data) {
         return this.prisma.laporanWarga.update({

@@ -100,6 +100,15 @@ export class WilayahService {
 
   // Get all warga under specific RT
   async getWargaByRt(rtId: string) {
+    if (!rtId) {
+      return {
+        totalRumah: 0,
+        totalWarga: 0,
+        rumahList: [],
+        userList: [],
+      };
+    }
+
     const rumahList = await this.prisma.rumah.findMany({
       where: { rtId },
       include: {
@@ -292,10 +301,12 @@ export class WilayahService {
 
   // Pengurus Management
   async getPengurusByRt(rtId: string) {
+    if (!rtId) return [];
+
     const users = await this.prisma.user.findMany({
       where: {
         rtId,
-        role: { in: [Role.ADMIN_RT, Role.BENDAHARA_RT, Role.SECURITY, Role.ADMIN_RW] },
+        role: { in: [Role.ADMIN_RT, Role.SEKRETARIS_RT, Role.BENDAHARA_RT, Role.SECURITY, Role.ADMIN_RW] },
       },
       include: { profile: true },
       orderBy: { role: 'asc' },
@@ -305,6 +316,7 @@ export class WilayahService {
       const { passwordHash, ...rest } = u;
       let jabatan = 'Pengurus RT';
       if (u.role === Role.ADMIN_RT) jabatan = 'Ketua RT';
+      else if (u.role === Role.SEKRETARIS_RT) jabatan = 'Sekretaris RT';
       else if (u.role === Role.BENDAHARA_RT) jabatan = 'Bendahara RT';
       else if (u.role === Role.SECURITY) jabatan = 'Petugas Keamanan / Satpam';
       else if (u.role === Role.ADMIN_RW) jabatan = 'Ketua RW';

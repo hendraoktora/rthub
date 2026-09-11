@@ -131,6 +131,14 @@ let WilayahService = class WilayahService {
         return results;
     }
     async getWargaByRt(rtId) {
+        if (!rtId) {
+            return {
+                totalRumah: 0,
+                totalWarga: 0,
+                rumahList: [],
+                userList: [],
+            };
+        }
         const rumahList = await this.prisma.rumah.findMany({
             where: { rtId },
             include: {
@@ -289,10 +297,12 @@ let WilayahService = class WilayahService {
         };
     }
     async getPengurusByRt(rtId) {
+        if (!rtId)
+            return [];
         const users = await this.prisma.user.findMany({
             where: {
                 rtId,
-                role: { in: [client_1.Role.ADMIN_RT, client_1.Role.BENDAHARA_RT, client_1.Role.SECURITY, client_1.Role.ADMIN_RW] },
+                role: { in: [client_1.Role.ADMIN_RT, client_1.Role.SEKRETARIS_RT, client_1.Role.BENDAHARA_RT, client_1.Role.SECURITY, client_1.Role.ADMIN_RW] },
             },
             include: { profile: true },
             orderBy: { role: 'asc' },
@@ -302,6 +312,8 @@ let WilayahService = class WilayahService {
             let jabatan = 'Pengurus RT';
             if (u.role === client_1.Role.ADMIN_RT)
                 jabatan = 'Ketua RT';
+            else if (u.role === client_1.Role.SEKRETARIS_RT)
+                jabatan = 'Sekretaris RT';
             else if (u.role === client_1.Role.BENDAHARA_RT)
                 jabatan = 'Bendahara RT';
             else if (u.role === client_1.Role.SECURITY)

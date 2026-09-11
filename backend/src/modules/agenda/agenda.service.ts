@@ -12,8 +12,12 @@ export class AgendaService {
     if (user?.rwId) orConditions.push({ scope: ScopeWilayah.RW, rwId: user.rwId });
     if (user?.kelurahanId) orConditions.push({ scope: ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId });
 
+    if (orConditions.length === 0) {
+      return [];
+    }
+
     return this.prisma.agendaKegiatan.findMany({
-      where: orConditions.length > 0 ? { OR: orConditions } : {},
+      where: { OR: orConditions },
       orderBy: { tanggalMulai: 'asc' },
     });
   }

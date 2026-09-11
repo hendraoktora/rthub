@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
 import '../../core/widgets/rthub_logo.dart';
-import '../home/home_screen.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_rt_screen.dart';
 

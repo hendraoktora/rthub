@@ -7,14 +7,22 @@ export class LapakService {
 
   // Marketplace cross-RT (Shared se-RW atau se-Kelurahan)
   async getFeedLapak(user: any) {
-    const filters: any[] = [];
-    if (user?.rwId) filters.push({ rwId: user.rwId });
-    if (user?.kelurahanId) filters.push({ kelurahanId: user.kelurahanId });
-    if (user?.rtId) filters.push({ rtId: user.rtId });
+    const rwId = user?.rwId || user?.rt?.rwId;
+    const kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
+    const rtId = user?.rtId;
 
-    let products = await this.prisma.lapakProduk.findMany({
+    const filters: any[] = [];
+    if (rwId) filters.push({ rwId });
+    if (kelurahanId) filters.push({ kelurahanId });
+    if (rtId) filters.push({ rtId });
+
+    if (filters.length === 0) {
+      return [];
+    }
+
+    return this.prisma.lapakProduk.findMany({
       where: {
-        ...(filters.length > 0 ? { OR: filters } : {}),
+        OR: filters,
         isActive: true,
       },
       include: {
@@ -24,32 +32,26 @@ export class LapakService {
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
-
-    if (products.length === 0) {
-      products = await this.prisma.lapakProduk.findMany({
-        where: { isActive: true },
-        include: {
-          seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
-          rt: { select: { nomor: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-      });
-    }
-
-    return products;
   }
 
   // Listing Kontrakan se-RW / Kelurahan
   async getFeedKontrakan(user: any) {
+    const rwId = user?.rwId || user?.rt?.rwId;
+    const kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
+    const rtId = user?.rtId;
+
     const filters: any[] = [];
-    if (user?.rwId) filters.push({ rwId: user.rwId });
-    if (user?.kelurahanId) filters.push({ kelurahanId: user.kelurahanId });
-    if (user?.rtId) filters.push({ rtId: user.rtId });
+    if (rwId) filters.push({ rwId });
+    if (kelurahanId) filters.push({ kelurahanId });
+    if (rtId) filters.push({ rtId });
+
+    if (filters.length === 0) {
+      return [];
+    }
 
     return this.prisma.infoKontrakan.findMany({
       where: {
-        ...(filters.length > 0 ? { OR: filters } : {}),
+        OR: filters,
         status: 'TERSEDIA',
       },
       include: {
@@ -61,16 +63,14 @@ export class LapakService {
 
   async createProduk(user: any, data: { judul: string; deskripsi: string; harga: number; kategori: string; kontakWa: string; fotoUrl?: string }) {
     let rtId = user?.rtId;
-    let rwId = user?.rwId;
-    let kelurahanId = user?.kelurahanId;
+    let rwId = user?.rwId || user?.rt?.rwId;
+    let kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
 
-    if (!rtId || !rwId || !kelurahanId) {
-      const defaultRt = await this.prisma.rT.findFirst();
-      if (defaultRt) {
-        rtId = rtId || defaultRt.id;
-        rwId = rwId || defaultRt.rwId;
-        const rw = await this.prisma.rW.findUnique({ where: { id: defaultRt.rwId } });
-        kelurahanId = kelurahanId || rw?.kelurahanId || null;
+    if ((!rwId || !kelurahanId) && rtId) {
+      const rt = await this.prisma.rT.findUnique({ where: { id: rtId }, include: { rw: true } });
+      if (rt) {
+        rwId = rwId || rt.rwId;
+        kelurahanId = kelurahanId || rt.rw?.kelurahanId;
       }
     }
 

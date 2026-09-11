@@ -7,13 +7,21 @@ export class BeritaService {
   constructor(private prisma: PrismaService) {}
 
   async getFeed(user: any) {
+    const rtId = user?.rtId;
+    const rwId = user?.rwId || user?.rt?.rwId;
+    const kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
+
     const orConditions: any[] = [];
-    if (user?.rtId) orConditions.push({ scope: ScopeWilayah.RT, rtId: user.rtId });
-    if (user?.rwId) orConditions.push({ scope: ScopeWilayah.RW, rwId: user.rwId });
-    if (user?.kelurahanId) orConditions.push({ scope: ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId });
+    if (rtId) orConditions.push({ scope: ScopeWilayah.RT, rtId });
+    if (rwId) orConditions.push({ scope: ScopeWilayah.RW, rwId });
+    if (kelurahanId) orConditions.push({ scope: ScopeWilayah.KELURAHAN, kelurahanId });
+
+    if (orConditions.length === 0) {
+      return [];
+    }
 
     return this.prisma.berita.findMany({
-      where: orConditions.length > 0 ? { OR: orConditions } : {},
+      where: { OR: orConditions },
       include: {
         author: { select: { profile: { select: { namaLengkap: true } }, role: true } },
       },

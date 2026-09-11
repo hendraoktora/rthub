@@ -905,9 +905,10 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context) {
                 final isPaid = _tagihanDbList.isNotEmpty && _tagihanDbList.any((t) => t['status'] == 'PAID');
                 final activeBill = _tagihanDbList.isNotEmpty ? _tagihanDbList.first : null;
-                final nominalVal = activeBill?['totalBayar'] != null
-                    ? (double.tryParse(activeBill['totalBayar'].toString()) ?? 52000).toInt()
-                    : 52000;
+                final hasBill = activeBill != null;
+                final nominalVal = hasBill
+                    ? (double.tryParse(activeBill['totalBayar'].toString()) ?? 0).toInt()
+                    : 0;
                 final nominalFmt = nominalVal.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
                 
                 return Container(
@@ -943,7 +944,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            isPaid ? '✓ LUNAS (September 2026)' : 'Rp $nominalFmt (September 2026)',
+                            isPaid
+                                ? '✓ LUNAS'
+                                : (hasBill
+                                    ? 'Rp $nominalFmt'
+                                    : 'Belum Ada Tagihan'),
                             style: TextStyle(
                               color: isPaid ? Colors.greenAccent : Colors.white,
                               fontSize: 12,
@@ -968,7 +973,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                         child: Text(
-                          isPaid ? 'Rincian Lunas' : 'Bayar',
+                          isPaid ? 'Rincian Lunas' : (hasBill ? 'Bayar' : 'Rincian'),
                           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -992,10 +997,146 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         : null;
 
-    final judul = item?['judul'] ?? 'Katering Tumpeng Mini & Snack Box';
-    final harga = item?['harga'] ?? '25000';
-    final kategori = item?['kategori'] ?? 'Kuliner RT';
-    final penjual = item?['seller']?['profile']?['namaLengkap'] ?? item?['user']?['profile']?['namaLengkap'] ?? item?['sellerName'] ?? 'Ibu Siti (Blok A2)';
+    if (item == null) {
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF065F46),
+                Color(0xFF0F766E),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF065F46).withValues(alpha: 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.storefront_rounded, color: Colors.amberAccent, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Lapak Warga RT $rtNomor',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                    ),
+                    child: const Text(
+                      'UMKM',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.store_mall_directory_rounded, color: Colors.amberAccent, size: 26),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Mulai Usaha di Lingkungan',
+                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Jual produk, kuliner, atau jasa ke tetangga sekitar',
+                          style: TextStyle(color: Colors.white70, fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Dukung usaha tetangga lingkungan!',
+                      style: TextStyle(color: Colors.white, fontSize: 11),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF065F46),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Buka Lapak', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final judul = item['judul'] ?? 'Produk Lapak Warga';
+    final harga = item['harga'] ?? '0';
+    final kategori = item['kategori'] ?? 'Lapak Warga';
+    final penjual = item['seller']?['profile']?['namaLengkap'] ?? item['user']?['profile']?['namaLengkap'] ?? item['sellerName'] ?? 'Warga';
     
     dynamic rawFoto = item?['fotoUrl'];
     String? fotoUrl;
@@ -1178,10 +1319,131 @@ class _HomeScreenState extends State<HomeScreen> {
   // Slide 3: Agenda & Kegiatan Terdekat (7 Hari Ke Depan)
   Widget _buildAgendaCard(String rtNomor) {
     final event = _agendaDbList.isNotEmpty ? _agendaDbList.first : null;
-    final judul = event?['judul'] ?? 'Kerja Bakti Bersih Saluran & Fogging DBD';
-    final tanggal = event?['tanggal'] ?? 'Sabtu, 14 Sept 2026';
-    final lokasi = event?['lokasi'] ?? 'Pos Ronda Utama RT $rtNomor';
-    final kategori = event?['kategori'] ?? 'Kerja Bakti';
+
+    if (event == null) {
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const AgendaScreen()));
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF3730A3),
+                Color(0xFF4F46E5),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF3730A3).withValues(alpha: 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.event_available_rounded, color: Colors.white, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Agenda RT Seminggu Ini',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text('Kalender RT', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+              const Row(
+                children: [
+                  Icon(Icons.calendar_month_outlined, color: Colors.white70, size: 28),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Belum Ada Kegiatan Terjadwal',
+                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Rapat warga, kerja bakti, & posyandu akan tampil di sini',
+                          style: TextStyle(color: Colors.white70, fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Lihat jadwal lengkap lingkungan',
+                      style: TextStyle(color: Colors.white, fontSize: 11),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const AgendaScreen()));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF3730A3),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Buka Kalender', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final judul = event['judul'] ?? 'Agenda Kegiatan RT';
+    final tanggal = event['tanggal'] ?? '-';
+    final lokasi = event['lokasi'] ?? 'Lingkungan RT $rtNomor';
+    final kategori = event['kategori'] ?? 'Kegiatan';
 
     return GestureDetector(
       onTap: () {

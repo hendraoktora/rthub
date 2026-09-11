@@ -91,55 +91,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     }
   }
 
-  void _setDefaultInitialAgenda() {
-    final now = DateTime.now();
-    final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    final dateStr = '${now.day} ${months[now.month]} ${now.year}';
 
-    setState(() {
-      _agendaList = [
-        {
-          'id': 'seed_1',
-          'title': 'Kerja Bakti Bersih Saluran Air & Selokan',
-          'date': dateStr,
-          'day': 'Selasa',
-          'time': '07:00 - 10:00 WIB',
-          'location': 'Sepanjang Jl. Melati Blok C & D',
-          'category': 'KERJA_BAKTI',
-          'level': 'Level RT ${_user?['rt']?['nomor'] ?? '03'}',
-          'levelColor': AppTheme.successGreen,
-          'description': 'Pembersihan endapan lumpur got dan sampah ranting daun mengantisipasi musim hujan deras.',
-          'startDate': now,
-        },
-        {
-          'id': 'seed_2',
-          'title': 'Fogging Nyamuk DBD Serentak RW',
-          'date': dateStr,
-          'day': 'Selasa',
-          'time': '15:30 - 17:30 WIB',
-          'location': 'Seluruh Lingkungan RW ${_user?['rw']?['nomor'] ?? '05'}',
-          'category': 'KESEHATAN',
-          'level': 'Level RW ${_user?['rw']?['nomor'] ?? '05'}',
-          'levelColor': AppTheme.warningAmber,
-          'description': 'Pengasapan nyamuk aedes aegypti serentak. Harap menutup makanan dan membuka jendela saat petugas lewat.',
-          'startDate': now,
-        },
-        {
-          'id': 'seed_3',
-          'title': 'Posyandu Balita & Lansia Rutin',
-          'date': '${now.day + 3} ${months[now.month]} ${now.year}',
-          'day': 'Jumat',
-          'time': '08:30 - 11:00 WIB',
-          'location': 'Balai Warga / Posyandu Flamboyan',
-          'category': 'POSYANDU',
-          'level': 'Level RT ${_user?['rt']?['nomor'] ?? '03'}',
-          'levelColor': AppTheme.purpleIndigo,
-          'description': 'Penimbangan berat badan, imunisasi balita, dan cek tensi/gula darah gratis untuk lansia.',
-          'startDate': now.add(const Duration(days: 3)),
-        },
-      ];
-    });
-  }
 
   void _showTambahAgendaModal() {
     final messenger = ScaffoldMessenger.of(context);

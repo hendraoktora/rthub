@@ -978,12 +978,14 @@ class ApiService {
       String? targetRtId = rtId;
       if (targetRtId == null || targetRtId.isEmpty) {
         final user = await getCurrentUser();
-        targetRtId = user?['rtId'] ?? 'rt-sukamaju-03';
+        targetRtId = user?['rtId'];
       }
-      final response = await _getWithFallback('/wilayah/rt/$targetRtId/pengurus', token: token);
-      if (response.statusCode == 200) {
-        final list = jsonDecode(response.body);
-        if (list is List && list.isNotEmpty) liveList = list;
+      if (targetRtId != null && targetRtId.isNotEmpty) {
+        final response = await _getWithFallback('/wilayah/rt/$targetRtId/pengurus', token: token);
+        if (response.statusCode == 200) {
+          final list = jsonDecode(response.body);
+          if (list is List && list.isNotEmpty) liveList = list;
+        }
       }
     } catch (_) {}
 
@@ -1120,12 +1122,14 @@ class ApiService {
       String? targetRtId = rtId;
       if (targetRtId == null || targetRtId.isEmpty) {
         final user = await getCurrentUser();
-        targetRtId = user?['rtId'] ?? 'rt-sukamaju-03';
+        targetRtId = user?['rtId'];
       }
-      final response = await _getWithFallback('/wilayah/rt/$targetRtId/warga', token: token);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data is Map<String, dynamic>) return data;
+      if (targetRtId != null && targetRtId.isNotEmpty) {
+        final response = await _getWithFallback('/wilayah/rt/$targetRtId/warga', token: token);
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          if (data is Map<String, dynamic>) return data;
+        }
       }
     } catch (_) {}
 

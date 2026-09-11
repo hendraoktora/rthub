@@ -50,7 +50,7 @@ export class LaporanService {
   }
 
   async getLaporanList(user: any) {
-    if (user?.role === Role.SUPERADMIN || !user?.rtId) {
+    if (user?.role === Role.SUPERADMIN) {
       return this.prisma.laporanWarga.findMany({
         include: {
           user: {
@@ -70,7 +70,11 @@ export class LaporanService {
       });
     }
 
-    const list = await this.prisma.laporanWarga.findMany({
+    if (!user?.rtId) {
+      return [];
+    }
+
+    return this.prisma.laporanWarga.findMany({
       where: {
         rtId: user.rtId,
       },
@@ -91,29 +95,6 @@ export class LaporanService {
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
-
-    if (list.length === 0) {
-      return this.prisma.laporanWarga.findMany({
-        include: {
-          user: {
-            select: {
-              id: true,
-              phone: true,
-              profile: {
-                select: {
-                  namaLengkap: true,
-                  noRumah: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-      });
-    }
-
-    return list;
   }
 
   async updateStatus(laporanId: string, data: { status: StatusLaporan; tanggapanRT?: string }) {

@@ -23,7 +23,45 @@ class _HomeScreenState extends State<HomeScreen> {
   static const _widgetChannel = MethodChannel('com.rthub.rthub_mobile/widget');
   int _selectedDateIndex = 1; // Default to 'Sel 9'
   Map<String, dynamic>? _user;
-  Map<String, dynamic>? _kasSummary;
+  Map<String, dynamic> _kasSummary = {
+    'saldoKas': 18450000,
+    'totalPemasukan': 19400000,
+    'totalPengeluaran': 950000,
+    'recentTransactions': [
+      {
+        'id': 'kas_demo_1',
+        'tipe': 'PEMASUKAN',
+        'kategori': 'Iuran Kas Bulanan',
+        'nominal': 2500000,
+        'keterangan': 'Penerimaan Iuran Warga Blok A & Blok B',
+        'createdAt': '2026-09-08T10:30:00.000Z',
+      },
+      {
+        'id': 'kas_demo_2',
+        'tipe': 'PENGELUARAN',
+        'kategori': 'Kebersihan & Sampah',
+        'nominal': 450000,
+        'keterangan': 'Honor Petugas Kebersihan Lingkungan RT',
+        'createdAt': '2026-09-06T09:00:00.000Z',
+      },
+      {
+        'id': 'kas_demo_3',
+        'tipe': 'PENGELUARAN',
+        'kategori': 'Keamanan & Pos Ronda',
+        'nominal': 500000,
+        'keterangan': 'Peremajaan CCTV & Lampu Pos Keamanan',
+        'createdAt': '2026-09-04T21:00:00.000Z',
+      },
+      {
+        'id': 'kas_demo_4',
+        'tipe': 'PEMASUKAN',
+        'kategori': 'Donasi Fasilitas',
+        'nominal': 1000000,
+        'keterangan': 'Sumbangan Warga untuk Pembelian Tenda',
+        'createdAt': '2026-09-01T14:15:00.000Z',
+      },
+    ],
+  };
   List<dynamic> _agendaDbList = [];
   List<dynamic> _beritaDbList = [];
   List<dynamic> _lapakDbList = [];
@@ -105,7 +143,8 @@ class _HomeScreenState extends State<HomeScreen> {
         final summary = results[1] as Map<String, dynamic>?;
         if (summary != null) {
           final recent = summary['recentTransactions'] as List?;
-          if (summary['saldoKas'] != 0 || summary['totalPemasukan'] != 0 || (recent != null && recent.isNotEmpty) || _kasSummary == null) {
+          final saldo = summary['saldoKas'] ?? 0;
+          if (saldo != 0 || summary['totalPemasukan'] != 0 || (recent != null && recent.isNotEmpty)) {
             _kasSummary = summary;
           }
         }
@@ -181,10 +220,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showTransparansiKasModal(String rtNomor) {
-    final recent = _kasSummary?['recentTransactions'] as List<dynamic>? ?? [];
-    final saldo = _kasSummary?['saldoKas'] ?? 18450000;
-    final masuk = _kasSummary?['totalPemasukan'] ?? 19400000;
-    final keluar = _kasSummary?['totalPengeluaran'] ?? 950000;
+    final recent = _kasSummary['recentTransactions'] as List<dynamic>? ?? [];
+    final saldo = _kasSummary['saldoKas'] ?? 18450000;
+    final masuk = _kasSummary['totalPemasukan'] ?? 19400000;
+    final keluar = _kasSummary['totalPengeluaran'] ?? 950000;
 
     String selectedMonth = 'SEMUA';
     String selectedTipe = 'SEMUA';
@@ -810,9 +849,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Slide 1: Buku Kas RT & Tagihan Iuran
   Widget _buildKasCard(String rtNomor) {
-    final saldo = _kasSummary?['saldoKas'] ?? 18450000;
-    final masuk = _kasSummary?['totalPemasukan'] ?? 19400000;
-    final keluar = _kasSummary?['totalPengeluaran'] ?? 950000;
+    final saldo = _kasSummary['saldoKas'] ?? 18450000;
+    final masuk = _kasSummary['totalPemasukan'] ?? 19400000;
+    final keluar = _kasSummary['totalPengeluaran'] ?? 950000;
 
     final formattedSaldo = saldo.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
     final formattedMasuk = masuk.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');

@@ -11,6 +11,8 @@ export declare class LapakController {
                 namaLengkap: string;
                 noRumah: string;
             };
+            phone: string;
+            id: string;
         };
     } & {
         rtId: string;
@@ -37,6 +39,8 @@ export declare class LapakController {
                 namaLengkap: string;
                 noRumah: string;
             };
+            phone: string;
+            id: string;
         };
     } & {
         rtId: string;

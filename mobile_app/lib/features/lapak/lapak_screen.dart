@@ -517,20 +517,30 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
     );
   }
 
+  bool _isMyProduct(dynamic item) {
+    if (item == null) return false;
+    if (item['isOwner'] == true) return true;
+
+    final currentUserId = _user?['id']?.toString();
+    final userPhone = (_user?['phone'] ?? '').toString().trim();
+    final userName = (_user?['profile']?['namaLengkap'] ?? '').toString().trim().toLowerCase();
+
+    final itemSellerId = (item['sellerId'] ?? item['createdById'])?.toString();
+    final itemPhone = (item['kontakWa'] ?? '').toString().trim();
+    final itemSellerName = (item['seller']?['profile']?['namaLengkap'] ?? item['sellerName'] ?? '').toString().trim().toLowerCase();
+
+    if (currentUserId != null && itemSellerId != null && currentUserId == itemSellerId) return true;
+    if (userPhone.isNotEmpty && itemPhone.isNotEmpty && (itemPhone == userPhone || itemPhone.endsWith(userPhone) || userPhone.endsWith(itemPhone))) return true;
+    if (userName.isNotEmpty && itemSellerName.isNotEmpty && itemSellerName == userName) return true;
+    if (itemSellerName == 'saya') return true;
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currentUserId = _user?['id'];
-    final userPhone = _user?['phone'] ?? '';
-    final userRole = _user?['role']?.toString().toUpperCase() ?? 'WARGA';
-    final isPengurus = userRole == 'ADMIN_RT' || userRole == 'KETUA_RT' || userRole == 'SUPERADMIN' || userRole == 'BENDAHARA_RT';
-
-    // Filter my products (products matching sellerId, user phone, or seller name)
-    final myProducts = _lapakList.where((item) {
-      if (item['sellerId'] == currentUserId && currentUserId != null) return true;
-      if (item['kontakWa'] == userPhone && userPhone.isNotEmpty) return true;
-      if (item['seller']?['profile']?['namaLengkap'] == _user?['profile']?['namaLengkap'] && _user?['profile']?['namaLengkap'] != null) return true;
-      return false;
-    }).toList();
+    // Filter strictly user's own products
+    final myProducts = _lapakList.where((item) => _isMyProduct(item)).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -577,17 +587,17 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showFormProdukModal(),
         backgroundColor: AppTheme.primaryNavy,
-        icon: const Icon(Icons.add_business_rounded, color: Colors.white),
-        label: const Text('+ Pasang Produk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.campaign_rounded, color: Colors.white),
+        label: const Text('+ Pasang Iklan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(
         child: TabBarView(
           controller: _tabController,
           children: [
             // TAB 1: SEMUA PRODUK WARGA
-            _buildAllLapakTab(currentUserId, isPengurus),
+            _buildAllLapakTab(),
 
-            // TAB 2: LAPAK SAYA (MANAGE MY PRODUCTS)
+            // TAB 2: LAPAK SAYA (MANAGE MY PRODUCTS & IKLAN)
             _buildMyLapakTab(myProducts),
           ],
         ),
@@ -595,7 +605,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildAllLapakTab(dynamic currentUserId, bool isPengurus) {
+  Widget _buildAllLapakTab() {
     return RefreshIndicator(
       onRefresh: _loadLapakFromDb,
       child: _isLoading && _lapakList.isEmpty
@@ -611,7 +621,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                   itemCount: _lapakList.length,
                   itemBuilder: (context, index) {
                     final item = _lapakList[index];
-                    final isOwner = item['sellerId'] == currentUserId || isPengurus;
+                    final isOwner = _isMyProduct(item);
                     return _buildProductCard(item, isOwner: isOwner);
                   },
                 ),
@@ -625,7 +635,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
-          // Banner Lapak Saya
+          // Banner Lapak Saya with "Buat Iklan" button
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -643,31 +653,52 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 24),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Kelola Lapak & Iklan Jualan Saya',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Total ${myProducts.length} produk & iklan Anda sedang aktif tayang ke seluruh warga lingkungan.',
+                            style: const TextStyle(color: Colors.white70, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Kelola Lapak & Jualan Saya',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Total ${myProducts.length} produk jualan Anda sedang aktif tayang ke seluruh warga lingkungan.',
-                        style: const TextStyle(color: Colors.white70, fontSize: 11),
-                      ),
-                    ],
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showFormProdukModal(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF0F766E),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFF0F766E)),
+                    label: const Text('📢 Buat Iklan / Tambah Produk Jualan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
                   ),
                 ),
               ],
@@ -678,7 +709,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
           if (myProducts.isEmpty)
             _buildEmptyLapakView(
               title: 'Lapak Anda Masih Kosong',
-              subtitle: 'Pasang jualan makanan, sembako, atau jasa Anda sekarang agar tetangga bisa langsung order via WhatsApp.',
+              subtitle: 'Pasang iklan jualan makanan, sembako, atau jasa Anda sekarang agar tetangga bisa langsung order via WhatsApp.',
             )
           else
             ...myProducts.map((item) => _buildMyProductManagementCard(item)),

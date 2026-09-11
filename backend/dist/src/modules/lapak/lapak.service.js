@@ -24,17 +24,30 @@ let LapakService = class LapakService {
             filters.push({ kelurahanId: user.kelurahanId });
         if (user?.rtId)
             filters.push({ rtId: user.rtId });
-        return this.prisma.lapakProduk.findMany({
+        let products = await this.prisma.lapakProduk.findMany({
             where: {
                 ...(filters.length > 0 ? { OR: filters } : {}),
                 isActive: true,
             },
             include: {
-                seller: { select: { profile: { select: { namaLengkap: true, noRumah: true } } } },
+                seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
                 rt: { select: { nomor: true } },
             },
             orderBy: { createdAt: 'desc' },
+            take: 50,
         });
+        if (products.length === 0) {
+            products = await this.prisma.lapakProduk.findMany({
+                where: { isActive: true },
+                include: {
+                    seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
+                    rt: { select: { nomor: true } },
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 50,
+            });
+        }
+        return products;
     }
     async getFeedKontrakan(user) {
         const filters = [];

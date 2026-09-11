@@ -11,6 +11,8 @@ export declare class LapakService {
                 namaLengkap: string;
                 noRumah: string;
             };
+            phone: string;
+            id: string;
         };
     } & {
         rtId: string;

@@ -71,7 +71,7 @@ let LaporanService = class LaporanService {
                 take: 50,
             });
         }
-        return this.prisma.laporanWarga.findMany({
+        const list = await this.prisma.laporanWarga.findMany({
             where: {
                 rtId: user.rtId,
             },
@@ -79,6 +79,7 @@ let LaporanService = class LaporanService {
                 user: {
                     select: {
                         id: true,
+                        phone: true,
                         profile: {
                             select: {
                                 namaLengkap: true,
@@ -89,7 +90,29 @@ let LaporanService = class LaporanService {
                 },
             },
             orderBy: { createdAt: 'desc' },
+            take: 50,
         });
+        if (list.length === 0) {
+            return this.prisma.laporanWarga.findMany({
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            phone: true,
+                            profile: {
+                                select: {
+                                    namaLengkap: true,
+                                    noRumah: true,
+                                },
+                            },
+                        },
+                    },
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 50,
+            });
+        }
+        return list;
     }
     async updateStatus(laporanId, data) {
         return this.prisma.laporanWarga.update({

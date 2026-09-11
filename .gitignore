@@ -23,6 +23,7 @@ android/local.properties
 ios/Pods/
 ios/.symlinks/
 *.apk
+!admin_web/public/*.apk
 *.aab
 
 # OS

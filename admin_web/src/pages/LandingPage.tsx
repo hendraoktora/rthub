@@ -1,24 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
+  Building2, 
+  ArrowRight, 
+  Download, 
+  CheckCircle2, 
   ShieldAlert, 
   Wallet, 
   ShoppingBag, 
   Video, 
   Calendar, 
   Users, 
-  Download, 
-  ArrowRight, 
-  CheckCircle2, 
-  Smartphone, 
-  LayoutDashboard, 
-  Building2, 
-  Bell, 
   QrCode, 
-  Clock, 
-  Lock,
-  ChevronRight,
+  PhoneCall, 
+  ChevronDown, 
+  ChevronUp, 
+  MessageSquare, 
+  Bell, 
+  Home, 
+  Eye, 
+  FileText, 
   Sparkles,
-  ExternalLink
+  Check,
+  X,
+  Smartphone,
+  LayoutDashboard,
+  ShieldCheck
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -26,392 +32,628 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [activePreviewTab, setActivePreviewTab] = useState<'warga' | 'pengurus'>('warga');
+
+  const toggleFaq = (index: number) => {
+    setOpenFaq(openFaq === index ? null : index);
+  };
+
+  const faqs = [
+    {
+      q: 'Apakah warga yang tidak memiliki smartphone tetap bisa terdata?',
+      a: 'Tentu bisa. Pengurus RT dapat mencatat data warga secara manual melalui Dashboard Admin Web. Ketika warga tersebut membayar tunai ke bendahara, bendahara cukup mencatatnya di sistem dan kuitansi pembayaran tetap tercatat rapi.'
+    },
+    {
+      q: 'Apakah besaran iuran RT bisa diatur berbeda per tipe rumah atau blok?',
+      a: 'Bisa. Bendahara RT dapat mengatur kategori iuran (Iuran Wajib RT, Kebersihan/Sampah, Keamanan Pos Satpam) dan menentukan tarif khusus sesuai tipe rumah (misal: rumah tinggal, tempat usaha, atau rumah kosong).'
+    },
+    {
+      q: 'Bagaimana cara warga mengunduh dan masuk ke aplikasi?',
+      a: 'Warga cukup mengunduh file APK Android yang tersedia di halaman ini, lalu masuk menggunakan nomor WhatsApp yang telah terdaftar di database pengurus RT. Tidak perlu mengingat password yang rumit.'
+    },
+    {
+      q: 'Bagaimana keamanan data pribadi warga di platform RtHub?',
+      a: 'Data warga terenkripsi dan hanya dapat diakses oleh pengurus RT yang berwenang serta warga di lingkungan yang bersangkutan. Kami tidak membagikan data warga ke pihak ketiga mana pun.'
+    },
+    {
+      q: 'Apakah bisa digunakan untuk perumahan cluster, kompleks, maupun RT perkampungan?',
+      a: 'Sangat cocok untuk semua jenis lingkungan! Fitur RtHub dirancang fleksibel untuk perumahan cluster tertutup dengan pos satpam, perumahan subsidi, maupun lingkungan RT/RW perkampungan.'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-blue-600 selection:text-white font-sans antialiased overflow-x-hidden">
-      {/* 1. Header / Navbar */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/80">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-['Plus_Jakarta_Sans',sans-serif] selection:bg-blue-600 selection:text-white antialiased">
+      
+      {/* 1. TOP ANNOUNCEMENT BANNER */}
+      <div className="bg-blue-600 text-white text-xs font-semibold py-2.5 px-4 text-center">
+        <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
+          <span className="bg-blue-700 text-blue-100 text-[10px] uppercase font-extrabold px-2 py-0.5 rounded">Rilis Terbaru</span>
+          <span>Aplikasi RtHub Android v2.0 kini sudah tersedia untuk seluruh warga & pengurus RT!</span>
+          <a href="#download" className="underline font-bold hover:text-blue-100 ml-1">Unduh APK Sekarang &rarr;</a>
+        </div>
+      </div>
+
+      {/* 2. NAVBAR */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/25">
-              <Building2 className="text-white" size={24} />
+          {/* Logo */}
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-xl shadow-md shadow-blue-500/20">
+              Rt
             </div>
             <div>
-              <span className="text-2xl font-black tracking-tight text-white flex items-center gap-1.5">
-                Rt<span className="text-blue-500">Hub</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold border border-blue-500/30">v2.0</span>
+              <span className="text-xl font-extrabold tracking-tight text-slate-900">
+                Rt<span className="text-blue-600">Hub</span>
               </span>
-              <p className="text-[10px] font-medium text-slate-400 tracking-wider uppercase">Smart Community Platform</p>
+              <p className="text-[10px] font-medium text-slate-500 -mt-0.5">Aplikasi Pengurus & Warga RT/RW</p>
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
-            <a href="#fitur" className="hover:text-blue-400 transition-colors">Fitur Unggulan</a>
-            <a href="#ekosistem" className="hover:text-blue-400 transition-colors">Aplikasi Warga & Web Admin</a>
-            <a href="#keamanan" className="hover:text-blue-400 transition-colors">Keamanan</a>
-            <a href="#download" className="hover:text-blue-400 transition-colors">Download APK</a>
+          {/* Navigation links */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+            <a href="#fitur" className="hover:text-blue-600 transition-colors">Fitur Unggulan</a>
+            <a href="#perbandingan" className="hover:text-blue-600 transition-colors">Kenapa RtHub?</a>
+            <a href="#cara-kerja" className="hover:text-blue-600 transition-colors">Cara Kerja</a>
+            <a href="#testimoni" className="hover:text-blue-600 transition-colors">Testimoni</a>
+            <a href="#faq" className="hover:text-blue-600 transition-colors">Tanya Jawab</a>
           </nav>
 
+          {/* Right Action */}
           <div className="flex items-center gap-3">
             <button
               onClick={onGoToLogin}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all flex items-center gap-2 group"
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shadow-sm transition-all flex items-center gap-2"
             >
-              <span>Login Pengurus</span>
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              <LayoutDashboard size={16} />
+              <span>Login Pengurus RT</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* 2. Hero Section */}
-      <section className="relative pt-12 pb-24 lg:pt-20 lg:pb-32 overflow-hidden">
-        {/* Ambient Glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[140px] pointer-events-none" />
-        <div className="absolute top-1/3 right-10 w-[400px] h-[400px] bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold mb-8 animate-pulse">
-            <Sparkles size={14} />
-            <span>Platform Digitalisasi RT & RW #1 Terlengkap & Terintegrasi</span>
-          </div>
-
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white max-w-4xl mx-auto leading-[1.15]">
-            Kelola Kas, Iuran & Keamanan Lingkungan Jadi <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-400">Transparan</span>
-          </h1>
-
-          <p className="mt-6 text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
-            Satu ekosistem cerdas untuk menghubungkan <strong>Warga</strong> dan <strong>Pengurus RT/RW</strong>. Bebas ribet catat buku manual, tagihan terbit otomatis, dan respons darurat dalam hitungan detik.
-          </p>
-
-          {/* CTA Group */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="/RTHub-Latest-Release.apk"
-              download
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-base shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95"
-            >
-              <Download size={20} />
-              <span>Download APK Warga (Android)</span>
-            </a>
-
-            <button
-              onClick={onGoToLogin}
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-base flex items-center justify-center gap-3 transition-all hover:border-slate-500"
-            >
-              <LayoutDashboard size={20} className="text-blue-400" />
-              <span>Portal Admin Web Pengurus</span>
-            </button>
-          </div>
-
-          {/* Highlights Mini Badge */}
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs font-semibold text-slate-400">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-emerald-400" />
-              <span>Buku Kas 100% Terbuka Real-Time</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-emerald-400" />
-              <span>Panic Button Siskamling Satpam</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-emerald-400" />
-              <span>Tagihan QRIS & Pengingat WA</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Hero Interactive Preview Showcase */}
-        <div className="mt-16 max-w-5xl mx-auto px-4">
-          <div className="relative rounded-3xl bg-slate-900/90 border border-slate-800 p-4 sm:p-6 shadow-2xl shadow-blue-950/50 backdrop-blur-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                <span className="ml-2 font-mono text-[11px] text-slate-500">app.rthub.hendraoktora.com</span>
-              </div>
-              <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full font-bold text-[10px]">
-                ● Live Production Server Active
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
-              {/* Card 1: Kas */}
-              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800/80 space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400 font-medium">Buku Kas RT 03/05</span>
-                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-bold">✓ LUNAS</span>
-                </div>
-                <p className="text-2xl font-black text-emerald-400">Rp 38.450.000</p>
-                <div className="text-[11px] text-slate-400 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Pemasukan Sep 2026:</span>
-                    <span className="text-white font-semibold">+Rp 6.850.000</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Pengeluaran Operasional:</span>
-                    <span className="text-rose-400 font-semibold">-Rp 1.400.000</span>
-                  </div>
-                </div>
+      {/* 3. HERO SECTION */}
+      <section className="pt-12 pb-20 lg:pt-20 lg:pb-28 overflow-hidden bg-gradient-to-b from-blue-50/50 via-white to-slate-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            {/* Left Content */}
+            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/80 border border-blue-200 text-blue-700 text-xs font-bold">
+                <Sparkles size={14} />
+                <span>Solusi Cerdas & Transparan Lingkungan Warga</span>
               </div>
 
-              {/* Card 2: Panic Button */}
-              <div className="bg-gradient-to-br from-red-950/40 to-slate-950 p-5 rounded-2xl border border-red-900/30 space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-red-400 font-bold flex items-center gap-1.5">
-                    <ShieldAlert size={16} /> Panic Button Darurat
-                  </span>
-                  <span className="px-2 py-0.5 bg-red-500/20 text-red-300 rounded-full text-[10px] font-bold animate-pulse">24/7 Siaga</span>
-                </div>
-                <p className="text-xs text-slate-300">
-                  Siaran darurat maling, kebakaran, atau medis langsung berbunyi keras di pos satpam & HP seluruh pengurus.
-                </p>
-                <div className="p-2.5 rounded-xl bg-red-900/30 border border-red-700/40 text-[11px] text-red-200 font-bold flex items-center justify-between">
-                  <span>🚨 Respon Satpam Siaga</span>
-                  <span>&lt; 30 Detik</span>
-                </div>
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.15]">
+                Kelola Kas, Iuran & Keamanan RT Jadi <span className="text-blue-600">Terbuka & Praktis.</span>
+              </h1>
+
+              <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                Tidak ada lagi buku kas manual yang tercecer dan tagih iuran door-to-door. Warga bisa bayar iuran via <strong>QRIS/Transfer</strong>, pantau saldo kas real-time dari HP, dan aktifkan <strong>Tombol Panik Darurat</strong> ke pos satpam dalam satu aplikasi.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                <a
+                  href="/RTHub-Latest-Release.apk"
+                  download
+                  className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-600/25 flex items-center justify-center gap-3 transition-transform hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <Download size={20} />
+                  <span>Download APK Warga (Android)</span>
+                </a>
+
+                <button
+                  onClick={onGoToLogin}
+                  className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-800 border-2 border-slate-200 font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition"
+                >
+                  <span>Masuk Web Pengurus</span>
+                  <ArrowRight size={18} />
+                </button>
               </div>
 
-              {/* Card 3: Lapak Warga */}
-              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800/80 space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400 font-medium">Lapak UMKM Warga</span>
-                  <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-bold">Pesan via WA</span>
+              {/* Trust Indicators */}
+              <div className="pt-6 border-t border-slate-200 grid grid-cols-3 gap-4 text-left">
+                <div>
+                  <p className="text-2xl font-black text-slate-900">100%</p>
+                  <p className="text-xs font-medium text-slate-500">Transparansi Buku Kas</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-400 font-black">
-                    🛍️
-                  </div>
-                  <div>
-                    <h5 className="text-sm font-bold text-white">Nasi Uduk Betawi Mpok Siti</h5>
-                    <p className="text-xs text-emerald-400 font-bold">Rp 15.000 • Blok C3/04</p>
-                  </div>
+                <div>
+                  <p className="text-2xl font-black text-slate-900">&lt; 30 Detik</p>
+                  <p className="text-xs font-medium text-slate-500">Respon Tombol Panik</p>
                 </div>
-                <div className="p-2 rounded-xl bg-slate-900 text-[11px] text-slate-400 flex items-center justify-between">
-                  <span>Pesan langsung diantar ke rumah</span>
-                  <span className="text-emerald-400 font-bold">✓ Ready</span>
+                <div>
+                  <p className="text-2xl font-black text-slate-900">Otomatis</p>
+                  <p className="text-xs font-medium text-slate-500">Pengingat Iuran via WA</p>
                 </div>
               </div>
             </div>
+
+            {/* Right Interactive Preview */}
+            <div className="lg:col-span-5">
+              <div className="relative mx-auto max-w-sm sm:max-w-md bg-white rounded-3xl p-5 border-2 border-slate-200 shadow-2xl">
+                
+                {/* Switcher Tab */}
+                <div className="flex bg-slate-100 p-1 rounded-xl mb-4 text-xs font-bold text-slate-600">
+                  <button
+                    onClick={() => setActivePreviewTab('warga')}
+                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1.5 ${
+                      activePreviewTab === 'warga' ? 'bg-white text-blue-700 shadow-sm' : 'hover:text-slate-900'
+                    }`}
+                  >
+                    <Smartphone size={14} />
+                    Tampilan Warga
+                  </button>
+                  <button
+                    onClick={() => setActivePreviewTab('pengurus')}
+                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1.5 ${
+                      activePreviewTab === 'pengurus' ? 'bg-white text-blue-700 shadow-sm' : 'hover:text-slate-900'
+                    }`}
+                  >
+                    <LayoutDashboard size={14} />
+                    Tampilan Pengurus
+                  </button>
+                </div>
+
+                {activePreviewTab === 'warga' ? (
+                  /* Mobile Preview Card */
+                  <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-left">
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                      <div>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase">Lingkungan Anda</p>
+                        <p className="text-sm font-extrabold text-slate-900">RT 03 / RW 05 (Sukamaju Asri)</p>
+                      </div>
+                      <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
+                        ✓ Warga Terdaftar
+                      </span>
+                    </div>
+
+                    {/* Saldo Kas */}
+                    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-4 rounded-2xl text-white space-y-2 shadow-md">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-blue-100 font-medium">Kas RT 03 Terbuka</span>
+                        <span className="px-2 py-0.5 bg-emerald-400/20 text-emerald-300 font-bold rounded text-[10px]">
+                          ✓ LUNAS (Sep 2026)
+                        </span>
+                      </div>
+                      <p className="text-2xl font-black">Rp 38.450.000</p>
+                      <p className="text-[11px] text-blue-100">
+                        Tagihan Anda bulan ini: <strong>Lunas Rp 50.000</strong> (Termasuk Sampah & Keamanan)
+                      </p>
+                    </div>
+
+                    {/* Menu Grid Icons */}
+                    <div className="grid grid-cols-4 gap-2 pt-1 text-center text-[10px] font-bold text-slate-700">
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 mx-auto flex items-center justify-center mb-1">
+                          <Wallet size={16} />
+                        </div>
+                        <span>Iuran RT</span>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center mb-1">
+                          <ShoppingBag size={16} />
+                        </div>
+                        <span>Lapak</span>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 mx-auto flex items-center justify-center mb-1">
+                          <Calendar size={16} />
+                        </div>
+                        <span>Agenda</span>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 mx-auto flex items-center justify-center mb-1">
+                          <Video size={16} />
+                        </div>
+                        <span>CCTV</span>
+                      </div>
+                    </div>
+
+                    {/* Floating Panic Preview */}
+                    <div className="bg-red-50 border border-red-200 p-3 rounded-xl flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center">
+                          <ShieldAlert size={18} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-red-900">Tombol Panik Satpam</p>
+                          <p className="text-[10px] text-red-700">Sirene ke pos ronda 24 jam</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-black text-red-700 bg-red-200/60 px-2 py-1 rounded-lg">SIAGA</span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Admin Preview Card */
+                  <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-left">
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                      <div>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase">Dashboard Pengurus</p>
+                        <p className="text-sm font-extrabold text-slate-900">Ringkasan Kas & Rekap Iuran</p>
+                      </div>
+                      <span className="px-2.5 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">
+                        Admin RT Aktif
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Iuran Terkumpul Bulan Ini:</span>
+                        <span className="font-extrabold text-emerald-600">Rp 6.850.000</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                        <div className="bg-emerald-500 h-full rounded-full" style={{ width: '85%' }}></div>
+                      </div>
+                      <p className="text-[10px] text-slate-400">11 dari 13 KK telah lunas (85%)</p>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs">
+                      <p className="text-[11px] font-bold text-slate-600">Aksi Cepat Pengurus:</p>
+                      <div className="p-2 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
+                        <span className="font-medium text-slate-700">Catat Kas Masuk / Keluar</span>
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">+ Tambah</span>
+                      </div>
+                      <div className="p-2 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
+                        <span className="font-medium text-slate-700">Kirim Pengingat Iuran WhatsApp</span>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">1-Klik WA</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* 3. Core Features Showcase Grid */}
-      <section id="fitur" className="py-24 bg-slate-900/60 border-y border-slate-800/80">
+      {/* 4. KENAPA HARUS BERALIH KE RTHUB? (Problem vs Solution) */}
+      <section id="perbandingan" className="py-20 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-xs font-black uppercase tracking-widest text-blue-400 mb-2">Fitur Terlengkap</h2>
-            <h3 className="text-3xl sm:text-4xl font-extrabold text-white">Semua Kebutuhan Rukun Tetangga Dalam 1 Aplikasi</h3>
-            <p className="mt-4 text-slate-400 text-sm sm:text-base">
-              Dirancang khusus untuk menyesuaikan alur kerja kepengurusan RT/RW di Indonesia, mulai dari penagihan iuran hingga sistem keamanan terpadu.
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-blue-600 mb-2">Mengapa Beralih ke RtHub?</h2>
+            <h3 className="text-2xl sm:text-4xl font-black text-slate-900">Perbedaan Cara Lama vs Cara Modern RtHub</h3>
+            <p className="mt-3 text-slate-600 text-sm sm:text-base">
+              Bandingkan repotnya administrasi cara manual dengan kemudahan platform digital terintegrasi RtHub.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            
+            {/* Cara Lama (Merah) */}
+            <div className="bg-rose-50/60 border-2 border-rose-200 rounded-3xl p-6 sm:p-8 space-y-4">
+              <div className="flex items-center gap-3 text-rose-800 pb-3 border-b border-rose-200">
+                <div className="w-10 h-10 rounded-xl bg-rose-200/80 flex items-center justify-center font-bold text-rose-800">
+                  <X size={20} />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-base sm:text-lg">Cara Manual / Tradisional</h4>
+                  <p className="text-xs text-rose-600">Banyak kendala & rawan salah paham</p>
+                </div>
+              </div>
+
+              <ul className="space-y-3.5 text-sm text-rose-950">
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 font-bold shrink-0">✕</span>
+                  <span>Pengurus harus keliling dari rumah ke rumah untuk menagih iuran warga.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 font-bold shrink-0">✕</span>
+                  <span>Catatan kas di buku tulis rawan hilang, basah, atau kuitansi terselip.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 font-bold shrink-0">✕</span>
+                  <span>Warga ragu atau tidak tahu transparansi penggunaan dana kas lingkungan.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 font-bold shrink-0">✕</span>
+                  <span>Keadaan darurat di malam hari sulit mengabari pos satpam dan tetangga cepat.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Cara Modern RtHub (Hijau/Biru) */}
+            <div className="bg-blue-50/60 border-2 border-blue-300 rounded-3xl p-6 sm:p-8 space-y-4 shadow-md">
+              <div className="flex items-center gap-3 text-blue-900 pb-3 border-b border-blue-200">
+                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
+                  <Check size={20} />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-base sm:text-lg">Dengan Platform RtHub</h4>
+                  <p className="text-xs text-blue-700">Transparan, otomatis & warga merasa aman</p>
+                </div>
+              </div>
+
+              <ul className="space-y-3.5 text-sm text-slate-800">
+                <li className="flex items-start gap-2.5">
+                  <span className="text-emerald-600 font-bold shrink-0">✓</span>
+                  <span>Warga bayar mandiri lewat QRIS / VA Transfer bank, bukti bayar digital terbit instan.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-emerald-600 font-bold shrink-0">✓</span>
+                  <span>Buku kas tercatat otomatis, saldo & mutasi dapat dilihat seluruh warga kapan saja.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-emerald-600 font-bold shrink-0">✓</span>
+                  <span>Transparansi 100% membangun rasa saling percaya antar warga dan pengurus RT.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-emerald-600 font-bold shrink-0">✓</span>
+                  <span>Tombol panik darurat melayang di HP warga langsung siaga ke pos siskamling & pengurus.</span>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* 5. 6 FITUR UTAMA LINGKUNGAN */}
+      <section id="fitur" className="py-20 bg-slate-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-blue-600 mb-2">Fitur Terlengkap</h2>
+            <h3 className="text-2xl sm:text-4xl font-black text-slate-900">Segala Urusan RT Ada Dalam Satu Genggaman</h3>
+            <p className="mt-3 text-slate-600 text-sm sm:text-base">
+              Mulai dari urusan keuangan, keamanan siskamling, hingga ekonomi warga RT.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
             {/* Feature 1 */}
-            <div className="p-8 rounded-3xl bg-slate-950 border border-slate-800 hover:border-blue-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all">
+            <div className="bg-white p-7 rounded-3xl border border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                 <Wallet size={24} />
               </div>
-              <h4 className="text-lg font-bold text-white mb-2">Buku Kas Terbuka & Otomatis</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Setiap rupiah yang masuk dan keluar tercatat dengan detail tanggal, kategori, dan bukti transaksi. Warga dapat melihat saldo kas RT secara real-time.
+              <h4 className="text-lg font-bold text-slate-900">Buku Kas & Transparansi</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Pencatatan pemasukan dan pengeluaran kas RT lengkap dengan tanggal, kategori, dan foto bukti kuitansi. Warga bisa mengecek saldo secara real-time.
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="p-8 rounded-3xl bg-slate-950 border border-slate-800 hover:border-red-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-2xl bg-red-600/20 text-red-400 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-red-600 group-hover:text-white transition-all">
+            <div className="bg-white p-7 rounded-3xl border border-slate-200 hover:border-red-500 hover:shadow-lg transition-all space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
                 <ShieldAlert size={24} />
               </div>
-              <h4 className="text-lg font-bold text-white mb-2">Tombol Panik & Siskamling</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Tombol panik darurat melayang di layar aplikasi warga. Memicu sirene instan ke pos satpam lengkap dengan nama, nomor rumah, dan titik lokasi.
+              <h4 className="text-lg font-bold text-slate-900">Tombol Panik & Siskamling</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Tombol darurat yang selalu siaga di layar HP warga. Bila terjadi kebakaran, bahaya maling, atau darurat medis, sirene langsung membunyikan pos satpam.
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="p-8 rounded-3xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+            <div className="bg-white p-7 rounded-3xl border border-slate-200 hover:border-emerald-500 hover:shadow-lg transition-all space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                 <QrCode size={24} />
               </div>
-              <h4 className="text-lg font-bold text-white mb-2">Iuran Digital QRIS & VA</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Warga membayar tagihan iuran sampah, keamanan, dan kas RT lewat QRIS / Virtual Account BCA & Mandiri, atau setor tunai dengan kuitansi otomatis.
+              <h4 className="text-lg font-bold text-slate-900">Iuran Digital QRIS & VA</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Warga membayar iuran bulanan tanpa uang pas. Cukup scan QRIS atau transfer rekening. Sistem otomatis menerbitkan tanda lunas.
               </p>
             </div>
 
             {/* Feature 4 */}
-            <div className="p-8 rounded-3xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-2xl bg-purple-600/20 text-purple-400 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all">
+            <div className="bg-white p-7 rounded-3xl border border-slate-200 hover:border-purple-500 hover:shadow-lg transition-all space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
                 <ShoppingBag size={24} />
               </div>
-              <h4 className="text-lg font-bold text-white mb-2">Lapak UMKM Warga</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Dorong ekonomi sirkular warga lingkungan. Warga dapat memasang produk jualan dan menerima pesanan langsung melalui WhatsApp secara instan.
+              <h4 className="text-lg font-bold text-slate-900">Lapak Warga & UMKM</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Wadah promosi kuliner, jajanan, dan jasa antar-tetangga di dalam perumahan. Pembeli bisa langsung memesan via WhatsApp penjual.
               </p>
             </div>
 
             {/* Feature 5 */}
-            <div className="p-8 rounded-3xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-cyan-600 group-hover:text-white transition-all">
+            <div className="bg-white p-7 rounded-3xl border border-slate-200 hover:border-cyan-500 hover:shadow-lg transition-all space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold">
                 <Video size={24} />
               </div>
-              <h4 className="text-lg font-bold text-white mb-2">Monitoring CCTV Lingkungan</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Pantau kamera keamanan gerbang utama, taman bermain, dan pos satpam langsung dari genggaman ponsel warga dan petugas ronda malam.
+              <h4 className="text-lg font-bold text-slate-900">Streaming CCTV Lingkungan</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Warga terdaftar dapat memantau kamera keamanan di gerbang utama, pos satpam, dan persimpangan lingkungan untuk memastikan keamanan.
               </p>
             </div>
 
             {/* Feature 6 */}
-            <div className="p-8 rounded-3xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-2xl bg-amber-600/20 text-amber-400 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-amber-600 group-hover:text-white transition-all">
+            <div className="bg-white p-7 rounded-3xl border border-slate-200 hover:border-amber-500 hover:shadow-lg transition-all space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                 <Calendar size={24} />
               </div>
-              <h4 className="text-lg font-bold text-white mb-2">Agenda Kegiatan & Laporan RT</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Kalender dinamis kegiatan kerja bakti, rapat bulanan warga, posyandu, dan formulir lapor keluhan fasilitas umum dengan foto lampiran.
+              <h4 className="text-lg font-bold text-slate-900">Agenda & Lapor Fasilitas</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Jadwal kerja bakti, posyandu, dan ronda malam. Warga juga bisa melaporkan lampu jalan mati atau tumpukan sampah cukup dengan mengunggah foto.
               </p>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* 4. Ekosistem: Mobile App vs Web Admin */}
-      <section id="ekosistem" className="py-24">
+      {/* 6. CARA KERJA (3 LANGKAH MUDAH) */}
+      <section id="cara-kerja" className="py-20 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left: Mobile App Warga */}
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold">
-                <Smartphone size={16} />
-                <span>Untuk Warga Lingkungan</span>
-              </div>
-              <h3 className="text-3xl sm:text-4xl font-black text-white">
-                Aplikasi Mobile Flutter Cepat & Ringan
-              </h3>
-              <p className="text-slate-300 text-base leading-relaxed">
-                Warga tidak perlu login berbelit-belit. Cukup masukkan nomor WhatsApp untuk mengakses semua informasi lingkungan, status iuran bulanan yang sudah lunas, kalender agenda RT mingguan, hingga pesan makanan di Lapak Warga.
-              </p>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-3 text-sm text-slate-200">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">✓</div>
-                  <span>Notifikasi Real-time tagihan iuran & status lunas</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-slate-200">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">✓</div>
-                  <span>Floating Panic Button darurat yang selalu siap ditekan</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-slate-200">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">✓</div>
-                  <span>Order langsung ke WhatsApp penjual UMKM RT</span>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <a
-                  href="/RTHub-Latest-Release.apk"
-                  download
-                  className="inline-flex items-center gap-3 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition-all"
-                >
-                  <Download size={18} />
-                  <span>Download APK (RTHub-Latest-Release.apk)</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Right: Dashboard Web Pengurus */}
-            <div className="p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold">
-                <LayoutDashboard size={16} />
-                <span>Untuk Pengurus RT, RW & Superadmin</span>
-              </div>
-              <h3 className="text-2xl sm:text-3xl font-black text-white">
-                Dashboard Web Lengkap & Kuat
-              </h3>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                Kelola data sensus KK & warga, atur besaran tarif tagihan bulanan, pencatatan kas masuk & keluar, hingga monitoring multi-wilayah RT dengan laporan terperinci.
-              </p>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-3 text-sm text-slate-300">
-                  <div className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">✓</div>
-                  <span>Pencatatan kas masuk & keluar dengan sweetalert konfirmasi</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-slate-300">
-                  <div className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">✓</div>
-                  <span>Monitoring wilayah RT interaktif (klik card untuk cek data warga & tagihan)</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-slate-300">
-                  <div className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">✓</div>
-                  <span>Pengiriman notifikasi pengingat iuran otomatis via WhatsApp</span>
-                </div>
-              </div>
-
-              <button
-                onClick={onGoToLogin}
-                className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm border border-slate-700 flex items-center justify-center gap-2 transition"
-              >
-                <span>Buka Dashboard Pengurus RT</span>
-                <ChevronRight size={16} />
-              </button>
-            </div>
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-blue-600 mb-2">Mudah Digunakan</h2>
+            <h3 className="text-2xl sm:text-4xl font-black text-slate-900">3 Langkah Cepat Memulai di Lingkungan Anda</h3>
           </div>
-        </div>
-      </section>
 
-      {/* 5. Download Section Banner */}
-      <section id="download" className="py-20 relative overflow-hidden">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-900 p-8 sm:p-14 text-center overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto relative">
             
-            <h3 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-              Mulai Digitalisasi Lingkungan RT Anda Sekarang
-            </h3>
-            <p className="mt-4 text-blue-100 text-base sm:text-lg max-w-2xl mx-auto">
-              Tingkatkan kenyamanan, transparansi, dan keamanan warga hanya dengan beberapa langkah mudah.
-            </p>
-
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="/RTHub-Latest-Release.apk"
-                download
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white text-blue-900 hover:bg-blue-50 font-black text-base shadow-xl flex items-center justify-center gap-3 transition hover:scale-105"
-              >
-                <Download size={20} className="text-blue-700" />
-                <span>Unduh File APK Android</span>
-              </a>
-
-              <button
-                onClick={onGoToLogin}
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-blue-950/60 hover:bg-blue-950 text-white border border-white/20 font-bold text-base flex items-center justify-center gap-2 transition"
-              >
-                <span>Login Pengurus RT / RW</span>
-                <ArrowRight size={18} />
-              </button>
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white font-black text-lg mx-auto flex items-center justify-center shadow-md">
+                1
+              </div>
+              <h4 className="text-lg font-bold text-slate-900">Pengurus Mendaftarkan RT</h4>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Ketua atau Sekretaris RT memasukkan data warga, nomor rumah, dan besaran tarif iuran melalui Dashboard Web.
+              </p>
             </div>
+
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white font-black text-lg mx-auto flex items-center justify-center shadow-md">
+                2
+              </div>
+              <h4 className="text-lg font-bold text-slate-900">Warga Mengunduh APK</h4>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Warga mengunduh aplikasi RtHub di smartphone Android dan langsung masuk dengan nomor WhatsApp mereka.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-black text-lg mx-auto flex items-center justify-center shadow-md">
+                3
+              </div>
+              <h4 className="text-lg font-bold text-slate-900">Lingkungan Siap & Rukun</h4>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Iuran terbayar tepat waktu, kas selalu transparan, komunikasi lancar, dan lingkungan semakin aman.
+              </p>
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* 6. Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-12 text-slate-500 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
-              R
-            </div>
-            <span className="font-bold text-slate-300">RtHub Community Platform</span>
-            <span>• Solusi Cerdas Manajemen RT/RW Modern</span>
+      {/* 7. TESTIMONI PENGURUS & WARGA */}
+      <section id="testimoni" className="py-20 bg-slate-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-blue-600 mb-2">Cerita Warga</h2>
+            <h3 className="text-2xl sm:text-4xl font-black text-slate-900">Apa Kata Pengurus & Warga yang Menggunakan RtHub?</h3>
           </div>
 
-          <p>© 2026 RtHub. All rights reserved. Made for Indonesia's RT/RW communities.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            
+            {/* Testimoni 1 */}
+            <div className="bg-white p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <p className="text-slate-700 text-sm sm:text-base leading-relaxed italic">
+                &ldquo;Dulu tiap akhir bulan bendahara kami pusing bikin laporan kas di Excel dan print kwitansi kertas. Sejak pakai RtHub, tiap ada uang masuk dan keluar langsung update di HP warga. Warga jadi jauh lebih percaya dan iuran selalu lancar.&rdquo;
+              </p>
+              <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
+                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center">
+                  HG
+                </div>
+                <div>
+                  <h5 className="text-sm font-bold text-slate-900">Bpk. Hendra Gunawan</h5>
+                  <p className="text-xs text-slate-500">Ketua RT 03 Kompleks Sukamaju Asri</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Testimoni 2 */}
+            <div className="bg-white p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <p className="text-slate-700 text-sm sm:text-base leading-relaxed italic">
+                &ldquo;Fitur yang paling saya suka itu Tombol Panik dan Lapak Warga. Mau pesan sarapan uduk atau lontong sayur buatan tetangga tinggal klik langsung masuk WhatsApp penjualnya. Guyub banget rasanya.&rdquo;
+              </p>
+              <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center">
+                  RS
+                </div>
+                <div>
+                  <h5 className="text-sm font-bold text-slate-900">Ibu Ratna Sari</h5>
+                  <p className="text-xs text-slate-500">Warga Penghuni Blok C3</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* 8. FAQ ACCORDION */}
+      <section id="faq" className="py-20 bg-white border-b border-slate-200">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-blue-600 mb-2">Pertanyaan Populer</h2>
+            <h3 className="text-2xl sm:text-4xl font-black text-slate-900">Pertanyaan yang Sering Diajukan (FAQ)</h3>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((item, idx) => (
+              <div 
+                key={idx} 
+                className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 transition"
+              >
+                <button
+                  onClick={() => toggleFaq(idx)}
+                  className="w-full p-5 text-left font-bold text-sm sm:text-base text-slate-800 flex justify-between items-center hover:bg-slate-100/80 transition"
+                >
+                  <span>{item.q}</span>
+                  {openFaq === idx ? <ChevronUp size={18} className="text-blue-600 shrink-0" /> : <ChevronDown size={18} className="text-slate-400 shrink-0" />}
+                </button>
+                {openFaq === idx && (
+                  <div className="px-5 pb-5 pt-1 text-slate-600 text-xs sm:text-sm leading-relaxed border-t border-slate-200 bg-white">
+                    {item.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 9. DOWNLOAD CTA BANNER */}
+      <section id="download" className="py-20 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 text-white relative overflow-hidden">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+          <h3 className="text-3xl sm:text-5xl font-black tracking-tight">
+            Mulai Digitalisasi Lingkungan RT Anda Hari Ini
+          </h3>
+          <p className="text-blue-100 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+            Tingkatkan kenyamanan, transparansi keuangan, dan keamanan warga Anda bersama platform pintar RtHub.
+          </p>
+
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href="/RTHub-Latest-Release.apk"
+              download
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white text-blue-900 hover:bg-blue-50 font-black text-sm sm:text-base shadow-xl flex items-center justify-center gap-3 transition hover:scale-105"
+            >
+              <Download size={20} className="text-blue-700" />
+              <span>Unduh File APK Android (Warga)</span>
+            </a>
+
+            <button
+              onClick={onGoToLogin}
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-blue-950/70 hover:bg-blue-950 text-white border border-white/20 font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition"
+            >
+              <span>Masuk Dashboard Pengurus RT</span>
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 10. FOOTER */}
+      <footer className="bg-slate-900 text-slate-400 py-12 text-xs border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-extrabold flex items-center justify-center text-sm">
+              Rt
+            </div>
+            <div>
+              <p className="font-bold text-slate-200 text-sm">RtHub Indonesia</p>
+              <p className="text-[11px] text-slate-500">Platform Komunitas & Administrasi RT/RW Terpadu</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6 text-slate-400 font-medium">
+            <a href="#fitur" className="hover:text-white transition">Fitur</a>
+            <a href="#cara-kerja" className="hover:text-white transition">Panduan</a>
+            <a href="#faq" className="hover:text-white transition">Bantuan</a>
+            <button onClick={onGoToLogin} className="hover:text-white transition font-bold text-blue-400">
+              Portal Admin
+            </button>
+          </div>
+
+          <p className="text-slate-500 text-center sm:text-right">
+            &copy; 2026 RtHub. Hak Cipta Dilindungi Undang-Undang.
+          </p>
         </div>
       </footer>
+
     </div>
   );
 };

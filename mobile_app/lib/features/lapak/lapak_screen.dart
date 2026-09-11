@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
 
@@ -516,21 +518,35 @@ class _LapakScreenState extends State<LapakScreen> {
                                           'Rp ${hargaNum.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
                                           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.electricBlue),
                                         ),
-                                        ElevatedButton.icon(
-                                          onPressed: () {
-                                            final phone = item['kontakWa'] ?? '081234567890';
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('Menghubungi Penjual di WhatsApp: $phone')),
-                                            );
-                                          },
-                                          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 14),
-                                          label: const Text('Chat WA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppTheme.successGreen,
-                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                            minimumSize: Size.zero,
-                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                          ),
+                                        Row(
+                                          children: [
+                                            OutlinedButton.icon(
+                                              onPressed: () => _openWhatsAppChat(item['kontakWa'] ?? '081234567890', item['judul'] ?? 'Produk'),
+                                              icon: const Icon(Icons.chat_outlined, size: 13, color: AppTheme.successGreen),
+                                              label: const Text('Chat', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
+                                              style: OutlinedButton.styleFrom(
+                                                side: const BorderSide(color: AppTheme.successGreen),
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                                minimumSize: Size.zero,
+                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            ElevatedButton.icon(
+                                              onPressed: () => _showOrderModal(item),
+                                              icon: const Icon(Icons.shopping_cart_outlined, size: 14),
+                                              label: const Text('Pesan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: AppTheme.successGreen,
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                                minimumSize: Size.zero,
+                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -543,6 +559,274 @@ class _LapakScreenState extends State<LapakScreen> {
                       },
                     ),
         ),
+      ),
+    );
+  }
+
+  void _openWhatsAppChat(String rawPhone, String productTitle) async {
+    String cleanPhone = rawPhone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '62${cleanPhone.substring(1)}';
+    } else if (!cleanPhone.startsWith('62')) {
+      cleanPhone = '62$cleanPhone';
+    }
+
+    final message = 'Halo, saya tertarik dengan produk/jasa "$productTitle" di Lapak Warga RtHub. Apakah masih tersedia?';
+    final url = 'https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}';
+    final uri = Uri.parse(url);
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        await Clipboard.setData(ClipboardData(text: message));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Nomor WA: $cleanPhone (Pesan telah disalin ke clipboard)'),
+              backgroundColor: AppTheme.successGreen,
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: message));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Nomor WA: $cleanPhone (Pesan disalin ke clipboard)'),
+            backgroundColor: AppTheme.successGreen,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showOrderModal(dynamic item) {
+    final buyerName = _user?['profile']?['namaLengkap'] ?? _user?['phone'] ?? 'Warga RT';
+    final buyerHouse = _user?['profile']?['noRumah'] ?? 'Blok C';
+    final sellerName = item['seller']?['profile']?['namaLengkap'] ?? item['sellerName'] ?? 'Penjual Lapak';
+    final rawPhone = item['kontakWa'] ?? '081234567890';
+    final productTitle = item['judul'] ?? 'Produk Lapak';
+    final hargaUnit = item['harga'] != null ? double.tryParse(item['harga'].toString()) ?? 0 : 0;
+    
+    int qty = 1;
+    final addressCtrl = TextEditingController(text: buyerHouse);
+    final notesCtrl = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) => StatefulBuilder(
+        builder: (modalContext, setModalState) {
+          final totalPrice = hargaUnit * qty;
+          final totalFormatted = totalPrice.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(modalContext).viewInsets.bottom + 20,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppTheme.slateBorder,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('🛍️ Formulir Pemesanan Langsung', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text('Penjual: $sellerName', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppTheme.successGreen.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('Direct WA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Item Detail Box
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.slateLight,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(productTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              const SizedBox(height: 2),
+                              Text('Rp ${hargaUnit.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')} / pcs',
+                                  style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                            ],
+                          ),
+                        ),
+                        // Qty Counter
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                if (qty > 1) {
+                                  setModalState(() => qty--);
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppTheme.slateBorder),
+                                ),
+                                child: const Icon(Icons.remove, size: 14),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text('$qty', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                            ),
+                            GestureDetector(
+                              onTap: () => setModalState(() => qty++),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryNavy,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.add, size: 14, color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  const Text('Alamat / Unit Rumah Pemesan *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: addressCtrl,
+                    decoration: const InputDecoration(hintText: 'Contoh: Blok C3 No. 12 (RT 03)'),
+                  ),
+                  const SizedBox(height: 12),
+
+                  const Text('Catatan Khusus Penjual (Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: notesCtrl,
+                    decoration: const InputDecoration(hintText: 'Contoh: Pedas sedang, diantar jam 12 siang...'),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Total calculation
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Total Pembayaran', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                      Text('Rp $totalFormatted', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.successGreen)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(modalContext);
+
+                        String cleanPhone = rawPhone.replaceAll(RegExp(r'[^0-9]'), '');
+                        if (cleanPhone.startsWith('0')) {
+                          cleanPhone = '62${cleanPhone.substring(1)}';
+                        } else if (!cleanPhone.startsWith('62')) {
+                          cleanPhone = '62$cleanPhone';
+                        }
+
+                        final orderMessage = '''Halo Kak *$sellerName*, saya ingin pesan dari *Lapak Warga RtHub*:
+
+📦 *Produk:* $productTitle
+🔢 *Jumlah:* $qty pcs
+💰 *Total Harga:* Rp $totalFormatted
+📍 *Alamat Antar:* ${addressCtrl.text.trim()}
+👤 *Pemesan:* $buyerName
+${notesCtrl.text.trim().isNotEmpty ? '📝 *Catatan:* ${notesCtrl.text.trim()}\n' : ''}
+Mohon konfirmasi ketersediaan dan metode pembayarannya. Terima kasih!''';
+
+                        final url = 'https://wa.me/$cleanPhone?text=${Uri.encodeComponent(orderMessage)}';
+                        final uri = Uri.parse(url);
+
+                        try {
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          } else {
+                            await Clipboard.setData(ClipboardData(text: orderMessage));
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Pesanan berhasil dibuat & disalin ke clipboard!'),
+                                  backgroundColor: AppTheme.successGreen,
+                                ),
+                              );
+                            }
+                          }
+                        } catch (_) {
+                          await Clipboard.setData(ClipboardData(text: orderMessage));
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Pesanan berhasil dibuat & disalin ke clipboard!'),
+                                backgroundColor: AppTheme.successGreen,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.send_rounded, size: 18),
+                      label: const Text('Kirim Pesanan ke WhatsApp Penjual', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.successGreen,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

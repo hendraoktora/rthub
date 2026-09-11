@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Lock, Phone, ArrowRight, UserCheck, Crown, Wallet, Shield, AlertCircle, RefreshCw } from 'lucide-react';
+import { Lock, Phone, ArrowRight, UserCheck, Crown, Wallet, Shield, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
 import { api, UserSession } from '../services/api';
 
 interface LoginProps {
   onLogin: (user: UserSession) => void;
+  onBack?: () => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
   const [username, setUsername] = useState('081111111111');
   const [password, setPassword] = useState('Password123!');
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +43,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="w-full max-w-lg bg-slate-800/80 backdrop-blur-xl border border-slate-700/70 p-8 rounded-3xl shadow-2xl relative z-10 text-white">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="mb-4 inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white transition"
+          >
+            <ArrowLeft size={16} />
+            <span>Kembali ke Beranda Utama</span>
+          </button>
+        )}
+
         {/* Brand Header */}
         <div className="text-center mb-6">
           <div className="w-14 h-14 rounded-2xl bg-blue-600 mx-auto flex items-center justify-center font-extrabold text-2xl shadow-lg shadow-blue-500/30 mb-3">

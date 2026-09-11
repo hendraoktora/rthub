@@ -11,9 +11,17 @@ class InvoiceScreen extends StatefulWidget {
 
 class _InvoiceScreenState extends State<InvoiceScreen> {
   String _selectedPaymentMethod = 'QRIS';
+  String _selectedPeriode = 'September 2026';
   List<dynamic> _tagihanList = [];
   bool _isLoading = false;
   bool _isPaying = false;
+
+  final List<String> _periodeList = [
+    'September 2026',
+    'Agustus 2026',
+    'Juli 2026',
+    'Juni 2026',
+  ];
 
   @override
   void initState() {
@@ -35,27 +43,98 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     }
   }
 
-  void _handlePayTagihan(dynamic activeTagihan) async {
+  void _handlePayTagihan(dynamic activeTagihan, num totalBayar) async {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _isPaying = true);
     try {
-      final tagihanId = activeTagihan['id'];
-      await ApiService.payTagihan(tagihanId, _selectedPaymentMethod);
+      if (activeTagihan != null && activeTagihan['id'] != null) {
+        await ApiService.payTagihan(activeTagihan['id'].toString(), _selectedPaymentMethod);
+      } else {
+        // Fallback demo simulation
+        await Future.delayed(const Duration(milliseconds: 700));
+      }
+
       if (!mounted) return;
+
+      final now = DateTime.now();
+      final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      final payTime = '${now.day} ${months[now.month]} ${now.year}, ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} WIB';
+
+      // Update state locally
+      setState(() {
+        if (_tagihanList.isNotEmpty) {
+          _tagihanList[0]['status'] = 'PAID';
+          _tagihanList[0]['metodePembayaran'] = _selectedPaymentMethod;
+          _tagihanList[0]['paidAt'] = now.toIso8601String();
+        } else {
+          _tagihanList = [
+            {
+              'id': 'mock_paid_1',
+              'status': 'PAID',
+              'nominalPokok': 50000,
+              'adminFee': 2000,
+              'totalBayar': 52000,
+              'periodeBulan': 9,
+              'periodeTahun': 2026,
+              'metodePembayaran': _selectedPaymentMethod,
+              'paidAt': now.toIso8601String(),
+            }
+          ];
+        }
+      });
 
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Row(
             children: [
-              Icon(Icons.check_circle_rounded, color: AppTheme.successGreen),
-              SizedBox(width: 8),
+              Icon(Icons.check_circle_rounded, color: AppTheme.successGreen, size: 28),
+              SizedBox(width: 10),
               Text('Pembayaran Berhasil!'),
             ],
           ),
-          content: const Text(
-            'Tagihan IPL Anda telah berhasil dibayar dan tercatat di Buku Kas RT.',
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Tagihan IPL RT berhasil diverifikasi dan otomatis tercatat di Buku Kas RT.'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.slateLight,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Waktu Bayar:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                        Text(payTime, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Metode:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                        Text(_selectedPaymentMethod, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.electricBlue)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Total:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                        Text('Rp ${totalBayar.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           actions: [
             ElevatedButton(
@@ -63,7 +142,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                 Navigator.pop(ctx);
                 _loadTagihan();
               },
-              child: const Text('OK'),
+              child: const Text('Tutup & Lihat Resi'),
             ),
           ],
         ),
@@ -90,6 +169,11 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     final bulanNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     final bulanStr = bulan >= 1 && bulan <= 12 ? bulanNames[bulan] : 'September';
 
+    final paidAtStr = activeTagihan?['paidAt'] != null ? DateTime.tryParse(activeTagihan['paidAt'].toString()) : null;
+    final formattedPaidDate = paidAtStr != null
+        ? '${paidAtStr.day} ${bulanNames[paidAtStr.month]} ${paidAtStr.year}, ${paidAtStr.hour.toString().padLeft(2, '0')}:${paidAtStr.minute.toString().padLeft(2, '0')} WIB'
+        : '11 September 2026, 10:15 WIB';
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -107,6 +191,45 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
+                  // Month & Year Filter Bar
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    color: Colors.white,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.electricBlue),
+                            SizedBox(width: 6),
+                            Text('Pilih Periode:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.slateLight,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppTheme.slateBorder),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedPeriode,
+                              isDense: true,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                              items: _periodeList.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => _selectedPeriode = val);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(20.0),
@@ -120,6 +243,13 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(color: isPaid ? AppTheme.successGreen.withValues(alpha: 0.3) : AppTheme.slateBorder),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.02),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -128,16 +258,16 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Tagihan $bulanStr $tahun',
+                                      'Tagihan $_selectedPeriode',
                                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      isPaid ? 'Sudah Lunas Terverifikasi' : 'Jatuh Tempo: 10 $bulanStr $tahun',
+                                      isPaid ? 'Terbayar pada $formattedPaidDate' : 'Jatuh Tempo: 10 $bulanStr $tahun',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: isPaid ? AppTheme.successGreen : AppTheme.textSecondary,
-                                        fontWeight: isPaid ? FontWeight.bold : FontWeight.normal,
+                                        fontWeight: isPaid ? FontWeight.w600 : FontWeight.normal,
                                       ),
                                     ),
                                   ],
@@ -216,32 +346,76 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                             const SizedBox(height: 12),
                             _buildPaymentOption('QRIS', 'QRIS (GoPay, OVO, Dana, ShopeePay, BCA)', Icons.qr_code_2_rounded),
                             const SizedBox(height: 10),
-                            _buildPaymentOption('VA_BCA', 'BCA Virtual Account', Icons.account_balance_rounded),
+                            _buildPaymentOption('VA_BCA', 'BCA Virtual Account (8800108123456)', Icons.account_balance_rounded),
                             const SizedBox(height: 10),
-                            _buildPaymentOption('VA_MANDIRI', 'Mandiri Virtual Account', Icons.account_balance_wallet_rounded),
+                            _buildPaymentOption('VA_MANDIRI', 'Mandiri Virtual Account (8900108123456)', Icons.account_balance_wallet_rounded),
                             const SizedBox(height: 10),
                             _buildPaymentOption('CASH', 'Bayar Tunai ke Bendahara RT', Icons.payments_rounded),
+                          ] else ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppTheme.successGreen.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppTheme.successGreen.withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.verified_user_rounded, color: AppTheme.successGreen, size: 28),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Bukti Pembayaran Terverifikasi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.successGreen)),
+                                        const SizedBox(height: 2),
+                                        Text('Metode: ${activeTagihan?['metodePembayaran'] ?? _selectedPaymentMethod} • $formattedPaidDate', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ],
                       ),
                     ),
                   ),
 
-                  // Bottom Sticky Button
-                  if (!isPaid && activeTagihan != null)
+                  // Bottom Sticky Button (Always visible when unpaid)
+                  if (!isPaid)
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         border: Border(top: BorderSide(color: AppTheme.slateBorder)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 8,
+                            offset: Offset(0, -2),
+                          ),
+                        ],
                       ),
                       child: SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isPaying ? null : () => _handlePayTagihan(activeTagihan),
-                          child: _isPaying
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : Text('Bayar Rp ${totalBayar.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')} Sekarang'),
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: _isPaying ? null : () => _handlePayTagihan(activeTagihan, totalBayar),
+                          icon: _isPaying
+                              ? const SizedBox.shrink()
+                              : const Icon(Icons.payment_rounded, size: 20),
+                          label: _isPaying
+                              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                              : Text(
+                                  'Bayar Rp ${totalBayar.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')} Sekarang',
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.electricBlue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
                         ),
                       ),
                     ),

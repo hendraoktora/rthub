@@ -16,11 +16,13 @@ import { LapakWarga } from './pages/LapakWarga';
 import { AgendaManagement } from './pages/AgendaManagement';
 import { BeritaManagement } from './pages/BeritaManagement';
 import { Login } from './pages/Login';
+import { LandingPage } from './pages/LandingPage';
 import { api, UserSession } from './services/api';
 
 export default function App() {
   const [user, setUser] = useState<UserSession | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [publicView, setPublicView] = useState<'landing' | 'login'>('landing');
 
   useEffect(() => {
     const savedUser = api.getUser();
@@ -37,11 +39,17 @@ export default function App() {
   const handleLogout = () => {
     api.clearSession();
     setUser(null);
+    setPublicView('landing');
   };
 
   if (!user) {
+    if (publicView === 'landing') {
+      return <LandingPage onGoToLogin={() => setPublicView('login')} />;
+    }
+
     return (
       <Login
+        onBack={() => setPublicView('landing')}
         onLogin={(loggedUser) => {
           setUser(loggedUser);
           if (loggedUser.role === 'SUPERADMIN') setActiveTab('superadmin_rt');

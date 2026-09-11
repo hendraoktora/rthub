@@ -10,7 +10,8 @@ class AgendaScreen extends StatefulWidget {
 }
 
 class _AgendaScreenState extends State<AgendaScreen> {
-  int _selectedDateIndex = 1; // Default to 'Sel 9'
+  DateTime _focusedDate = DateTime.now();
+  DateTime? _selectedDate = DateTime.now();
   String _selectedCategory = 'SEMUA';
   Map<String, dynamic>? _user;
   List<Map<String, dynamic>> _agendaList = [];
@@ -80,11 +81,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 'levelColor': color,
                 'description': item['deskripsi'] ?? 'Kegiatan warga lingkungan bersama.',
                 'raw': item,
+                'startDate': start,
               };
             }).toList();
           });
         } else {
-          // If empty in DB, show helpful default initial items
           _setDefaultInitialAgenda();
         }
       }
@@ -96,12 +97,16 @@ class _AgendaScreenState extends State<AgendaScreen> {
   }
 
   void _setDefaultInitialAgenda() {
+    final now = DateTime.now();
+    final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    final dateStr = '${now.day} ${months[now.month]} ${now.year}';
+
     setState(() {
       _agendaList = [
         {
           'id': 'seed_1',
           'title': 'Kerja Bakti Bersih Saluran Air & Selokan',
-          'date': '9 Sep 2026',
+          'date': dateStr,
           'day': 'Selasa',
           'time': '07:00 - 10:00 WIB',
           'location': 'Sepanjang Jl. Melati Blok C & D',
@@ -109,11 +114,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
           'level': 'Level RT ${_user?['rt']?['nomor'] ?? '03'}',
           'levelColor': AppTheme.successGreen,
           'description': 'Pembersihan endapan lumpur got dan sampah ranting daun mengantisipasi musim hujan deras.',
+          'startDate': now,
         },
         {
           'id': 'seed_2',
           'title': 'Fogging Nyamuk DBD Serentak RW',
-          'date': '9 Sep 2026',
+          'date': dateStr,
           'day': 'Selasa',
           'time': '15:30 - 17:30 WIB',
           'location': 'Seluruh Lingkungan RW ${_user?['rw']?['nomor'] ?? '05'}',
@@ -121,11 +127,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
           'level': 'Level RW ${_user?['rw']?['nomor'] ?? '05'}',
           'levelColor': AppTheme.warningAmber,
           'description': 'Pengasapan nyamuk aedes aegypti serentak. Harap menutup makanan dan membuka jendela saat petugas lewat.',
+          'startDate': now,
         },
         {
           'id': 'seed_3',
           'title': 'Posyandu Balita & Lansia Rutin',
-          'date': '12 Sep 2026',
+          'date': '${now.day + 3} ${months[now.month]} ${now.year}',
           'day': 'Jumat',
           'time': '08:30 - 11:00 WIB',
           'location': 'Balai Warga / Posyandu Flamboyan',
@@ -133,6 +140,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           'level': 'Level RT ${_user?['rt']?['nomor'] ?? '03'}',
           'levelColor': AppTheme.purpleIndigo,
           'description': 'Penimbangan berat badan, imunisasi balita, dan cek tensi/gula darah gratis untuk lansia.',
+          'startDate': now.add(const Duration(days: 3)),
         },
       ];
     });
@@ -371,20 +379,33 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final role = _user?['role']?.toString().toUpperCase() ?? 'WARGA';
     final isPengurus = role == 'ADMIN_RT' || role == 'KETUA_RT' || role == 'SEKRETARIS';
 
-    final days = [
-      {'day': 'Sen', 'date': '8'},
-      {'day': 'Sel', 'date': '9'},
-      {'day': 'Rab', 'date': '10'},
-      {'day': 'Kam', 'date': '11'},
-      {'day': 'Jum', 'date': '12'},
-      {'day': 'Sab', 'date': '13'},
-      {'day': 'Min', 'date': '14'},
-    ];
+    final monday = _focusedDate.subtract(Duration(days: _focusedDate.weekday - 1));
+    final weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
+    final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    final monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
     final filtered = _agendaList.where((item) {
-      if (_selectedCategory == 'SEMUA') return true;
-      return item['category'] == _selectedCategory;
+      if (_selectedCategory != 'SEMUA' && item['category'] != _selectedCategory) {
+        return false;
+      }
+      if (_selectedDate != null) {
+        final start = item['startDate'] as DateTime?;
+        if (start != null) {
+          final isSameDay = start.year == _selectedDate!.year &&
+              start.month == _selectedDate!.month &&
+              start.day == _selectedDate!.day;
+          // If no specific agenda on that day, show matching category or keep visible
+          // to give full visibility unless strictly filtered
+          return isSameDay;
+        }
+      }
+      return true;
     }).toList();
+
+    // Fallback: If filtered is empty for the exact day, also show all matching category so citizen doesn't see blank page
+    final displayList = filtered.isNotEmpty
+        ? filtered
+        : _agendaList.where((item) => _selectedCategory == 'SEMUA' || item['category'] == _selectedCategory).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -457,21 +478,95 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                // Calendar Days Row
+                // Calendar Month & Week Navigation Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(days.length, (index) {
-                    final isSelected = index == _selectedDateIndex;
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_month_rounded, size: 18, color: AppTheme.electricBlue),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${monthNames[_focusedDate.month]} ${_focusedDate.year}',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        if (_selectedDate != null)
+                          TextButton(
+                            onPressed: () => setState(() => _selectedDate = null),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('Semua Tgl', style: TextStyle(fontSize: 11, color: AppTheme.electricBlue, fontWeight: FontWeight.bold)),
+                          ),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_left_rounded, size: 22),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            setState(() {
+                              _focusedDate = _focusedDate.subtract(const Duration(days: 7));
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_right_rounded, size: 22),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            setState(() {
+                              _focusedDate = _focusedDate.add(const Duration(days: 7));
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Dynamic Calendar Days Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(weekDays.length, (index) {
+                    final dayDate = weekDays[index];
+                    final isSelected = _selectedDate != null &&
+                        dayDate.year == _selectedDate!.year &&
+                        dayDate.month == _selectedDate!.month &&
+                        dayDate.day == _selectedDate!.day;
+                    final isToday = dayDate.year == DateTime.now().year &&
+                        dayDate.month == DateTime.now().month &&
+                        dayDate.day == DateTime.now().day;
+
                     return GestureDetector(
-                      onTap: () => setState(() => _selectedDateIndex = index),
+                      onTap: () {
+                        setState(() {
+                          if (isSelected) {
+                            _selectedDate = null; // Toggle off
+                          } else {
+                            _selectedDate = dayDate;
+                          }
+                        });
+                      },
                       child: Container(
                         width: 44,
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppTheme.electricBlue : Colors.white,
+                          color: isSelected
+                              ? AppTheme.electricBlue
+                              : (isToday ? AppTheme.electricBlue.withValues(alpha: 0.1) : Colors.white),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isSelected ? AppTheme.electricBlue : AppTheme.slateBorder,
+                            color: isSelected
+                                ? AppTheme.electricBlue
+                                : (isToday ? AppTheme.electricBlue : AppTheme.slateBorder),
+                            width: isToday ? 1.5 : 1.0,
                           ),
                           boxShadow: isSelected
                               ? [
@@ -486,19 +581,23 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         child: Column(
                           children: [
                             Text(
-                              days[index]['day']!,
+                              dayNames[index],
                               style: TextStyle(
                                 fontSize: 10,
-                                color: isSelected ? Colors.white.withValues(alpha: 0.85) : AppTheme.textSecondary,
-                                fontWeight: FontWeight.w500,
+                                color: isSelected
+                                    ? Colors.white.withValues(alpha: 0.85)
+                                    : (isToday ? AppTheme.electricBlue : AppTheme.textSecondary),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              days[index]['date']!,
+                              '${dayDate.day}',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isToday ? AppTheme.electricBlue : AppTheme.textPrimary),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -531,7 +630,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Daftar Kegiatan (${filtered.length})',
+                      _selectedDate != null
+                          ? 'Kegiatan (${displayList.length}) - ${_selectedDate!.day} ${monthNames[_selectedDate!.month]}'
+                          : 'Daftar Kegiatan (${displayList.length})',
                       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                     ),
                     if (_isLoading)
@@ -540,7 +641,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                if (filtered.isEmpty)
+                if (displayList.isEmpty)
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -553,7 +654,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         children: [
                           const Icon(Icons.event_busy_rounded, color: AppTheme.textMuted, size: 36),
                           const SizedBox(height: 8),
-                          const Text('Belum ada agenda pada kategori ini',
+                          const Text('Belum ada agenda pada tanggal/kategori ini',
                               style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
                           if (isPengurus) ...[
                             const SizedBox(height: 8),
@@ -571,10 +672,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filtered.length,
+                    itemCount: displayList.length,
                     separatorBuilder: (context, index) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      final item = filtered[index];
+                      final item = displayList[index];
                       final isReminded = _remindedIds.contains(item['id']);
 
                       return Container(

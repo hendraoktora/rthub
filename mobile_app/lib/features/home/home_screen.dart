@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> _agendaDbList = [];
   List<dynamic> _beritaDbList = [];
   List<dynamic> _lapakDbList = [];
+  List<dynamic> _tagihanDbList = [];
   final PageController _cardPageController = PageController();
   int _activeCardSlide = 0;
 
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadAgendaData();
     _loadBeritaData();
     _loadLapakData();
+    _loadTagihanData();
     _checkWidgetLaunch();
   }
 
@@ -130,12 +132,24 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {}
   }
 
+  void _loadTagihanData() async {
+    try {
+      final tagihan = await ApiService.getTagihanSaya();
+      if (mounted && tagihan.isNotEmpty) {
+        setState(() {
+          _tagihanDbList = tagihan;
+        });
+      }
+    } catch (_) {}
+  }
+
   Future<void> _refreshAllData() async {
     _loadUserData();
     _loadKasSummary();
     _loadAgendaData();
     _loadBeritaData();
     _loadLapakData();
+    _loadTagihanData();
     await Future.delayed(const Duration(milliseconds: 600));
   }
 
@@ -154,171 +168,302 @@ class _HomeScreenState extends State<HomeScreen> {
     final masuk = _kasSummary?['totalPemasukan'] ?? 19400000;
     final keluar = _kasSummary?['totalPengeluaran'] ?? 950000;
 
+    String selectedMonth = 'SEMUA';
+    String selectedTipe = 'SEMUA';
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.75,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.slateBorder,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+          
+          final filteredList = recent.where((tx) {
+            if (selectedTipe != 'SEMUA' && tx['tipe'] != selectedTipe) return false;
+            if (selectedMonth != 'SEMUA') {
+              final date = tx['createdAt'] != null ? DateTime.tryParse(tx['createdAt']) : null;
+              if (date != null && '${date.month}' != selectedMonth) return false;
+            }
+            return true;
+          }).toList();
+
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Buku Kas Terbuka RT $rtNomor',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.slateBorder,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    const Text(
-                      'Transparansi publik real-time seluruh warga',
-                      style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Buku Kas Terbuka RT $rtNomor',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        const Text(
+                          'Transparansi publik real-time seluruh warga',
+                          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.successGreen.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.verified_rounded, size: 12, color: AppTheme.successGreen),
+                          SizedBox(width: 4),
+                          Text(
+                            'Audit Warga',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.successGreen),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 14),
+
+                // Summary mini cards
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppTheme.successGreen.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppTheme.slateLight,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Row(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Icon(Icons.verified_rounded, size: 12, color: AppTheme.successGreen),
-                      SizedBox(width: 4),
-                      Text(
-                        'Audit Warga',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.successGreen),
+                      Column(
+                        children: [
+                          const Text('Total Saldo Kas', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+                          const SizedBox(height: 2),
+                          Text('Rp ${saldo.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                        ],
+                      ),
+                      Container(width: 1, height: 28, color: AppTheme.slateBorder),
+                      Column(
+                        children: [
+                          const Text('Pemasukan', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+                          const SizedBox(height: 2),
+                          Text('+Rp ${masuk.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
+                        ],
+                      ),
+                      Container(width: 1, height: 28, color: AppTheme.slateBorder),
+                      Column(
+                        children: [
+                          const Text('Pengeluaran', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+                          const SizedBox(height: 2),
+                          Text('-Rp ${keluar.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.alertRed)),
+                        ],
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 14),
+
+                // Month/Year and Type Filter Bar
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.slateLight,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppTheme.slateBorder),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedMonth,
+                            isDense: true,
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                            items: const [
+                              DropdownMenuItem(value: 'SEMUA', child: Text('Semua Bulan')),
+                              DropdownMenuItem(value: '9', child: Text('September 2026')),
+                              DropdownMenuItem(value: '8', child: Text('Agustus 2026')),
+                              DropdownMenuItem(value: '7', child: Text('Juli 2026')),
+                              DropdownMenuItem(value: '6', child: Text('Juni 2026')),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) setModalState(() => selectedMonth = val);
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => setModalState(() => selectedTipe = 'SEMUA'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: selectedTipe == 'SEMUA' ? AppTheme.primaryNavy : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: selectedTipe == 'SEMUA' ? AppTheme.primaryNavy : AppTheme.slateBorder),
+                          ),
+                          child: Text('Semua', style: TextStyle(fontSize: 11, color: selectedTipe == 'SEMUA' ? Colors.white : AppTheme.textSecondary, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () => setModalState(() => selectedTipe = 'PEMASUKAN'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: selectedTipe == 'PEMASUKAN' ? AppTheme.successGreen : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: selectedTipe == 'PEMASUKAN' ? AppTheme.successGreen : AppTheme.slateBorder),
+                          ),
+                          child: Text('+ Pemasukan', style: TextStyle(fontSize: 11, color: selectedTipe == 'PEMASUKAN' ? Colors.white : AppTheme.successGreen, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () => setModalState(() => selectedTipe = 'PENGELUARAN'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: selectedTipe == 'PENGELUARAN' ? AppTheme.alertRed : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: selectedTipe == 'PENGELUARAN' ? AppTheme.alertRed : AppTheme.slateBorder),
+                          ),
+                          child: Text('- Pengeluaran', style: TextStyle(fontSize: 11, color: selectedTipe == 'PENGELUARAN' ? Colors.white : AppTheme.alertRed, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Mutasi Kas Tercatat', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    Text('${filteredList.length} transaksi', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                Expanded(
+                  child: filteredList.isNotEmpty
+                      ? ListView.separated(
+                          itemCount: filteredList.length,
+                          separatorBuilder: (context, index) => const Divider(height: 16),
+                          itemBuilder: (context, index) {
+                            final tx = filteredList[index];
+                            final isMasuk = tx['tipe'] == 'PEMASUKAN';
+                            final nominal = tx['nominal'] ?? 0;
+                            final date = tx['createdAt'] != null ? DateTime.tryParse(tx['createdAt'].toString()) : null;
+                            final dateFormatted = date != null
+                                ? '${date.day} ${months[date.month]} ${date.year}, ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')} WIB'
+                                : '11 Sep 2026, 10:00 WIB';
+
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: (isMasuk ? AppTheme.successGreen : AppTheme.alertRed).withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    isMasuk ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                                    size: 16,
+                                    color: isMasuk ? AppTheme.successGreen : AppTheme.alertRed,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        tx['kategori'] ?? (isMasuk ? 'Pemasukan' : 'Pengeluaran'),
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        tx['keterangan'] ?? '-',
+                                        style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.access_time_rounded, size: 11, color: AppTheme.textMuted),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            dateFormatted,
+                                            style: const TextStyle(fontSize: 10, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '${isMasuk ? '+' : '-'}Rp ${nominal.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        color: isMasuk ? AppTheme.successGreen : AppTheme.alertRed,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: (isMasuk ? AppTheme.successGreen : AppTheme.alertRed).withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        isMasuk ? 'Masuk' : 'Keluar',
+                                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isMasuk ? AppTheme.successGreen : AppTheme.alertRed),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          },
+                        )
+                      : const Center(
+                          child: Text('Belum ada riwayat mutasi kas pada filter ini.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                        ),
+                ),
               ],
             ),
-            const SizedBox(height: 16),
-
-            // Summary mini cards
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppTheme.slateLight,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Column(
-                    children: [
-                      const Text('Total Saldo', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                      const SizedBox(height: 2),
-                      Text('Rp ${saldo.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
-                    ],
-                  ),
-                  Container(width: 1, height: 28, color: AppTheme.slateBorder),
-                  Column(
-                    children: [
-                      const Text('Pemasukan', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                      const SizedBox(height: 2),
-                      Text('+Rp ${masuk.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
-                    ],
-                  ),
-                  Container(width: 1, height: 28, color: AppTheme.slateBorder),
-                  Column(
-                    children: [
-                      const Text('Pengeluaran', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                      const SizedBox(height: 2),
-                      Text('-Rp ${keluar.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.alertRed)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            const Text('Riwayat Pengeluaran & Pemasukan Kas', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-
-            Expanded(
-              child: recent.isNotEmpty
-                  ? ListView.separated(
-                      itemCount: recent.length,
-                      separatorBuilder: (context, index) => const Divider(height: 16),
-                      itemBuilder: (context, index) {
-                        final tx = recent[index];
-                        final isMasuk = tx['tipe'] == 'PEMASUKAN';
-                        final nominal = tx['nominal'] ?? 0;
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: (isMasuk ? AppTheme.successGreen : AppTheme.alertRed).withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                isMasuk ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                                size: 16,
-                                color: isMasuk ? AppTheme.successGreen : AppTheme.alertRed,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    tx['kategori'] ?? (isMasuk ? 'Pemasukan' : 'Pengeluaran'),
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    tx['keterangan'] ?? '-',
-                                    style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              '${isMasuk ? '+' : '-'}Rp ${nominal.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: isMasuk ? AppTheme.successGreen : AppTheme.alertRed,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    )
-                  : const Center(
-                      child: Text('Belum ada riwayat mutasi kas.', style: TextStyle(color: AppTheme.textSecondary)),
-                    ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -583,12 +728,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // Quick Action Row (6 Layanan Termasuk CCTV Lingkungan)
               _buildQuickActionsRow(),
 
-              const SizedBox(height: 20),
-
-              // Interactive Panic Alert Home Widget
-              _buildPanicAlertHomeWidget(rtNomor),
-
-              const SizedBox(height: 26),
+              const SizedBox(height: 24),
 
               // Calendar & Agenda Section
               _buildCalendarAgendaSection(),
@@ -597,11 +737,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Recent News Feed
               _buildRecentNewsFeed(),
+              const SizedBox(height: 40),
             ],
           ),
         ),
       ),
       ),
+      floatingActionButton: _buildFloatingPanicButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -728,48 +871,81 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             // Inside Bill Banner
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            Builder(
+              builder: (context) {
+                final isPaid = _tagihanDbList.isNotEmpty && _tagihanDbList.any((t) => t['status'] == 'PAID');
+                final activeBill = _tagihanDbList.isNotEmpty ? _tagihanDbList.first : null;
+                final nominalVal = activeBill?['totalBayar'] != null
+                    ? (double.tryParse(activeBill['totalBayar'].toString()) ?? 52000).toInt()
+                    : 52000;
+                final nominalFmt = nominalVal.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+                
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isPaid ? AppTheme.successGreen.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isPaid ? AppTheme.successGreen.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.12),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Tagihan Iuran Anda',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Iuran Warga Periode Ini',
+                                style: TextStyle(
+                                  color: isPaid ? Colors.greenAccent : Colors.white.withValues(alpha: 0.7),
+                                  fontSize: 10,
+                                  fontWeight: isPaid ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                              if (isPaid) ...[
+                                const SizedBox(width: 4),
+                                const Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 11),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            isPaid ? '✓ LUNAS (September 2026)' : 'Rp $nominalFmt (September 2026)',
+                            style: TextStyle(
+                              color: isPaid ? Colors.greenAccent : Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                      const Text(
-                        'Rp 52.000 (Sept)',
-                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const InvoiceScreen()),
+                          ).then((_) => _loadTagihanData());
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isPaid ? Colors.greenAccent : Colors.white,
+                          foregroundColor: AppTheme.primaryNavy,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text(
+                          isPaid ? 'Rincian Lunas' : 'Bayar',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const InvoiceScreen()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppTheme.primaryNavy,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Bayar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ],
         ),
@@ -1203,13 +1379,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCalendarAgendaSection() {
-    final days = [
-      {'day': 'Sen', 'date': '8'},
-      {'day': 'Sel', 'date': '9'},
-      {'day': 'Rab', 'date': '10'},
-      {'day': 'Kam', 'date': '11'},
-      {'day': 'Jum', 'date': '12'},
-    ];
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekDays = List.generate(5, (i) => monday.add(Duration(days: i)));
+    final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
     final displayAgendas = _agendaDbList.isNotEmpty
         ? _agendaDbList.take(2).toList()
@@ -1236,9 +1410,25 @@ class _HomeScreenState extends State<HomeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Agenda Kegiatan',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                const Text(
+                  'Agenda Kegiatan',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.electricBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '${months[now.month]} ${now.year}',
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
+                  ),
+                ),
+              ],
             ),
             GestureDetector(
               onTap: () {
@@ -1254,8 +1444,11 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(days.length, (index) {
-            final isSelected = index == _selectedDateIndex;
+          children: List.generate(weekDays.length, (index) {
+            final dayDate = weekDays[index];
+            final isToday = dayDate.year == now.year && dayDate.month == now.month && dayDate.day == now.day;
+            final isSelected = index == _selectedDateIndex || isToday;
+
             return GestureDetector(
               onTap: () {
                 setState(() => _selectedDateIndex = index);
@@ -1283,16 +1476,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     Text(
-                      days[index]['day']!,
+                      dayNames[dayDate.weekday - 1],
                       style: TextStyle(
                         fontSize: 11,
-                        color: isSelected ? Colors.white.withValues(alpha: 0.8) : AppTheme.textSecondary,
+                        color: isSelected ? Colors.white.withValues(alpha: 0.85) : AppTheme.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      days[index]['date']!,
+                      '${dayDate.day}',
                       style: TextStyle(
                         fontSize: 16,
                         color: isSelected ? Colors.white : AppTheme.textPrimary,
@@ -1569,143 +1762,34 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPanicAlertHomeWidget(String rtNomor) {
+
+
+  Widget _buildFloatingPanicButton() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFDC2626),
-            Color(0xFF991B1B),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFDC2626).withValues(alpha: 0.35),
-            blurRadius: 14,
+            color: const Color(0xFFDC2626).withValues(alpha: 0.45),
+            blurRadius: 16,
+            spreadRadius: 2,
             offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.crisis_alert_rounded, color: Colors.white, size: 18),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    '🚨 PANIC ALERT DARURAT RT',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Pos Satpam RT $rtNomor',
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Sinyal bahaya langsung disiarkan ke pos keamanan & seluruh pengurus RT:',
-            style: TextStyle(color: Colors.white, fontSize: 11, height: 1.3),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildPanicMiniButton(
-                  icon: Icons.shield_outlined,
-                  label: 'Maling / Bahaya',
-                  category: 'BAHAYA_KEAMANAN',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildPanicMiniButton(
-                  icon: Icons.local_fire_department_rounded,
-                  label: 'Kebakaran',
-                  category: 'KEBAKARAN',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildPanicMiniButton(
-                  icon: Icons.medical_services_rounded,
-                  label: 'Medis / Ambulans',
-                  category: 'MEDIS',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPanicMiniButton({required IconData icon, required String label, required String category}) {
-    return GestureDetector(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => PanicScreen(defaultCategory: category),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: const Color(0xFFDC2626), size: 20),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF991B1B),
-                fontSize: 9.5,
-                fontWeight: FontWeight.w800,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+      child: FloatingActionButton.extended(
+        heroTag: 'flying_panic_btn',
+        onPressed: _openPanicModal,
+        backgroundColor: const Color(0xFFDC2626),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        icon: const Icon(Icons.crisis_alert_rounded, size: 22, color: Colors.white),
+        label: const Text(
+          '🚨 PANIK RT',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 0.8),
         ),
       ),
     );
   }
 }
+

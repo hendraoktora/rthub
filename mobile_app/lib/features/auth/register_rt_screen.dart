@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/nik_service.dart';
 import '../home/home_screen.dart';
+import 'login_screen.dart';
 
 class RegisterRtScreen extends StatefulWidget {
   final String initialRole; // 'RT' or 'WARGA'
@@ -757,8 +758,25 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
     } catch (e) {
       if (mounted) {
         final err = e.toString().replaceAll('Exception:', '').trim();
+        final isAlreadyRegistered = err.toLowerCase().contains('terdaftar') || err.toLowerCase().contains('sudah ada');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ $err'), backgroundColor: AppTheme.alertRed),
+          SnackBar(
+            content: Text('❌ $err'),
+            backgroundColor: AppTheme.alertRed,
+            duration: Duration(seconds: isAlreadyRegistered ? 6 : 4),
+            action: isAlreadyRegistered
+                ? SnackBarAction(
+                    label: 'MASUK SEKARANG',
+                    textColor: Colors.white,
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      );
+                    },
+                  )
+                : null,
+          ),
         );
       }
     } finally {

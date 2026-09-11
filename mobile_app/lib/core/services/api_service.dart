@@ -89,7 +89,7 @@ class ApiService {
     _memoryCache.removeWhere((k, v) => k.startsWith(keyPrefix));
   }
 
-  /// Send request with fast fallback and connection reuse
+  /// Send request with fast fallback, connection reuse, and cloud serverless timeout tolerance (25s)
   static Future<http.Response> _postWithFallback(String path, Map<String, dynamic> body) async {
     final configuredUrl = await getBaseUrl();
     try {
@@ -97,7 +97,7 @@ class ApiService {
         Uri.parse('$configuredUrl$path'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 25));
       return res;
     } catch (e) {
       if (configuredUrl != defaultUrl) {
@@ -106,12 +106,12 @@ class ApiService {
             Uri.parse('$defaultUrl$path'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(body),
-          ).timeout(const Duration(seconds: 5));
+          ).timeout(const Duration(seconds: 25));
           await setBaseUrl(defaultUrl);
           return res;
         } catch (_) {}
       }
-      throw Exception('Gagal menghubungi server backend: $e');
+      throw Exception('Gagal menghubungi server backend. Pastikan koneksi internet aktif: $e');
     }
   }
 
@@ -124,7 +124,7 @@ class ApiService {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
         },
-      ).timeout(const Duration(seconds: 4));
+      ).timeout(const Duration(seconds: 20));
       return res;
     } catch (e) {
       if (configuredUrl != defaultUrl) {
@@ -135,7 +135,7 @@ class ApiService {
               'Content-Type': 'application/json',
               if (token != null) 'Authorization': 'Bearer $token',
             },
-          ).timeout(const Duration(seconds: 4));
+          ).timeout(const Duration(seconds: 20));
           await setBaseUrl(defaultUrl);
           return res;
         } catch (_) {}
@@ -146,9 +146,10 @@ class ApiService {
 
   /// Real Live Database Login
   static Future<Map<String, dynamic>> login(String username, String password) async {
+    final cleanUsername = username.trim().replaceAll(' ', '').replaceAll('-', '');
     final response = await _postWithFallback(
       '/auth/login',
-      {'username': username.trim(), 'password': password.trim()},
+      {'username': cleanUsername, 'password': password.trim()},
     );
 
     final data = jsonDecode(response.body);
@@ -893,17 +894,28 @@ class ApiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedStr = prefs.getString('local_custom_laporan');
-      if (savedStr != null) {
-        List<dynamic> list = jsonDecode(savedStr);
-        final idx = list.indexWhere((e) => (e['id'] ?? '').toString() == id);
-        if (idx != -1) {
-          list[idx]['status'] = status;
-          if (tanggapanRT != null) list[idx]['tanggapanRT'] = tanggapanRT;
-          if (tanggapanBy != null) list[idx]['tanggapanBy'] = tanggapanBy;
-          list[idx]['tanggapanAt'] = DateTime.now().toIso8601String();
-          await prefs.setString('local_custom_laporan', jsonEncode(list));
+      List<dynamic> list = savedStr != null ? jsonDecode(savedStr) : [];
+      final idx = list.indexWhere((e) => (e['id'] ?? '').toString() == id);
+      if (idx != -1) {
+        list[idx]['status'] = status;
+        if (tanggapanRT != null) list[idx]['tanggapanRT'] = tanggapanRT;
+        if (tanggapanBy != null) list[idx]['tanggapanBy'] = tanggapanBy;
+        list[idx]['tanggapanAt'] = DateTime.now().toIso8601String();
+      } else {
+        final allLaporan = await getLaporanList();
+        final found = allLaporan.firstWhere((e) => (e['id'] ?? '').toString() == id, orElse: () => null);
+        if (found != null) {
+          final updated = {
+            ...found,
+            'status': status,
+            if (tanggapanRT != null) 'tanggapanRT': tanggapanRT,
+            if (tanggapanBy != null) 'tanggapanBy': tanggapanBy,
+            'tanggapanAt': DateTime.now().toIso8601String(),
+          };
+          list.insert(0, updated);
         }
       }
+      await prefs.setString('local_custom_laporan', jsonEncode(list));
     } catch (_) {}
 
     try {
@@ -1127,6 +1139,24 @@ class ApiService {
           'paidAt': '2026-09-08T14:20:00.000Z',
         },
         {
+          'noRumah': 'Blok A1 No. 02',
+          'kepalaKeluarga': 'Bpk. Ridwan Kamil',
+          'phone': '081211112222',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T09:30:00.000Z',
+        },
+        {
+          'noRumah': 'Blok A1 No. 03',
+          'kepalaKeluarga': 'Ibu Dewi Sartika',
+          'phone': '081233334444',
+          'jumlahAnggota': 2,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-07T11:20:00.000Z',
+        },
+        {
           'noRumah': 'Blok A1 No. 04',
           'kepalaKeluarga': 'Bpk. Aditya Pratama',
           'phone': '081298765432',
@@ -1136,6 +1166,24 @@ class ApiService {
           'paidAt': '2026-09-08T10:15:00.000Z',
         },
         {
+          'noRumah': 'Blok A2 No. 01',
+          'kepalaKeluarga': 'Bpk. Agus Salim',
+          'phone': '081355556666',
+          'jumlahAnggota': 4,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-06T14:10:00.000Z',
+        },
+        {
+          'noRumah': 'Blok A2 No. 02',
+          'kepalaKeluarga': 'Ibu Maria Ulfah',
+          'phone': '081377778888',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-07T16:45:00.000Z',
+        },
+        {
           'noRumah': 'Blok A2 No. 05',
           'kepalaKeluarga': 'Ibu Siti Aminah (Bendahara RT)',
           'phone': '085712345678',
@@ -1143,6 +1191,15 @@ class ApiService {
           'statusHunian': 'MILIK_SENDIRI',
           'statusIuran': 'PAID',
           'paidAt': '2026-09-07T08:30:00.000Z',
+        },
+        {
+          'noRumah': 'Blok A3 No. 01',
+          'kepalaKeluarga': 'Bpk. Faisal Basri',
+          'phone': '081399990000',
+          'jumlahAnggota': 5,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-05T10:00:00.000Z',
         },
         {
           'noRumah': 'Blok A3 No. 05',
@@ -1163,6 +1220,24 @@ class ApiService {
           'paidAt': null,
         },
         {
+          'noRumah': 'Blok B1 No. 01',
+          'kepalaKeluarga': 'Bpk. Teguh Prasetyo',
+          'phone': '081712345678',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T13:40:00.000Z',
+        },
+        {
+          'noRumah': 'Blok B1 No. 04',
+          'kepalaKeluarga': 'Ibu Maya Indah',
+          'phone': '081723456789',
+          'jumlahAnggota': 4,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-07T09:15:00.000Z',
+        },
+        {
           'noRumah': 'Blok B1 No. 08',
           'kepalaKeluarga': 'Bpk. Bambang Supriyadi',
           'phone': '087811223344',
@@ -1181,6 +1256,24 @@ class ApiService {
           'paidAt': '2026-09-09T09:20:00.000Z',
         },
         {
+          'noRumah': 'Blok B2 No. 01',
+          'kepalaKeluarga': 'Bpk. Danang Wicaksono',
+          'phone': '081834567890',
+          'jumlahAnggota': 4,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T15:10:00.000Z',
+        },
+        {
+          'noRumah': 'Blok B2 No. 05',
+          'kepalaKeluarga': 'Ibu Rina Marlina',
+          'phone': '081845678901',
+          'jumlahAnggota': 2,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-07T12:00:00.000Z',
+        },
+        {
           'noRumah': 'Blok B2 No. 14',
           'kepalaKeluarga': 'Bpk. Rahmat Hidayat',
           'phone': '081988776655',
@@ -1188,6 +1281,33 @@ class ApiService {
           'statusHunian': 'MILIK_SENDIRI',
           'statusIuran': 'PAID',
           'paidAt': '2026-09-07T14:10:00.000Z',
+        },
+        {
+          'noRumah': 'Blok B3 No. 02',
+          'kepalaKeluarga': 'Bpk. Eko Yulianto',
+          'phone': '081956789012',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-06T18:30:00.000Z',
+        },
+        {
+          'noRumah': 'Blok B3 No. 07',
+          'kepalaKeluarga': 'Ibu Wahyuni',
+          'phone': '081967890123',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T11:45:00.000Z',
+        },
+        {
+          'noRumah': 'Blok C1 No. 01',
+          'kepalaKeluarga': 'Bpk. Gunawan Wibisono',
+          'phone': '082178901234',
+          'jumlahAnggota': 4,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T08:15:00.000Z',
         },
         {
           'noRumah': 'Blok C1 No. 03',
@@ -1199,6 +1319,15 @@ class ApiService {
           'paidAt': '2026-09-08T16:00:00.000Z',
         },
         {
+          'noRumah': 'Blok C2 No. 02',
+          'kepalaKeluarga': 'Bpk. Hendro Siswanto',
+          'phone': '082189012345',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-07T17:20:00.000Z',
+        },
+        {
           'noRumah': 'Blok C2 No. 08',
           'kepalaKeluarga': 'Ibu Endang Suryani',
           'phone': '085712345678',
@@ -1208,6 +1337,15 @@ class ApiService {
           'paidAt': null,
         },
         {
+          'noRumah': 'Blok C3 No. 01',
+          'kepalaKeluarga': 'Bpk. Surya Dharma',
+          'phone': '082290123456',
+          'jumlahAnggota': 4,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T14:50:00.000Z',
+        },
+        {
           'noRumah': 'Blok C3 No. 10',
           'kepalaKeluarga': 'Bpk. Anwar Ibrahim',
           'phone': '087766554433',
@@ -1215,6 +1353,33 @@ class ApiService {
           'statusHunian': 'MILIK_SENDIRI',
           'statusIuran': 'UNPAID',
           'paidAt': null,
+        },
+        {
+          'noRumah': 'Blok C4 No. 02',
+          'kepalaKeluarga': 'Bpk. Lukman Hakim',
+          'phone': '082301234567',
+          'jumlahAnggota': 3,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-06T16:10:00.000Z',
+        },
+        {
+          'noRumah': 'Blok C4 No. 06',
+          'kepalaKeluarga': 'Ibu Nurhayati',
+          'phone': '082312345678',
+          'jumlahAnggota': 2,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-08T10:30:00.000Z',
+        },
+        {
+          'noRumah': 'Blok C5 No. 01',
+          'kepalaKeluarga': 'Bpk. Zaenal Arifin',
+          'phone': '082323456789',
+          'jumlahAnggota': 4,
+          'statusHunian': 'MILIK_SENDIRI',
+          'statusIuran': 'PAID',
+          'paidAt': '2026-09-07T13:15:00.000Z',
         },
       ],
       'userList': [],
@@ -1387,7 +1552,7 @@ class ApiService {
     }
     try {
       final configuredUrl = await getBaseUrl();
-      final res = await http.get(Uri.parse('$configuredUrl/auth/check-nik/$cleanNik')).timeout(const Duration(seconds: 4));
+      final res = await http.get(Uri.parse('$configuredUrl/auth/check-nik/$cleanNik')).timeout(const Duration(seconds: 15));
       if (res.statusCode == 200) {
         return jsonDecode(res.body);
       }

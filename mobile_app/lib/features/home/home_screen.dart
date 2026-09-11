@@ -27,7 +27,21 @@ class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> _agendaDbList = [];
   List<dynamic> _beritaDbList = [];
   List<dynamic> _lapakDbList = [];
-  List<dynamic> _tagihanDbList = [];
+  List<dynamic> _tagihanDbList = [
+    {
+      'id': 'tagihan_sep_2026',
+      'namaTagihan': 'Iuran Kas & Kebersihan',
+      'nominalPokok': 50000,
+      'adminFee': 2000,
+      'totalBayar': 52000,
+      'periodeBulan': 9,
+      'periodeTahun': 2026,
+      'status': 'PAID',
+      'jatuhTempo': '2026-09-10T00:00:00.000Z',
+      'metodePembayaran': 'QRIS',
+      'paidAt': '2026-09-08T14:20:00.000Z',
+    }
+  ];
   final PageController _cardPageController = PageController();
   int _activeCardSlide = 0;
 
@@ -1279,71 +1293,49 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickActionsRow() {
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildActionItem(
-              icon: Icons.receipt_long_rounded,
-              label: 'Bayar IPL',
-              color: AppTheme.electricBlue,
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const InvoiceScreen()));
-              },
-            ),
-            _buildActionItem(
-              icon: Icons.campaign_rounded,
-              label: 'Lapor RT',
-              color: AppTheme.warningAmber,
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const LaporScreen()));
-              },
-            ),
-            _buildActionItem(
-              icon: Icons.videocam_rounded,
-              label: 'CCTV Live',
-              color: AppTheme.alertRed,
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const CctvScreen()));
-              },
-            ),
-            _buildActionItem(
-              icon: Icons.storefront_rounded,
-              label: 'Lapak Warga',
-              color: AppTheme.successGreen,
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
-              },
-            ),
-          ],
+        _buildActionItem(
+          icon: Icons.receipt_long_rounded,
+          label: 'Bayar IPL',
+          color: AppTheme.electricBlue,
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const InvoiceScreen()))
+                .then((_) => _loadTagihanData());
+          },
         ),
-        const SizedBox(height: 14),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildActionItem(
-              icon: Icons.calendar_month_rounded,
-              label: 'Agenda RT',
-              color: AppTheme.purpleIndigo,
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const AgendaScreen()));
-              },
-            ),
-            _buildActionItem(
-              icon: Icons.crisis_alert_rounded,
-              label: '🚨 Tombol Panik',
-              color: AppTheme.alertRed,
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => const PanicScreen(),
-                );
-              },
-            ),
-          ],
+        _buildActionItem(
+          icon: Icons.campaign_rounded,
+          label: 'Lapor RT',
+          color: AppTheme.warningAmber,
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const LaporScreen()));
+          },
+        ),
+        _buildActionItem(
+          icon: Icons.storefront_rounded,
+          label: 'Lapak RT',
+          color: AppTheme.successGreen,
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+          },
+        ),
+        _buildActionItem(
+          icon: Icons.calendar_month_rounded,
+          label: 'Agenda RT',
+          color: AppTheme.purpleIndigo,
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AgendaScreen()));
+          },
+        ),
+        _buildActionItem(
+          icon: Icons.videocam_rounded,
+          label: 'CCTV Live',
+          color: Colors.teal,
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const CctvScreen()));
+          },
         ),
       ],
     );
@@ -1360,18 +1352,18 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         children: [
           Container(
-            width: 54,
-            height: 54,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -1766,27 +1758,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFloatingPanicButton() {
     return Container(
+      width: 62,
+      height: 62,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFEF4444),
+            Color(0xFFDC2626),
+            Color(0xFF991B1B),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFDC2626).withValues(alpha: 0.45),
+            color: const Color(0xFFDC2626).withValues(alpha: 0.55),
             blurRadius: 16,
-            spreadRadius: 2,
-            offset: const Offset(0, 6),
+            spreadRadius: 3,
+            offset: const Offset(0, 5),
           ),
         ],
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
       ),
-      child: FloatingActionButton.extended(
-        heroTag: 'flying_panic_btn',
-        onPressed: _openPanicModal,
-        backgroundColor: const Color(0xFFDC2626),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        icon: const Icon(Icons.crisis_alert_rounded, size: 22, color: Colors.white),
-        label: const Text(
-          '🚨 PANIK RT',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 0.8),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: _openPanicModal,
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.crisis_alert_rounded, color: Colors.white, size: 20),
+              SizedBox(height: 1),
+              Text(
+                'SOS',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

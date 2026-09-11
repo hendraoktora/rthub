@@ -13,17 +13,25 @@ class LapakScreen extends StatefulWidget {
   State<LapakScreen> createState() => _LapakScreenState();
 }
 
-class _LapakScreenState extends State<LapakScreen> {
+class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStateMixin {
   List<dynamic> _lapakList = [];
   bool _isLoading = false;
   Map<String, dynamic>? _user;
   final ImagePicker _picker = ImagePicker();
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _loadUserData();
     _loadLapakFromDb();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   void _loadUserData() async {
@@ -45,14 +53,39 @@ class _LapakScreenState extends State<LapakScreen> {
     }
   }
 
-  void _showTambahProdukModal() {
+  List<String> _extractImages(dynamic fotoUrl) {
+    if (fotoUrl == null) return [];
+    if (fotoUrl is List) return fotoUrl.map((e) => e.toString()).toList();
+    if (fotoUrl is String) {
+      if (fotoUrl.isEmpty) return [];
+      if (fotoUrl.startsWith('[') && fotoUrl.endsWith(']')) {
+        try {
+          final decoded = jsonDecode(fotoUrl);
+          if (decoded is List) return decoded.map((e) => e.toString()).toList();
+        } catch (_) {}
+      }
+      if (fotoUrl.contains('|||')) {
+        return fotoUrl.split('|||').where((s) => s.isNotEmpty).toList();
+      }
+      return [fotoUrl];
+    }
+    return [];
+  }
+
+  void _showFormProdukModal({dynamic editItem}) {
     final messenger = ScaffoldMessenger.of(context);
-    final judulController = TextEditingController();
-    final hargaController = TextEditingController();
-    final waController = TextEditingController(text: _user?['phone'] ?? '');
-    final deskripsiController = TextEditingController();
-    String kategori = 'Kuliner';
-    String? fotoBase64;
+    final isEditing = editItem != null;
+
+    final judulController = TextEditingController(text: editItem?['judul'] ?? '');
+    final hargaController = TextEditingController(
+      text: editItem?['harga'] != null ? editItem['harga'].toString().replaceAll('.0', '') : '',
+    );
+    final waController = TextEditingController(
+      text: editItem?['kontakWa'] ?? _user?['phone'] ?? '',
+    );
+    final deskripsiController = TextEditingController(text: editItem?['deskripsi'] ?? '');
+    String kategori = editItem?['kategori'] ?? 'Kuliner';
+    List<String> fotoList = _extractImages(editItem?['fotoUrl']);
 
     showModalBottomSheet(
       context: context,
@@ -62,7 +95,9 @@ class _LapakScreenState extends State<LapakScreen> {
       builder: (modalContext) => StatefulBuilder(
         builder: (modalContext, setModalState) => Padding(
           padding: EdgeInsets.only(
-            left: 20, right: 20, top: 20,
+            left: 20,
+            right: 20,
+            top: 20,
             bottom: MediaQuery.of(modalContext).viewInsets.bottom + 20,
           ),
           child: SingleChildScrollView(
@@ -81,37 +116,147 @@ class _LapakScreenState extends State<LapakScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Pasang Jualan di Lapak Warga', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const Text('Produk akan tampil ke seluruh warga RT & RW di lingkungan Anda',
-                    style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEditing ? '✏️ Edit Produk Lapak' : '🏪 Pasang Produk di Lapak Saya',
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppTheme.electricBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${fotoList.length} Foto',
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
+                      ),
+                    ),
+                  ],
+                ),
+                const Text(
+                  'Produk dan foto akan tampil ke seluruh warga RT & RW di lingkungan Anda',
+                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                ),
                 const SizedBox(height: 16),
 
-                // Upload Foto Produk Section
-                const Text('Foto Produk / Jasa *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                // Multi-Photo Upload Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Foto Produk (Bisa Banyak Foto) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(
+                      '${fotoList.length}/10 Foto',
+                      style: const TextStyle(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 8),
-                if (fotoBase64 != null) ...[
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: _buildImageWidget(fotoBase64!, height: 160, width: double.infinity),
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: GestureDetector(
-                          onTap: () => setModalState(() => fotoBase64 = null),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.black54,
-                              shape: BoxShape.circle,
+
+                // Horizontal Photo Thumbnails List
+                if (fotoList.isNotEmpty) ...[
+                  SizedBox(
+                    height: 110,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: fotoList.length + (fotoList.length < 10 ? 1 : 0),
+                      separatorBuilder: (ctx, idx) => const SizedBox(width: 8),
+                      itemBuilder: (ctx, idx) {
+                        if (idx == fotoList.length) {
+                          // Add more button tile
+                          return GestureDetector(
+                            onTap: () async {
+                              final imgs = await _picker.pickMultiImage(imageQuality: 50, maxWidth: 800, maxHeight: 800);
+                              if (imgs.isNotEmpty) {
+                                for (var img in imgs) {
+                                  final bytes = await img.readAsBytes();
+                                  setModalState(() {
+                                    fotoList.add('data:image/jpeg;base64,${base64Encode(bytes)}');
+                                  });
+                                }
+                              }
+                            },
+                            child: Container(
+                              width: 90,
+                              height: 110,
+                              decoration: BoxDecoration(
+                                color: AppTheme.slateLight,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AppTheme.slateBorder, style: BorderStyle.solid),
+                              ),
+                              child: const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_rounded, color: AppTheme.electricBlue, size: 28),
+                                  SizedBox(height: 4),
+                                  Text('+ Tambah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.electricBlue)),
+                                ],
+                              ),
                             ),
-                            child: const Icon(Icons.close, color: Colors.white, size: 18),
-                          ),
-                        ),
-                      ),
-                    ],
+                          );
+                        }
+
+                        final photoStr = fotoList[idx];
+                        return Stack(
+                          children: [
+                            Container(
+                              width: 90,
+                              height: 110,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: idx == 0 ? AppTheme.electricBlue : AppTheme.slateBorder,
+                                  width: idx == 0 ? 2 : 1,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: _buildImageWidget(photoStr, height: 110, width: 90),
+                              ),
+                            ),
+                            if (idx == 0)
+                              Positioned(
+                                bottom: 4,
+                                left: 4,
+                                right: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.electricBlue,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'Foto Utama',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setModalState(() {
+                                    fotoList.removeAt(idx);
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black87,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(height: 12),
                 ] else ...[
@@ -127,11 +272,11 @@ class _LapakScreenState extends State<LapakScreen> {
                         const Icon(Icons.add_photo_alternate_outlined, color: AppTheme.electricBlue, size: 36),
                         const SizedBox(height: 6),
                         const Text(
-                          'Upload Foto Produk Menarik',
+                          'Upload Foto Produk (Bisa Pilih Banyak Sekaligus)',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         const Text(
-                          'Foto membuat jualan Anda lebih menarik bagi calon pembeli',
+                          'Semakin lengkap foto produk, semakin menarik bagi pembeli',
                           style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
                         ),
                         const SizedBox(height: 12),
@@ -148,13 +293,13 @@ class _LapakScreenState extends State<LapakScreen> {
                                     final img = await _picker.pickImage(
                                       source: ImageSource.camera,
                                       imageQuality: 50,
-                                      maxWidth: 600,
-                                      maxHeight: 600,
+                                      maxWidth: 800,
+                                      maxHeight: 800,
                                     );
                                     if (img != null) {
                                       final bytes = await img.readAsBytes();
                                       setModalState(() {
-                                        fotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                        fotoList.add('data:image/jpeg;base64,${base64Encode(bytes)}');
                                       });
                                     }
                                   } catch (e) {
@@ -175,24 +320,25 @@ class _LapakScreenState extends State<LapakScreen> {
                                 ),
                                 onPressed: () async {
                                   try {
-                                    final img = await _picker.pickImage(
-                                      source: ImageSource.gallery,
+                                    final imgs = await _picker.pickMultiImage(
                                       imageQuality: 50,
-                                      maxWidth: 600,
-                                      maxHeight: 600,
+                                      maxWidth: 800,
+                                      maxHeight: 800,
                                     );
-                                    if (img != null) {
-                                      final bytes = await img.readAsBytes();
-                                      setModalState(() {
-                                        fotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-                                      });
+                                    if (imgs.isNotEmpty) {
+                                      for (var img in imgs) {
+                                        final bytes = await img.readAsBytes();
+                                        setModalState(() {
+                                          fotoList.add('data:image/jpeg;base64,${base64Encode(bytes)}');
+                                        });
+                                      }
                                     }
                                   } catch (e) {
                                     messenger.showSnackBar(SnackBar(content: Text('Gagal galeri: $e')));
                                   }
                                 },
                                 icon: const Icon(Icons.photo_library_rounded, size: 16, color: Colors.white),
-                                label: const Text('Galeri', style: TextStyle(fontSize: 12, color: Colors.white)),
+                                label: const Text('Galeri (Multi)', style: TextStyle(fontSize: 12, color: Colors.white)),
                               ),
                             ),
                           ],
@@ -205,7 +351,7 @@ class _LapakScreenState extends State<LapakScreen> {
 
                 TextField(
                   controller: judulController,
-                  decoration: const InputDecoration(labelText: 'Nama Produk / Jasa *', hintText: 'Contoh: Risol Mayo Mama'),
+                  decoration: const InputDecoration(labelText: 'Nama Produk / Jasa *', hintText: 'Contoh: Nasi Uduk Komplit Bu Hendra'),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -214,7 +360,7 @@ class _LapakScreenState extends State<LapakScreen> {
                       child: DropdownButtonFormField<String>(
                         initialValue: kategori,
                         decoration: const InputDecoration(labelText: 'Kategori'),
-                        items: ['Kuliner', 'Jasa', 'Kontrakan', 'Produk', 'Fashion', 'Elektronik']
+                        items: ['Kuliner', 'Sembako', 'Minuman', 'Jasa', 'Kontrakan', 'Produk', 'Fashion', 'Elektronik']
                             .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                             .toList(),
                         onChanged: (val) {
@@ -227,7 +373,7 @@ class _LapakScreenState extends State<LapakScreen> {
                       child: TextField(
                         controller: hargaController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'Harga (Rp) *', hintText: '25000'),
+                        decoration: const InputDecoration(labelText: 'Harga (Rp) *', hintText: '15000'),
                       ),
                     ),
                   ],
@@ -236,18 +382,24 @@ class _LapakScreenState extends State<LapakScreen> {
                 TextField(
                   controller: waController,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'No. WhatsApp Penjual *', hintText: '0812xxxxxxxx'),
+                  decoration: const InputDecoration(labelText: 'No. WhatsApp untuk Terima Pesanan *', hintText: '0812xxxxxxxx'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: deskripsiController,
                   maxLines: 2,
-                  decoration: const InputDecoration(labelText: 'Deskripsi Produk *', hintText: 'Jelaskan keunggulan produk atau porsi...'),
+                  decoration: const InputDecoration(labelText: 'Deskripsi & Varian Produk *', hintText: 'Jelaskan porsi, varian rasa, atau waktu buka...'),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryNavy,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
                     onPressed: () async {
                       final judul = judulController.text.trim();
                       final harga = double.tryParse(hargaController.text.trim()) ?? 0;
@@ -262,18 +414,26 @@ class _LapakScreenState extends State<LapakScreen> {
                       }
                       Navigator.pop(modalContext);
 
+                      // Save encoded multiple photos
+                      final fotoPayload = fotoList.isNotEmpty ? jsonEncode(fotoList) : null;
+
                       try {
+                        if (isEditing && editItem['id'] != null) {
+                          await ApiService.deleteLapak(editItem['id'].toString());
+                        }
+
                         await ApiService.createLapak({
                           'judul': judul,
                           'harga': harga,
                           'kategori': kategori,
                           'kontakWa': phone,
                           'deskripsi': desc,
-                          'fotoUrl': fotoBase64,
+                          'fotoUrl': fotoPayload,
                         });
+
                         messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text('✅ Produk & Foto berhasil dipasang ke Lapak Warga!'),
+                          SnackBar(
+                            content: Text(isEditing ? '✅ Produk berhasil diperbarui!' : '✅ Produk & Foto berhasil dipasang ke Lapak Saya!'),
                             backgroundColor: AppTheme.successGreen,
                           ),
                         );
@@ -287,7 +447,8 @@ class _LapakScreenState extends State<LapakScreen> {
                         );
                       }
                     },
-                    child: const Text('Simpan & Pasang ke Lapak'),
+                    icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+                    label: Text(isEditing ? 'Simpan Perubahan Produk' : 'Pasang Produk ke Lapak Saya', style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -304,7 +465,7 @@ class _LapakScreenState extends State<LapakScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Hapus Produk Lapak?'),
-        content: Text('Yakin ingin menghapus "$title"?'),
+        content: Text('Yakin ingin menghapus "$title"? Produk tidak akan tampil lagi di Lapak Warga.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
           ElevatedButton(
@@ -320,7 +481,7 @@ class _LapakScreenState extends State<LapakScreen> {
       try {
         await ApiService.deleteLapak(id);
         messenger.showSnackBar(
-          const SnackBar(content: Text('Produk berhasil dihapus'), backgroundColor: AppTheme.successGreen),
+          const SnackBar(content: Text('Produk berhasil dihapus dari Lapak'), backgroundColor: AppTheme.successGreen),
         );
         _loadLapakFromDb();
       } catch (e) {
@@ -332,7 +493,7 @@ class _LapakScreenState extends State<LapakScreen> {
   }
 
   static Widget _buildImageWidget(String urlOrBase64, {double height = 150, double width = double.infinity}) {
-    if (urlOrBase64.startsWith('data:image') || urlOrBase64.length > 200) {
+    if (urlOrBase64.startsWith('data:image') || (urlOrBase64.length > 200 && !urlOrBase64.startsWith('http'))) {
       try {
         final cleanBase64 = urlOrBase64.contains(',') ? urlOrBase64.split(',')[1] : urlOrBase64;
         final bytes = base64Decode(cleanBase64.trim());
@@ -375,13 +536,52 @@ class _LapakScreenState extends State<LapakScreen> {
   @override
   Widget build(BuildContext context) {
     final currentUserId = _user?['id'];
+    final userPhone = _user?['phone'] ?? '';
     final userRole = _user?['role']?.toString().toUpperCase() ?? 'WARGA';
     final isPengurus = userRole == 'ADMIN_RT' || userRole == 'KETUA_RT' || userRole == 'SUPERADMIN' || userRole == 'BENDAHARA_RT';
+
+    // Filter my products (products matching sellerId, user phone, or seller name)
+    final myProducts = _lapakList.where((item) {
+      if (item['sellerId'] == currentUserId && currentUserId != null) return true;
+      if (item['kontakWa'] == userPhone && userPhone.isNotEmpty) return true;
+      if (item['seller']?['profile']?['namaLengkap'] == _user?['profile']?['namaLengkap'] && _user?['profile']?['namaLengkap'] != null) return true;
+      return false;
+    }).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Lapak Warga & UMKM (Live DB)'),
+        title: const Text('Lapak Warga & UMKM RT'),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: AppTheme.primaryNavy,
+          unselectedLabelColor: AppTheme.textMuted,
+          indicatorColor: AppTheme.electricBlue,
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          tabs: [
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.storefront_rounded, size: 18),
+                  const SizedBox(width: 6),
+                  Text('Semua Lapak (${_lapakList.length})'),
+                ],
+              ),
+            ),
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.store_mall_directory_rounded, size: 18),
+                  const SizedBox(width: 6),
+                  Text('Lapak Saya (${myProducts.length})'),
+                ],
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -391,174 +591,441 @@ class _LapakScreenState extends State<LapakScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showTambahProdukModal,
+        onPressed: () => _showFormProdukModal(),
         backgroundColor: AppTheme.primaryNavy,
         icon: const Icon(Icons.add_business_rounded, color: Colors.white),
-        label: const Text('Jual Produk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text('+ Pasang Produk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadLapakFromDb,
-          child: _isLoading && _lapakList.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : _lapakList.isEmpty
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            // TAB 1: SEMUA PRODUK WARGA
+            _buildAllLapakTab(currentUserId, isPengurus),
+
+            // TAB 2: LAPAK SAYA (MANAGE MY PRODUCTS)
+            _buildMyLapakTab(myProducts),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAllLapakTab(dynamic currentUserId, bool isPengurus) {
+    return RefreshIndicator(
+      onRefresh: _loadLapakFromDb,
+      child: _isLoading && _lapakList.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : _lapakList.isEmpty
+              ? _buildEmptyLapakView(
+                  title: 'Belum Ada Produk di Lapak Warga',
+                  subtitle: 'Jadilah yang pertama memasarkan produk / makanan / jasa Anda di lingkungan RT & RW!',
+                )
+              : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _lapakList.length,
+                  itemBuilder: (context, index) {
+                    final item = _lapakList[index];
+                    final isOwner = item['sellerId'] == currentUserId || isPengurus;
+                    return _buildProductCard(item, isOwner: isOwner);
+                  },
+                ),
+    );
+  }
+
+  Widget _buildMyLapakTab(List<dynamic> myProducts) {
+    return RefreshIndicator(
+      onRefresh: _loadLapakFromDb,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Banner Lapak Saya
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F766E), Color(0xFF047857)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F766E).withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Kelola Lapak & Jualan Saya',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Total ${myProducts.length} produk jualan Anda sedang aktif tayang ke seluruh warga lingkungan.',
+                        style: const TextStyle(color: Colors.white70, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          if (myProducts.isEmpty)
+            _buildEmptyLapakView(
+              title: 'Lapak Anda Masih Kosong',
+              subtitle: 'Pasang jualan makanan, sembako, atau jasa Anda sekarang agar tetangga bisa langsung order via WhatsApp.',
+            )
+          else
+            ...myProducts.map((item) => _buildMyProductManagementCard(item)),
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyLapakView({required String title, required String subtitle}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppTheme.slateLight,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.storefront_outlined, size: 48, color: AppTheme.textMuted),
+          ),
+          const SizedBox(height: 16),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12, height: 1.4),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: () => _showFormProdukModal(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryNavy,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            icon: const Icon(Icons.add, size: 18, color: Colors.white),
+            label: const Text('Pasang Jualan Baru', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductCard(dynamic item, {required bool isOwner}) {
+    final sellerName = item['seller']?['profile']?['namaLengkap'] ?? item['sellerName'] ?? 'Warga RT';
+    final sellerRt = item['rt']?['nomor'] ?? '03';
+    final hargaNum = item['harga'] != null ? double.tryParse(item['harga'].toString()) ?? 0 : 0;
+    final photos = _extractImages(item['fotoUrl']);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.slateBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Gambar Produk Multi-Photo
+          if (photos.isNotEmpty) ...[
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: photos.length > 1
+                      ? SizedBox(
+                          height: 180,
+                          child: PageView.builder(
+                            itemCount: photos.length,
+                            itemBuilder: (ctx, pIdx) => _buildImageWidget(photos[pIdx], height: 180, width: double.infinity),
+                          ),
+                        )
+                      : _buildImageWidget(photos.first, height: 180, width: double.infinity),
+                ),
+                if (photos.length > 1)
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.photo_library_rounded, color: Colors.white, size: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${photos.length} Foto (Geser)',
+                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppTheme.electricBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        item['kategori'] ?? 'PRODUK',
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
+                      ),
+                    ),
+                    Row(
                       children: [
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.15),
-                        Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.storefront_outlined, size: 48, color: AppTheme.textMuted),
-                              const SizedBox(height: 12),
-                              const Text('Belum Ada Produk di Lapak Warga',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                              const SizedBox(height: 4),
-                              const Text('Jadilah yang pertama memasarkan produk / makanan / jasa Anda di lingkungan RT & RW!',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: _showTambahProdukModal,
-                                icon: const Icon(Icons.add, size: 16),
-                                label: const Text('Pasang Jualan Sekarang'),
-                              ),
-                            ],
+                        Text('$sellerName (RT $sellerRt)',
+                            style: const TextStyle(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w500)),
+                        if (isOwner && item['id'] != null) ...[
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () => _showFormProdukModal(editItem: item),
+                            child: const Padding(
+                              padding: EdgeInsets.all(2.0),
+                              child: Icon(Icons.edit_outlined, size: 16, color: AppTheme.electricBlue),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () => _handleDeleteLapak(item['id'].toString(), item['judul'] ?? 'Produk'),
+                            child: const Padding(
+                              padding: EdgeInsets.all(2.0),
+                              child: Icon(Icons.delete_outline_rounded, size: 16, color: AppTheme.alertRed),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(item['judul'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                if (item['deskripsi'] != null && item['deskripsi'].toString().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(item['deskripsi'], style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Rp ${hargaNum.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.electricBlue),
+                    ),
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () => _openWhatsAppChat(item['kontakWa'] ?? '081234567890', item['judul'] ?? 'Produk'),
+                          icon: const Icon(Icons.chat_outlined, size: 13, color: AppTheme.successGreen),
+                          label: const Text('Chat', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppTheme.successGreen),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => _showOrderModal(item),
+                          icon: const Icon(Icons.shopping_cart_outlined, size: 14),
+                          label: const Text('Pesan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.successGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                         ),
                       ],
-                    )
-                  : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _lapakList.length,
-                      itemBuilder: (context, index) {
-                        final item = _lapakList[index];
-                        final sellerName = item['seller']?['profile']?['namaLengkap'] ?? item['sellerName'] ?? 'Warga RT';
-                        final sellerRt = item['rt']?['nomor'] ?? '03';
-                        final hargaNum = item['harga'] != null ? double.tryParse(item['harga'].toString()) ?? 0 : 0;
-                        final isOwner = item['sellerId'] == currentUserId || isPengurus;
-                        final fotoUrl = item['fotoUrl'] as String?;
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: AppTheme.slateBorder),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.03),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Gambar Produk Jika Ada
-                              if (fotoUrl != null && fotoUrl.isNotEmpty) ...[
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                                  child: _buildImageWidget(fotoUrl, height: 170, width: double.infinity),
-                                ),
-                              ],
-
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.electricBlue.withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            item['kategori'] ?? 'PRODUK',
-                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
-                                          ),
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text('$sellerName (RT $sellerRt)',
-                                                style: const TextStyle(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w500)),
-                                            if (isOwner && item['id'] != null) ...[
-                                              const SizedBox(width: 4),
-                                              GestureDetector(
-                                                onTap: () => _handleDeleteLapak(item['id'].toString(), item['judul'] ?? 'Produk'),
-                                                child: const Padding(
-                                                  padding: EdgeInsets.all(4.0),
-                                                  child: Icon(Icons.delete_outline_rounded, size: 16, color: AppTheme.alertRed),
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(item['judul'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                    if (item['deskripsi'] != null && item['deskripsi'].toString().isNotEmpty) ...[
-                                      const SizedBox(height: 4),
-                                      Text(item['deskripsi'], style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                                    ],
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Rp ${hargaNum.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.electricBlue),
-                                        ),
-                                        Row(
-                                          children: [
-                                            OutlinedButton.icon(
-                                              onPressed: () => _openWhatsAppChat(item['kontakWa'] ?? '081234567890', item['judul'] ?? 'Produk'),
-                                              icon: const Icon(Icons.chat_outlined, size: 13, color: AppTheme.successGreen),
-                                              label: const Text('Chat', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
-                                              style: OutlinedButton.styleFrom(
-                                                side: const BorderSide(color: AppTheme.successGreen),
-                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                                                minimumSize: Size.zero,
-                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            ElevatedButton.icon(
-                                              onPressed: () => _showOrderModal(item),
-                                              icon: const Icon(Icons.shopping_cart_outlined, size: 14),
-                                              label: const Text('Pesan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: AppTheme.successGreen,
-                                                foregroundColor: Colors.white,
-                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                                minimumSize: Size.zero,
-                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
                     ),
-        ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMyProductManagementCard(dynamic item) {
+    final hargaNum = item['harga'] != null ? double.tryParse(item['harga'].toString()) ?? 0 : 0;
+    final photos = _extractImages(item['fotoUrl']);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.slateBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Photo Thumbnail
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: photos.isNotEmpty
+                    ? _buildImageWidget(photos.first, height: 75, width: 75)
+                    : _buildPlaceholder(75, 75),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.electricBlue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            item['kategori'] ?? 'PRODUK',
+                            style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.successGreen.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text('✓ Tayang', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item['judul'] ?? '-',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Rp ${hargaNum.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.electricBlue),
+                    ),
+                    if (photos.length > 1) ...[
+                      const SizedBox(height: 2),
+                      Text('📸 Memiliki ${photos.length} foto produk', style: const TextStyle(fontSize: 10.5, color: AppTheme.textMuted)),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+
+          // Action Buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _handleDeleteLapak(item['id'].toString(), item['judul'] ?? 'Produk'),
+                icon: const Icon(Icons.delete_outline_rounded, size: 14, color: AppTheme.alertRed),
+                label: const Text('Hapus', style: TextStyle(fontSize: 11, color: AppTheme.alertRed, fontWeight: FontWeight.bold)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppTheme.alertRed),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () => _showFormProdukModal(editItem: item),
+                icon: const Icon(Icons.edit_rounded, size: 14),
+                label: const Text('Edit Produk & Foto', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryNavy,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

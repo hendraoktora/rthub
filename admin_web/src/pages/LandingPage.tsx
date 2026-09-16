@@ -27,6 +27,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { RtHubLogo } from '../components/RtHubLogo';
+import { ManageAdsBanner } from '../components/ManageAdsBanner';
 
 interface LandingPageProps {
   onGoToLogin: () => void;
@@ -299,6 +300,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* SPONSORED BANNER (ManageADS Dynamic Smart Widget) */}
+      <section className="py-5 bg-slate-100/75 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">
+            Iklan Sponsor Resmi
+          </span>
+          <ManageAdsBanner bannerId="ban-mu3rpj2u" />
         </div>
       </section>
 

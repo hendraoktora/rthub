@@ -30,3 +30,4 @@ ios/.symlinks/
 .DS_Store
 Thumbs.db
 *.tmp
+.idea/

@@ -310,7 +310,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
             Iklan Sponsor Resmi
           </span>
           <ManageAdsBanner
-            bannerId="ban-mu3ryzku"
+            bannerId="ban-mu3usk1d"
             targetUrl="https://iconnet.id/promo/promo-september-2026"
           />
         </div>

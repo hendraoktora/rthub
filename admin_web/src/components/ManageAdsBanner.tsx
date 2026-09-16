@@ -8,7 +8,7 @@ interface ManageAdsBannerProps {
 }
 
 export const ManageAdsBanner: React.FC<ManageAdsBannerProps> = ({
-  bannerId = 'ban-mu3ryzku',
+  bannerId = 'ban-mu3usk1d',
   targetUrl = 'https://iconnet.id/promo/promo-september-2026',
   host = 'https://manage-ads-three.vercel.app',
   className = '',

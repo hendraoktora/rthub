@@ -309,7 +309,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
           <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">
             Iklan Sponsor Resmi
           </span>
-          <ManageAdsBanner bannerId="ban-mu3rpj2u" />
+          <ManageAdsBanner bannerId="ban-mu3ryzku" />
         </div>
       </section>
 

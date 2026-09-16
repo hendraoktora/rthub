@@ -303,13 +303,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
         </div>
       </section>
 
-      {/* SPONSORED BANNER (ManageADS Dynamic Smart Widget) */}
+      {/* SPONSORED BANNER (ManageADS Dynamic Smart Widget - Auto-Updates & Direct Backlink) */}
       <section className="py-5 bg-slate-100/75 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
           <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">
             Iklan Sponsor Resmi
           </span>
-          <ManageAdsBanner bannerId="ban-mu3ryzku" />
+          <ManageAdsBanner
+            bannerId="ban-mu3ryzku"
+            targetUrl="https://iconnet.id/promo/promo-september-2026"
+          />
         </div>
       </section>
 

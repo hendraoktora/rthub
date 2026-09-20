@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String defaultUrl = 'https://rthub.hendraoktora.com/api';
+  static const String defaultUrl = 'https://api.rthub.id/api';
 
   static final http.Client _client = http.Client();
   static String? _cachedBaseUrl;
@@ -12,10 +12,9 @@ class ApiService {
   static final Map<String, dynamic> _memoryCache = {};
 
   static const List<String> candidateUrls = [
+    'https://api.rthub.id/api',
     'https://rthub.hendraoktora.com/api',
     'https://rthub.vercel.app/api',
-    'http://192.168.100.49:3000/api',
-    'http://10.0.2.2:3000/api',
     'http://127.0.0.1:3000/api',
     'http://localhost:3000/api',
   ];

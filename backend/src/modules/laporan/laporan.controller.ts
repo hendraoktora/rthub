@@ -13,32 +13,43 @@ export class LaporanController {
   constructor(private readonly laporanService: LaporanService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Buat laporan keluhan RT baru (Bisa dilakukan semua role kecuali Superadmin)' })
+  @ApiOperation({ summary: 'Buat laporan keluhan RT atau permohonan surat pengantar' })
   async createLaporan(
     @CurrentUser() user: any,
-    @Body() body: {
+    @Body()
+    body: {
       judul: string;
       deskripsi: string;
-      kategori: string;
+      kategori?: string;
       fotoUrl?: string;
       isAnonymous?: boolean;
+      tujuan?: string;
+      tipeLaporan?: string;
+      dataSurat?: any;
     },
   ) {
     return this.laporanService.createLaporan(user, body);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Daftar laporan warga di lingkungan RT' })
+  @ApiOperation({ summary: 'Daftar laporan warga di lingkungan RT (Strict Privacy)' })
   async getLaporanList(@CurrentUser() user: any) {
     return this.laporanService.getLaporanList(user);
   }
 
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update status laporan dan berikan tanggapan RT' })
+  @ApiOperation({ summary: 'Update status laporan dan berikan tanggapan (Hanya pihak berwenang)' })
   async updateStatus(
+    @CurrentUser() user: any,
     @Param('id') id: string,
-    @Body() body: { status: StatusLaporan; tanggapanRT?: string },
+    @Body()
+    body: {
+      status: StatusLaporan;
+      tanggapanRT?: string;
+      tanggapanBy?: string;
+      nomorSurat?: string;
+    },
   ) {
-    return this.laporanService.updateStatus(id, body);
+    return this.laporanService.updateStatus(user, id, body);
   }
 }

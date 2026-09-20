@@ -28,14 +28,14 @@ let LaporanController = class LaporanController {
     async getLaporanList(user) {
         return this.laporanService.getLaporanList(user);
     }
-    async updateStatus(id, body) {
-        return this.laporanService.updateStatus(id, body);
+    async updateStatus(user, id, body) {
+        return this.laporanService.updateStatus(user, id, body);
     }
 };
 exports.LaporanController = LaporanController;
 __decorate([
     (0, common_1.Post)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Buat laporan keluhan RT baru (Bisa dilakukan semua role kecuali Superadmin)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Buat laporan keluhan RT atau permohonan surat pengantar' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -44,7 +44,7 @@ __decorate([
 ], LaporanController.prototype, "createLaporan", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Daftar laporan warga di lingkungan RT' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Daftar laporan warga di lingkungan RT (Strict Privacy)' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -52,11 +52,12 @@ __decorate([
 ], LaporanController.prototype, "getLaporanList", null);
 __decorate([
     (0, common_1.Patch)(':id/status'),
-    (0, swagger_1.ApiOperation)({ summary: 'Update status laporan dan berikan tanggapan RT' }),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    (0, swagger_1.ApiOperation)({ summary: 'Update status laporan dan berikan tanggapan (Hanya pihak berwenang)' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [Object, String, Object]),
     __metadata("design:returntype", Promise)
 ], LaporanController.prototype, "updateStatus", null);
 exports.LaporanController = LaporanController = __decorate([

@@ -44,11 +44,97 @@ class _LaporScreenState extends State<LaporScreen> {
     }
   }
 
+  // Strict Privacy: Regular WARGA only see their own reports or reports targeted to them
+  List<dynamic> get _filteredLaporanList {
+    final role = _user?['role']?.toString() ?? 'WARGA';
+    final myUserId = _user?['id']?.toString();
+    final myName = _user?['profile']?['namaLengkap']?.toString().toLowerCase();
+
+    if (role == 'SUPERADMIN' || role == 'ADMIN_RT') {
+      return _laporanList;
+    }
+
+    if (role == 'SEKRETARIS_RT') {
+      return _laporanList.where((l) {
+        final t = l['tujuan']?.toString();
+        final tipe = l['tipeLaporan']?.toString();
+        final uid = l['userId']?.toString();
+        return t == 'SEKRETARIS_RT' || t == 'UMUM' || tipe != 'PENGADUAN' || (myUserId != null && uid == myUserId);
+      }).toList();
+    }
+
+    if (role == 'BENDAHARA_RT') {
+      return _laporanList.where((l) {
+        final t = l['tujuan']?.toString();
+        final uid = l['userId']?.toString();
+        return t == 'BENDAHARA_RT' || t == 'UMUM' || (myUserId != null && uid == myUserId);
+      }).toList();
+    }
+
+    if (role == 'SECURITY') {
+      return _laporanList.where((l) {
+        final t = l['tujuan']?.toString();
+        final uid = l['userId']?.toString();
+        return t == 'KEAMANAN' || t == 'UMUM' || (myUserId != null && uid == myUserId);
+      }).toList();
+    }
+
+    // Regular WARGA: ONLY sees their own reports
+    return _laporanList.where((l) {
+      final uid = l['userId']?.toString();
+      if (myUserId != null && uid == myUserId) return true;
+      final targetCustom = l['targetCustom']?.toString().toLowerCase();
+      if (myName != null && targetCustom != null && targetCustom.contains(myName)) return true;
+      return false;
+    }).toList();
+  }
+
+  // Strict Authorization: who can respond to this report?
+  bool _canUserRespond(Map<String, dynamic> item) {
+    if (_user == null) return false;
+    final role = _user?['role']?.toString() ?? 'WARGA';
+    if (role == 'SUPERADMIN' || role == 'ADMIN_RT') return true;
+
+    final tujuan = item['tujuan']?.toString() ?? 'KETUA_RT';
+    final tipe = item['tipeLaporan']?.toString() ?? 'PENGADUAN';
+
+    if (role == 'SEKRETARIS_RT' && (tujuan == 'SEKRETARIS_RT' || tujuan == 'UMUM' || tipe != 'PENGADUAN')) return true;
+    if (role == 'BENDAHARA_RT' && (tujuan == 'BENDAHARA_RT' || tujuan == 'UMUM')) return true;
+    if (role == 'SECURITY' && (tujuan == 'KEAMANAN' || tujuan == 'UMUM')) return true;
+    return false;
+  }
+
+  Map<String, dynamic> _parseDataSurat(Map<String, dynamic> item) {
+    final raw = item['dataSurat'];
+    if (raw == null) return {};
+    if (raw is Map<String, dynamic>) return raw;
+    try {
+      return jsonDecode(raw.toString()) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
+    }
+  }
+
   void _showBuatLaporanModal() {
     final messenger = ScaffoldMessenger.of(context);
     final judulController = TextEditingController();
     final deskripsiController = TextEditingController();
-    final customTargetController = TextEditingController();
+
+    // Template-specific controllers
+    final namaAlmController = TextEditingController();
+    final nikAlmController = TextEditingController();
+    final tglMeninggalController = TextEditingController();
+    final tempatMeninggalController = TextEditingController();
+    final hubunganController = TextEditingController(text: 'Anak Kandung');
+
+    final pekerjaanController = TextEditingController();
+    final penghasilanController = TextEditingController(text: 'Rp 1.500.000 / bulan');
+    final keperluanController = TextEditingController();
+
+    final alamatDomisiliController = TextEditingController();
+    final lamaTinggalController = TextEditingController(text: '2 Tahun');
+
+    String tipeLaporan = 'PENGADUAN';
     String tujuan = 'KETUA_RT';
     String kategori = 'FASILITAS_UMUM';
     bool isAnonymous = false;
@@ -81,11 +167,45 @@ class _LaporScreenState extends State<LaporScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Buat Laporan / Pengaduan Lingkungan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const Text('Laporan dapat ditujukan ke Pengurus RT, Seksi Khusus, atau Warga/Tetangga tertentu',
+                const Text('Buat Laporan / Permohonan Surat RT', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                const Text('Layanan pengaduan dan surat pengantar kelurahan (100% Private & Terenkripsi)',
                     style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                 const SizedBox(height: 16),
 
+                // 1. Pilih Template
+                DropdownButtonFormField<String>(
+                  initialValue: tipeLaporan,
+                  decoration: const InputDecoration(
+                    labelText: 'Pilih Template / Layanan *',
+                    prefixIcon: Icon(Icons.description_outlined),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'PENGADUAN', child: Text('📢 Pengaduan Lingkungan & Fasilitas')),
+                    DropdownMenuItem(value: 'SURAT_PENGANTAR', child: Text('📑 Surat Pengantar Kelurahan (KTP/KK)')),
+                    DropdownMenuItem(value: 'SURAT_KEMATIAN', child: Text('📜 Surat Keterangan Kematian')),
+                    DropdownMenuItem(value: 'SURAT_SKTM', child: Text('📄 Surat Keterangan Tidak Mampu (SKTM)')),
+                    DropdownMenuItem(value: 'SURAT_DOMISILI', child: Text('🏡 Surat Keterangan Domisili Warga')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setModalState(() {
+                        tipeLaporan = val;
+                        if (val == 'SURAT_KEMATIAN') {
+                          judulController.text = 'Permohonan Surat Keterangan Kematian';
+                        } else if (val == 'SURAT_SKTM') {
+                          judulController.text = 'Permohonan Surat Keterangan Tidak Mampu (SKTM)';
+                        } else if (val == 'SURAT_DOMISILI') {
+                          judulController.text = 'Permohonan Surat Keterangan Domisili';
+                        } else if (val == 'SURAT_PENGANTAR') {
+                          judulController.text = 'Permohonan Surat Pengantar Kelurahan';
+                        }
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                // 2. Ditujukan Ke
                 DropdownButtonFormField<String>(
                   initialValue: tujuan,
                   decoration: const InputDecoration(
@@ -93,225 +213,250 @@ class _LaporScreenState extends State<LaporScreen> {
                     prefixIcon: Icon(Icons.person_pin_rounded),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'KETUA_RT', child: Text('👑 Ketua RT')),
+                    DropdownMenuItem(value: 'KETUA_RT', child: Text('👑 Ketua RT (Administrasi & Surat)')),
                     DropdownMenuItem(value: 'SEKRETARIS_RT', child: Text('📝 Sekretaris RT')),
                     DropdownMenuItem(value: 'BENDAHARA_RT', child: Text('💰 Bendahara RT')),
-                    DropdownMenuItem(value: 'KEAMANAN', child: Text('🛡️ Seksi Keamanan & Ronda Malam')),
-                    DropdownMenuItem(value: 'KEBERSIHAN', child: Text('🧹 Seksi Kebersihan Lingkungan')),
-                    DropdownMenuItem(value: 'PEMBANGUNAN', child: Text('🏗️ Seksi Pembangunan & Sarana')),
-                    DropdownMenuItem(value: 'PENGURUS_RW', child: Text('🏛️ Pengurus RW Lingkungan')),
-                    DropdownMenuItem(value: 'WARGA_SPESIFIK', child: Text('👤 Warga / Tetangga Tertentu')),
-                    DropdownMenuItem(value: 'UMUM', child: Text('🏢 Pengurus RT Umum / Semua')),
+                    DropdownMenuItem(value: 'KEAMANAN', child: Text('🛡️ Seksi Keamanan & Ronda')),
+                    DropdownMenuItem(value: 'KEBERSIHAN', child: Text('🧹 Seksi Kebersihan')),
+                    DropdownMenuItem(value: 'UMUM', child: Text('🏢 Pengurus RT Umum')),
                   ],
                   onChanged: (val) {
                     if (val != null) setModalState(() => tujuan = val);
                   },
                 ),
-                if (tujuan == 'WARGA_SPESIFIK') ...[
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: customTargetController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nama & Blok Rumah Warga yang Dituju *',
-                      hintText: 'Contoh: Bpk. Budi (Blok A3 No. 12)',
-                      prefixIcon: Icon(Icons.home_work_outlined),
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 12),
 
+                // Judul
                 TextField(
                   controller: judulController,
                   decoration: const InputDecoration(
-                    labelText: 'Judul Masalah / Permohonan *',
-                    hintText: 'Contoh: Lampu Jalan Gang 3 Mati Total',
+                    labelText: 'Judul Laporan / Permohonan *',
+                    hintText: 'Contoh: Permohonan Surat Keterangan Kematian Alm. Bpk. Fulan',
                     prefixIcon: Icon(Icons.title_rounded),
                   ),
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: kategori,
-                  decoration: const InputDecoration(
-                    labelText: 'Kategori Masalah',
-                    prefixIcon: Icon(Icons.category_outlined),
+
+                // FIELDS TEMPLATE: SURAT KEMATIAN
+                if (tipeLaporan == 'SURAT_KEMATIAN') ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Data Almarhum / Almarhumah:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.purple)),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: namaAlmController,
+                          decoration: const InputDecoration(labelText: 'Nama Lengkap Almarhum/ah *', isDense: true),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: nikAlmController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'NIK Almarhum/ah (16 Digit)', isDense: true),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: tglMeninggalController,
+                          decoration: const InputDecoration(labelText: 'Hari / Tanggal / Waktu Wafat *', hintText: 'Contoh: 18 September 2026, 08:30 WIB', isDense: true),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: tempatMeninggalController,
+                          decoration: const InputDecoration(labelText: 'Tempat Meninggal & Penyebab', hintText: 'Contoh: Rumah Duka / Sakit Tua', isDense: true),
+                        ),
+                      ],
+                    ),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'FASILITAS_UMUM', child: Text('Fasilitas Umum & Jalan')),
-                    DropdownMenuItem(value: 'KEBERSIHAN', child: Text('Kebersihan & Sampah')),
-                    DropdownMenuItem(value: 'KEAMANAN', child: Text('Keamanan Lingkungan')),
-                    DropdownMenuItem(value: 'KETERTIBAN', child: Text('Ketertiban & Kebisingan')),
-                    DropdownMenuItem(value: 'ADMINISTRASI', child: Text('Administrasi & Surat Pengantar')),
-                    DropdownMenuItem(value: 'SOSIAL_WARGA', child: Text('Sosial & Bantuan Warga')),
-                    DropdownMenuItem(value: 'LAINNYA', child: Text('Lainnya')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setModalState(() => kategori = val);
-                  },
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
+                ],
+
+                // FIELDS TEMPLATE: SKTM
+                if (tipeLaporan == 'SURAT_SKTM') ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Data Keterangan Ekonomi / SKTM:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF92400E))),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: pekerjaanController,
+                          decoration: const InputDecoration(labelText: 'Pekerjaan Kepala Keluarga', hintText: 'Contoh: Buruh / Pedagang Kecil', isDense: true),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: penghasilanController,
+                          decoration: const InputDecoration(labelText: 'Rata-rata Penghasilan Bulanan', isDense: true),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: keperluanController,
+                          decoration: const InputDecoration(labelText: 'Keperluan Surat SKTM *', hintText: 'Contoh: Beasiswa KIP Kuliah / BPJS PBI', isDense: true),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Deskripsi Rincian
                 TextField(
                   controller: deskripsiController,
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Rincian Keluhan & Lokasi Kejadian *',
-                    hintText: 'Jelaskan detail kendala, kronologi, atau lokasi yang perlu ditindaklanjuti...',
-                    prefixIcon: Icon(Icons.notes_rounded),
+                  decoration: InputDecoration(
+                    labelText: tipeLaporan == 'PENGADUAN' ? 'Rincian Keluhan & Lokasi *' : 'Keterangan Pengantar Tambahan *',
+                    hintText: 'Jelaskan kronologi atau maksud permohonan secara lengkap...',
+                    prefixIcon: const Icon(Icons.notes_rounded),
                   ),
                 ),
                 const SizedBox(height: 12),
 
-                // Foto Bukti Kejadian
-                const Text('Foto Bukti Kejadian (Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
-                if (fotoBase64 != null) ...[
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: _buildImageWidget(fotoBase64!, height: 130, width: double.infinity),
-                      ),
-                      Positioned(
-                        top: 6,
-                        right: 6,
-                        child: GestureDetector(
-                          onTap: () => setModalState(() => fotoBase64 = null),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                // Foto Lampiran
+                if (tipeLaporan == 'PENGADUAN') ...[
+                  const Text('Foto Bukti (Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  if (fotoBase64 != null) ...[
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: _buildImageWidget(fotoBase64!, height: 130, width: double.infinity),
+                        ),
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: GestureDetector(
+                            onTap: () => setModalState(() => fotoBase64 = null),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                              child: const Icon(Icons.close, color: Colors.white, size: 16),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                ] else ...[
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ] else ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              try {
+                                final img = await _picker.pickImage(source: ImageSource.camera, imageQuality: 50, maxWidth: 600, maxHeight: 600);
+                                if (img != null) {
+                                  final bytes = await img.readAsBytes();
+                                  setModalState(() => fotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}');
+                                }
+                              } catch (e) {
+                                messenger.showSnackBar(SnackBar(content: Text('Gagal kamera: $e')));
+                              }
+                            },
+                            icon: const Icon(Icons.camera_alt_rounded, size: 16),
+                            label: const Text('Foto Kamera', style: TextStyle(fontSize: 12)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              try {
+                                final img = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50, maxWidth: 600, maxHeight: 600);
+                                if (img != null) {
+                                  final bytes = await img.readAsBytes();
+                                  setModalState(() => fotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}');
+                                }
+                              } catch (e) {
+                                messenger.showSnackBar(SnackBar(content: Text('Gagal galeri: $e')));
+                              }
+                            },
+                            icon: const Icon(Icons.photo_library_rounded, size: 16),
+                            label: const Text('Pilih Galeri', style: TextStyle(fontSize: 12)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+
                   Row(
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () async {
-                            try {
-                              final img = await _picker.pickImage(
-                                source: ImageSource.camera,
-                                imageQuality: 50,
-                                maxWidth: 600,
-                                maxHeight: 600,
-                              );
-                              if (img != null) {
-                                final bytes = await img.readAsBytes();
-                                setModalState(() {
-                                  fotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-                                });
-                              }
-                            } catch (e) {
-                              messenger.showSnackBar(SnackBar(content: Text('Gagal kamera: $e')));
-                            }
-                          },
-                          icon: const Icon(Icons.camera_alt_rounded, size: 16),
-                          label: const Text('Foto Kamera', style: TextStyle(fontSize: 12)),
-                        ),
+                      Checkbox(
+                        value: isAnonymous,
+                        onChanged: (val) => setModalState(() => isAnonymous = val ?? false),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () async {
-                            try {
-                              final img = await _picker.pickImage(
-                                source: ImageSource.gallery,
-                                imageQuality: 50,
-                                maxWidth: 600,
-                                maxHeight: 600,
-                              );
-                              if (img != null) {
-                                final bytes = await img.readAsBytes();
-                                setModalState(() {
-                                  fotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-                                });
-                              }
-                            } catch (e) {
-                              messenger.showSnackBar(SnackBar(content: Text('Gagal galeri: $e')));
-                            }
-                          },
-                          icon: const Icon(Icons.photo_library_rounded, size: 16),
-                          label: const Text('Pilih Galeri', style: TextStyle(fontSize: 12)),
-                        ),
-                      ),
+                      const Text('Kirim sebagai Warga Anonim (Rahasiakan Nama)', style: TextStyle(fontSize: 12)),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                 ],
 
-                Row(
-                  children: [
-                    Checkbox(
-                      value: isAnonymous,
-                      onChanged: (val) => setModalState(() => isAnonymous = val ?? false),
-                    ),
-                    const Text('Kirim sebagai Warga Anonim (Rahasiakan Nama)', style: TextStyle(fontSize: 12)),
-                  ],
-                ),
-                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: () async {
-                      final judul = judulController.text.trim();
+                      final j = judulController.text.trim();
                       final desc = deskripsiController.text.trim();
-                      final customTarget = customTargetController.text.trim();
 
-                      if (judul.isEmpty || desc.isEmpty) {
+                      if (j.isEmpty || desc.isEmpty) {
                         messenger.showSnackBar(
-                          const SnackBar(content: Text('Judul dan rincian keluhan wajib diisi!'), backgroundColor: AppTheme.alertRed),
-                        );
-                        return;
-                      }
-
-                      if (tujuan == 'WARGA_SPESIFIK' && customTarget.isEmpty) {
-                        messenger.showSnackBar(
-                          const SnackBar(content: Text('Nama / Blok rumah penerima wajib diisi!'), backgroundColor: AppTheme.alertRed),
+                          const SnackBar(content: Text('Judul dan rincian wajib diisi!'), backgroundColor: AppTheme.alertRed),
                         );
                         return;
                       }
 
                       Navigator.pop(modalContext);
 
-                      String targetLabel = 'Ketua RT';
-                      if (tujuan == 'SEKRETARIS_RT') targetLabel = 'Sekretaris RT';
-                      if (tujuan == 'BENDAHARA_RT') targetLabel = 'Bendahara RT';
-                      if (tujuan == 'KEAMANAN') targetLabel = 'Seksi Keamanan';
-                      if (tujuan == 'KEBERSIHAN') targetLabel = 'Seksi Kebersihan';
-                      if (tujuan == 'PEMBANGUNAN') targetLabel = 'Seksi Pembangunan';
-                      if (tujuan == 'PENGURUS_RW') targetLabel = 'Pengurus RW';
-                      if (tujuan == 'WARGA_SPESIFIK') targetLabel = customTarget;
-                      if (tujuan == 'UMUM') targetLabel = 'Pengurus RT';
+                      final dataSuratMap = {
+                        'namaAlmarhum': namaAlmController.text.trim(),
+                        'nikAlmarhum': nikAlmController.text.trim(),
+                        'tglMeninggal': tglMeninggalController.text.trim(),
+                        'tempatMeninggal': tempatMeninggalController.text.trim(),
+                        'hubunganPelapor': hubunganController.text.trim(),
+                        'pekerjaan': pekerjaanController.text.trim(),
+                        'penghasilan': penghasilanController.text.trim(),
+                        'keperluan': keperluanController.text.trim(),
+                        'alamatDomisili': alamatDomisiliController.text.trim(),
+                        'lamaTinggal': lamaTinggalController.text.trim(),
+                      };
 
                       try {
                         await ApiService.createLaporan({
-                          'judul': judul,
+                          'judul': j,
                           'deskripsi': desc,
                           'kategori': kategori,
-                          'tujuan': targetLabel,
+                          'tujuan': tujuan,
+                          'tipeLaporan': tipeLaporan,
                           'isAnonymous': isAnonymous,
                           'fotoUrl': fotoBase64,
+                          'dataSurat': dataSuratMap,
                         });
                         messenger.showSnackBar(
-                          SnackBar(
-                            content: Text('✅ Laporan berhasil dikirim ke $targetLabel!'),
+                          const SnackBar(
+                            content: Text('✅ Permohonan / Laporan berhasil dikirimkan secara privat!'),
                             backgroundColor: AppTheme.successGreen,
                           ),
                         );
                         _loadLaporanFromDb();
                       } catch (e) {
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text('⚠️ ${e.toString().replaceAll('Exception: ', '')}'),
-                            backgroundColor: AppTheme.alertRed,
-                          ),
-                        );
+                        messenger.showSnackBar(SnackBar(content: Text('⚠️ Gagal mengirim: $e'), backgroundColor: AppTheme.alertRed));
                       }
                     },
-                    child: const Text('Kirim Laporan & Teruskan ke Pihak Terkait'),
+                    child: const Text('Kirim Permohonan Sekarang', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -322,14 +467,13 @@ class _LaporScreenState extends State<LaporScreen> {
     );
   }
 
-  void _showTindakLanjutModal(dynamic item) {
+  void _showTindakLanjutModal(Map<String, dynamic> item) {
     final messenger = ScaffoldMessenger.of(context);
-    final currentStatus = (item['status'] ?? 'PENDING').toString().toUpperCase();
-    String newStatus = currentStatus == 'PENDING' ? 'DIPROSES' : (currentStatus == 'DIPROSES' ? 'SELESAI' : 'SELESAI');
-    
-    final defaultHandler = _user?['profile']?['namaLengkap'] ?? _user?['phone'] ?? 'Pihak Dituju';
-    final handlerController = TextEditingController(text: item['tanggapanBy'] ?? defaultHandler);
-    final tanggapanController = TextEditingController(text: item['tanggapanRT'] ?? '');
+    final tanggapanController = TextEditingController(text: item['tanggapanRT']?.toString() ?? '');
+    final handlerController = TextEditingController(
+      text: _user?['profile']?['namaLengkap'] ?? _user?['phone'] ?? 'Pengurus RT',
+    );
+    String newStatus = 'SELESAI';
 
     showModalBottomSheet(
       context: context,
@@ -351,46 +495,21 @@ class _LaporScreenState extends State<LaporScreen> {
                   child: Container(
                     width: 40,
                     height: 4,
-                    decoration: BoxDecoration(
-                      color: AppTheme.slateBorder,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                    decoration: BoxDecoration(color: AppTheme.slateBorder, borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.electricBlue.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.handyman_rounded, color: AppTheme.electricBlue, size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Tindak Lanjut & Respon Laporan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          Text(item['judul'] ?? 'Laporan', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                const Text('Tindak Lanjut & Verifikasi Resmi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(item['judul'] ?? 'Laporan', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                 const SizedBox(height: 16),
 
-                const Text('Perbarui Status Laporan *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: newStatus,
-                  decoration: const InputDecoration(prefixIcon: Icon(Icons.rule_folder_outlined)),
+                  decoration: const InputDecoration(labelText: 'Status Verifikasi *', prefixIcon: Icon(Icons.rule_folder_outlined)),
                   items: const [
-                    DropdownMenuItem(value: 'DIPROSES', child: Text('🔄 Sedang Ditangani / Dalam Pengerjaan')),
-                    DropdownMenuItem(value: 'SELESAI', child: Text('✓ Selesai & Dituntaskan')),
-                    DropdownMenuItem(value: 'DITOLAK', child: Text('✗ Tidak Valid / Dibatalkan')),
+                    DropdownMenuItem(value: 'SELESAI', child: Text('✓ Setujui & Selesaikan (Terbitkan Surat)')),
+                    DropdownMenuItem(value: 'DIPROSES', child: Text('🔄 Sedang Ditangani / Dalam Proses')),
+                    DropdownMenuItem(value: 'DITOLAK', child: Text('✗ Tolak Permohonan / Dibatalkan')),
                   ],
                   onChanged: (val) {
                     if (val != null) setModalState(() => newStatus = val);
@@ -401,8 +520,7 @@ class _LaporScreenState extends State<LaporScreen> {
                 TextField(
                   controller: handlerController,
                   decoration: const InputDecoration(
-                    labelText: 'Nama Penindak Lanjut / Jabatan *',
-                    hintText: 'Contoh: Ketua RT / Seksi Keamanan',
+                    labelText: 'Nama Petugas / Jabatan *',
                     prefixIcon: Icon(Icons.badge_outlined),
                   ),
                 ),
@@ -412,8 +530,8 @@ class _LaporScreenState extends State<LaporScreen> {
                   controller: tanggapanController,
                   maxLines: 3,
                   decoration: const InputDecoration(
-                    labelText: 'Catatan Tindak Lanjut & Solusi *',
-                    hintText: 'Tuliskan tindakan yang telah atau sedang dilakukan...',
+                    labelText: 'Catatan Tanggapan & Solusi *',
+                    hintText: 'Tuliskan tindakan yang diambil atau verifikasi persetujuan...',
                     prefixIcon: Icon(Icons.comment_outlined),
                   ),
                 ),
@@ -451,22 +569,209 @@ class _LaporScreenState extends State<LaporScreen> {
 
                         messenger.showSnackBar(
                           SnackBar(
-                            content: Text(newStatus == 'SELESAI' ? '✅ Laporan berhasil dituntaskan!' : '✅ Status tindak lanjut berhasil diperbarui!'),
+                            content: Text(newStatus == 'SELESAI' ? '✅ Berhasil disetujui & diselesaikan!' : '✅ Status berhasil diperbarui!'),
                             backgroundColor: AppTheme.successGreen,
                           ),
                         );
                         _loadLaporanFromDb();
                       } catch (e) {
                         messenger.showSnackBar(
-                          SnackBar(
-                            content: Text('⚠️ Gagal update tindak lanjut: $e'),
-                            backgroundColor: AppTheme.alertRed,
-                          ),
+                          SnackBar(content: Text('⚠️ Gagal update: $e'), backgroundColor: AppTheme.alertRed),
                         );
                       }
                     },
                     icon: const Icon(Icons.send_rounded, size: 18),
-                    label: const Text('Simpan & Publikasikan Tindak Lanjut', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text('Simpan Tanggapan Resmi', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // DIALOG PRATINJAU & CETAK SURAT RESMI
+  void _showCetakSuratModal(Map<String, dynamic> item) {
+    final meta = _parseDataSurat(item);
+    final tipe = item['tipeLaporan']?.toString() ?? 'SURAT_PENGANTAR';
+    final nomorSurat = item['nomorSurat']?.toString() ?? '470/108/RT.03-RW.05/2026';
+    final pelapor = item['user']?['profile']?['namaLengkap'] ?? item['pelapor'] ?? 'Warga RT';
+    final nik = item['user']?['profile']?['nik'] ?? meta['nikPemohon'] ?? '3201234567890001';
+
+    String judulSurat = 'SURAT PENGANTAR KELURAHAN';
+    if (tipe == 'SURAT_KEMATIAN') judulSurat = 'SURAT KETERANGAN KEMATIAN';
+    if (tipe == 'SURAT_SKTM') judulSurat = 'SURAT KETERANGAN TIDAK MAMPU (SKTM)';
+    if (tipe == 'SURAT_DOMISILI') judulSurat = 'SURAT KETERANGAN DOMISILI';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Action Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.print_rounded, color: AppTheme.primaryNavy, size: 20),
+                        SizedBox(width: 8),
+                        Text('Dokumen Resmi Siap Cetak', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                const SizedBox(height: 8),
+
+                // KOP SURAT RESMI
+                const Text('PEMERINTAH KOTA ADMINISTRASI LINGKUNGAN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                const Text('RUKUN TETANGGA 03 / RUKUN WARGA 05', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900)),
+                const Text('KELURAHAN SUKAMAJU ASRI', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                const Text('Sekretariat: Balai Warga RT 03 RW 05 • Sistem Terpadu RtHub', style: TextStyle(fontSize: 9, color: AppTheme.textMuted)),
+                const SizedBox(height: 4),
+                const Divider(thickness: 2, color: Colors.black87),
+                const SizedBox(height: 8),
+
+                // JUDUL SURAT
+                Text(judulSurat, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                Text('Nomor: $nomorSurat', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                const SizedBox(height: 12),
+
+                // KETERANGAN
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Yang bertanda tangan di bawah ini, Pengurus RT 03 / RW 05 menerangkan bahwa:',
+                        style: TextStyle(fontSize: 10.5, height: 1.3),
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('• Nama Lengkap : $pelapor', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+                            Text('• NIK / KTP     : $nik', style: const TextStyle(fontSize: 10.5)),
+                            const Text('• Alamat        : Lingkungan RT 03 RW 05', style: TextStyle(fontSize: 10.5)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Keterangan Template
+                      if (tipe == 'SURAT_KEMATIAN') ...[
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(color: AppTheme.slateLight, borderRadius: BorderRadius.circular(8)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Menerangkan benar telah MENINGGAL DUNIA:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              Text('Nama Almarhum : ${meta['namaAlmarhum'] ?? '-'}', style: const TextStyle(fontSize: 10)),
+                              Text('Waktu Wafat   : ${meta['tglMeninggal'] ?? '-'}', style: const TextStyle(fontSize: 10)),
+                              Text('Tempat/Penyebab: ${meta['tempatMeninggal'] ?? '-'}', style: const TextStyle(fontSize: 10)),
+                            ],
+                          ),
+                        ),
+                      ] else if (tipe == 'SURAT_SKTM') ...[
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(color: AppTheme.slateLight, borderRadius: BorderRadius.circular(8)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Keluarga PRA-SEJAHTERA / TIDAK MAMPU:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              Text('Pekerjaan   : ${meta['pekerjaan'] ?? 'Buruh'}', style: const TextStyle(fontSize: 10)),
+                              Text('Penghasilan : ${meta['penghasilan'] ?? '-'}', style: const TextStyle(fontSize: 10)),
+                              Text('Keperluan   : ${meta['keperluan'] ?? item['deskripsi'] ?? '-'}', style: const TextStyle(fontSize: 10)),
+                            ],
+                          ),
+                        ),
+                      ] else ...[
+                        Text(
+                          'Surat pengantar ini diberikan untuk keperluan: ${meta['keperluan'] ?? item['judul'] ?? 'Pengurusan ke Kelurahan'}.',
+                          style: const TextStyle(fontSize: 10.5, height: 1.3),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Demikian surat keterangan pengantar ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.',
+                        style: TextStyle(fontSize: 10.5, height: 1.3),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // TTD & STEMPEL DIGITAL
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      children: [
+                        const Text('Warga Pemohon,', style: TextStyle(fontSize: 9.5, color: AppTheme.textSecondary)),
+                        const SizedBox(height: 36),
+                        Text(pelapor, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        const Text('Ketua RT 03,', style: TextStyle(fontSize: 9.5, color: AppTheme.textSecondary)),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppTheme.electricBlue, width: 1),
+                            borderRadius: BorderRadius.circular(6),
+                            color: AppTheme.electricBlue.withValues(alpha: 0.05),
+                          ),
+                          child: const Column(
+                            children: [
+                              Icon(Icons.verified_rounded, color: AppTheme.electricBlue, size: 16),
+                              Text('TERVALIDASI RTHUB', style: TextStyle(fontSize: 7.5, fontWeight: FontWeight.bold, color: AppTheme.electricBlue)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(item['tanggapanBy'] ?? 'Ketua RT', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Cetak / Bagikan Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('🖨️ Dokumen Surat siap dicetak / disimpan sebagai file PDF resmi!'),
+                          backgroundColor: AppTheme.successGreen,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.print_rounded, size: 18),
+                    label: const Text('Cetak / Simpan Dokumen PDF', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -489,14 +794,16 @@ class _LaporScreenState extends State<LaporScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final list = _filteredLaporanList;
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Lapor & Pengaduan Warga (Live DB)'),
+        title: const Text('Lapor & Layanan Surat RT'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh DB',
+            tooltip: 'Refresh',
             onPressed: _loadLaporanFromDb,
           ),
         ],
@@ -504,15 +811,15 @@ class _LaporScreenState extends State<LaporScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showBuatLaporanModal,
         backgroundColor: AppTheme.primaryNavy,
-        icon: const Icon(Icons.campaign_rounded, color: Colors.white),
-        label: const Text('Buat Laporan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.add_task_rounded, color: Colors.white),
+        label: const Text('Buat Laporan / Surat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadLaporanFromDb,
-          child: _isLoading && _laporanList.isEmpty
+          child: _isLoading && list.isEmpty
               ? const Center(child: CircularProgressIndicator())
-              : _laporanList.isEmpty
+              : list.isEmpty
                   ? ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
@@ -522,19 +829,19 @@ class _LaporScreenState extends State<LaporScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.mark_email_read_outlined, size: 48, color: AppTheme.textMuted),
+                              const Icon(Icons.lock_outline_rounded, size: 48, color: AppTheme.textMuted),
                               const SizedBox(height: 12),
-                              const Text('Belum Ada Laporan Keluhan di Lingkungan RT',
+                              const Text('Belum Ada Laporan atau Permohonan Surat Anda',
                                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                               const SizedBox(height: 4),
-                              const Text('Jika Anda menemukan fasilitas rusak atau kendala kebersihan, laporkan langsung di sini.',
+                              const Text('Laporan bersifat 100% private. Hanya Anda dan pihak yang ditunjuk yang dapat melihat status tindak lanjutnya.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
                               const SizedBox(height: 16),
                               ElevatedButton.icon(
                                 onPressed: _showBuatLaporanModal,
                                 icon: const Icon(Icons.add, size: 16),
-                                label: const Text('Buat Laporan Baru'),
+                                label: const Text('Buat Permohonan / Laporan'),
                               ),
                             ],
                           ),
@@ -544,22 +851,29 @@ class _LaporScreenState extends State<LaporScreen> {
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(16),
-                      itemCount: _laporanList.length,
+                      itemCount: list.length,
                       itemBuilder: (context, index) {
-                        final l = _laporanList[index];
+                        final l = list[index];
                         final statusStr = (l['status'] ?? 'PENDING').toString().toUpperCase();
                         final isResolved = statusStr == 'RESOLVED' || statusStr == 'SELESAI';
                         final isInProgress = statusStr == 'IN_PROGRESS' || statusStr == 'DIPROSES';
                         final isRejected = statusStr == 'REJECTED' || statusStr == 'DITOLAK';
                         final isAnonymous = l['isAnonymous'] == true;
                         final fotoUrl = l['fotoUrl'] as String?;
+                        final tipe = l['tipeLaporan']?.toString() ?? 'PENGADUAN';
+                        final isSurat = tipe != 'PENGADUAN';
+                        final canRespond = _canUserRespond(l);
 
                         String pelaporName = isAnonymous
                             ? 'Warga Anonim'
                             : (l['user']?['profile']?['namaLengkap'] ?? l['pelapor'] ?? 'Warga RT');
 
                         String targetLabel = l['tujuan'] ?? 'Pengurus RT';
-                        if (targetLabel.isEmpty) targetLabel = 'Pengurus RT';
+                        if (targetLabel == 'KETUA_RT') targetLabel = 'Ketua RT';
+                        if (targetLabel == 'SEKRETARIS_RT') targetLabel = 'Sekretaris RT';
+                        if (targetLabel == 'BENDAHARA_RT') targetLabel = 'Bendahara RT';
+                        if (targetLabel == 'KEAMANAN') targetLabel = 'Seksi Keamanan';
+                        if (targetLabel == 'KEBERSIHAN') targetLabel = 'Seksi Kebersihan';
 
                         String createdAtStr = 'Hari ini';
                         if (l['createdAt'] != null) {
@@ -605,7 +919,7 @@ class _LaporScreenState extends State<LaporScreen> {
                                     ),
                                     child: Text(
                                       isResolved
-                                          ? '✓ Selesai'
+                                          ? '✓ Disetujui / Selesai'
                                           : isInProgress
                                               ? '⏳ Sedang Diproses'
                                               : isRejected
@@ -629,7 +943,7 @@ class _LaporScreenState extends State<LaporScreen> {
                               ),
                               const SizedBox(height: 8),
 
-                              // Target and Reporter Information Pills
+                              // Target & Template Badges
                               Wrap(
                                 spacing: 6,
                                 runSpacing: 4,
@@ -637,12 +951,14 @@ class _LaporScreenState extends State<LaporScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.electricBlue.withValues(alpha: 0.08),
+                                      color: isSurat ? Colors.purple.withValues(alpha: 0.08) : AppTheme.electricBlue.withValues(alpha: 0.08),
                                       borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: AppTheme.electricBlue.withValues(alpha: 0.2)),
+                                      border: Border.all(color: isSurat ? Colors.purple.withValues(alpha: 0.25) : AppTheme.electricBlue.withValues(alpha: 0.2)),
                                     ),
-                                    child: Text('🎯 Ditujukan ke: $targetLabel',
-                                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppTheme.electricBlue)),
+                                    child: Text(
+                                      isSurat ? '📜 $tipe' : '📢 PENGADUAN',
+                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSurat ? Colors.purple : AppTheme.electricBlue),
+                                    ),
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
@@ -650,8 +966,17 @@ class _LaporScreenState extends State<LaporScreen> {
                                       color: AppTheme.slateLight,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: Text('👤 Pelapor: $pelaporName',
-                                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500, color: AppTheme.textSecondary)),
+                                    child: Text('🎯 Ditujukan: $targetLabel',
+                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.slateLight,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text('👤 $pelaporName',
+                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
                                   ),
                                 ],
                               ),
@@ -691,7 +1016,7 @@ class _LaporScreenState extends State<LaporScreen> {
                                           const SizedBox(width: 6),
                                           Expanded(
                                             child: Text(
-                                              'Tanggapan & Tindak Lanjut (${l['tanggapanBy'] ?? targetLabel}):',
+                                              'Tanggapan Resmi (${l['tanggapanBy'] ?? targetLabel}):',
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.bold,
@@ -706,6 +1031,10 @@ class _LaporScreenState extends State<LaporScreen> {
                                         '${l['tanggapanRT']}',
                                         style: const TextStyle(fontSize: 11.5, color: AppTheme.textPrimary, height: 1.3),
                                       ),
+                                      if (l['nomorSurat'] != null) ...[
+                                        const SizedBox(height: 4),
+                                        Text('No. Registrasi: ${l['nomorSurat']}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -715,29 +1044,37 @@ class _LaporScreenState extends State<LaporScreen> {
                               const Divider(height: 1),
                               const SizedBox(height: 8),
 
-                              // Follow up button
+                              // Actions Row
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    'Kategori: ${l['kategori'] ?? 'Fasilitas'}',
-                                    style: const TextStyle(fontSize: 10.5, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
-                                  ),
-                                  OutlinedButton.icon(
-                                    onPressed: () => _showTindakLanjutModal(l),
-                                    icon: const Icon(Icons.handyman_outlined, size: 14, color: AppTheme.electricBlue),
-                                    label: Text(
-                                      l['tanggapanRT'] != null ? 'Edit Tindak Lanjut' : '🛠️ Tindak Lanjuti',
-                                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
+                                  // Print Button for Approved Letters
+                                  if (isSurat && isResolved) ...[
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.successGreen,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                      onPressed: () => _showCetakSuratModal(l),
+                                      icon: const Icon(Icons.print_rounded, size: 14),
+                                      label: const Text('🖨️ Cetak Surat Resmi', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                                     ),
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: AppTheme.electricBlue),
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                      minimumSize: Size.zero,
-                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ] else ...[
+                                    Text('Kategori: ${l['kategori'] ?? 'Umum'}', style: const TextStyle(fontSize: 10.5, color: AppTheme.textMuted)),
+                                  ],
+
+                                  // Follow up / Respond Button: STRICT AUTHORIZATION
+                                  if (!isResolved && canRespond) ...[
+                                    OutlinedButton.icon(
+                                      onPressed: () => _showTindakLanjutModal(l),
+                                      icon: const Icon(Icons.handyman_outlined, size: 14, color: AppTheme.electricBlue),
+                                      label: const Text('🛠️ Tindak Lanjuti', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                                     ),
-                                  ),
+                                  ] else if (!isResolved && !canRespond) ...[
+                                    Text('(Menunggu $targetLabel)', style: const TextStyle(fontSize: 10, color: AppTheme.textMuted, fontStyle: FontStyle.italic)),
+                                  ],
                                 ],
                               ),
                             ],

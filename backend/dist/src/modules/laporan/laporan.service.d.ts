@@ -6,36 +6,20 @@ export declare class LaporanService {
     createLaporan(user: any, data: {
         judul: string;
         deskripsi: string;
-        kategori: string;
+        kategori?: string;
         fotoUrl?: string;
         isAnonymous?: boolean;
+        tujuan?: string;
+        tipeLaporan?: string;
+        dataSurat?: any;
     }): Promise<{
         user: {
             profile: {
                 namaLengkap: string;
+                nik: string;
                 noRumah: string;
             };
-        };
-    } & {
-        rtId: string;
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
-        status: import(".prisma/client").$Enums.StatusLaporan;
-        deskripsi: string;
-        kategori: string;
-        judul: string;
-        fotoUrl: string | null;
-        isAnonymous: boolean;
-        tanggapanRT: string | null;
-    }>;
-    getLaporanList(user: any): Promise<({
-        user: {
-            profile: {
-                namaLengkap: string;
-                noRumah: string;
-            };
+            phone: string;
             id: string;
         };
     } & {
@@ -50,12 +34,34 @@ export declare class LaporanService {
         judul: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
+        tujuan: string;
+        tipeLaporan: string;
+        dataSurat: string | null;
+        nomorSurat: string | null;
         tanggapanRT: string | null;
-    })[]>;
-    updateStatus(laporanId: string, data: {
-        status: StatusLaporan;
-        tanggapanRT?: string;
-    }): Promise<{
+        tanggapanBy: string | null;
+        respondedAt: Date | null;
+    }>;
+    getLaporanList(user: any): Promise<({
+        user: {
+            profile: {
+                namaLengkap: string;
+                nik: string;
+                noRumah: string;
+            };
+            phone: string;
+            id: string;
+        };
+        rt: {
+            namaJalan: string | null;
+            skDokumenUrl: string | null;
+            id: string;
+            rwId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            nomor: string;
+        };
+    } & {
         rtId: string;
         id: string;
         createdAt: Date;
@@ -67,6 +73,56 @@ export declare class LaporanService {
         judul: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
+        tujuan: string;
+        tipeLaporan: string;
+        dataSurat: string | null;
+        nomorSurat: string | null;
         tanggapanRT: string | null;
+        tanggapanBy: string | null;
+        respondedAt: Date | null;
+    })[]>;
+    updateStatus(user: any, laporanId: string, data: {
+        status: StatusLaporan;
+        tanggapanRT?: string;
+        tanggapanBy?: string;
+        nomorSurat?: string;
+    }): Promise<{
+        user: {
+            profile: {
+                namaLengkap: string;
+                nik: string;
+                noRumah: string;
+            };
+            phone: string;
+            id: string;
+        };
+        rt: {
+            namaJalan: string | null;
+            skDokumenUrl: string | null;
+            id: string;
+            rwId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            nomor: string;
+        };
+    } & {
+        rtId: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
+        status: import(".prisma/client").$Enums.StatusLaporan;
+        deskripsi: string;
+        kategori: string;
+        judul: string;
+        fotoUrl: string | null;
+        isAnonymous: boolean;
+        tujuan: string;
+        tipeLaporan: string;
+        dataSurat: string | null;
+        nomorSurat: string | null;
+        tanggapanRT: string | null;
+        tanggapanBy: string | null;
+        respondedAt: Date | null;
     }>;
 }

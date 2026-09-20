@@ -467,7 +467,13 @@ model LaporanWarga {
   fotoUrl     String?       @db.LongText
   isAnonymous Boolean       @default(false)
   status      StatusLaporan @default(PENDING)
+  tujuan      String        @default("KETUA_RT") @db.VarChar(100) // KETUA_RT, SEKRETARIS_RT, BENDAHARA_RT, KEAMANAN, KEBERSIHAN, UMUM, WARGA_SPESIFIK
+  tipeLaporan String        @default("PENGADUAN") @db.VarChar(50) // PENGADUAN, SURAT_PENGANTAR, SURAT_KEMATIAN, SURAT_SKTM, SURAT_DOMISILI
+  dataSurat   String?       @db.Text // JSON metadata template surat
+  nomorSurat  String?       @db.VarChar(100) // Nomor surat resmi jika permohonan disetujui
   tanggapanRT String?       @db.Text
+  tanggapanBy String?       @db.VarChar(100)
+  respondedAt DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 

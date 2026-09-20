@@ -24,7 +24,7 @@ export const RtHubLogo: React.FC<RtHubLogoProps> = ({
           src="/rthub_icon.png"
           alt="RtHub Icon"
           style={{ width: size, height: size }}
-          className="rounded-2xl shadow-md transition-transform duration-300 hover:scale-105 object-contain"
+          className="rounded-xl transition-transform duration-200 hover:scale-105 object-contain"
         />
       </div>
     );
@@ -34,10 +34,10 @@ export const RtHubLogo: React.FC<RtHubLogoProps> = ({
     <div className={`flex items-center gap-2 select-none ${className}`}>
       <div className="flex flex-col">
         <img
-          src="/rthub_logo.png"
+          src={isDark ? '/rthub_logo_dark.png' : '/rthub_logo.png'}
           alt="RtHub Logo"
           style={{ height: size }}
-          className="object-contain transition-transform duration-300 hover:scale-[1.02]"
+          className="object-contain transition-transform duration-200 hover:scale-[1.01]"
         />
         {subtext && (
           <span

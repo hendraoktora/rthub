@@ -896,7 +896,13 @@ class ApiService {
     required String status,
     String? tanggapanRT,
     String? tanggapanBy,
+    String? nomorSurat,
   }) async {
+    final currentYear = DateTime.now().year;
+    final romanMonths = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    final romanMonth = romanMonths[DateTime.now().month];
+    final autoNo = nomorSurat ?? '470/${100 + (DateTime.now().millisecond % 899)}/RT.03-RW.05/$romanMonth/$currentYear';
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedStr = prefs.getString('local_custom_laporan');
@@ -906,18 +912,22 @@ class ApiService {
         list[idx]['status'] = status;
         if (tanggapanRT != null) list[idx]['tanggapanRT'] = tanggapanRT;
         if (tanggapanBy != null) list[idx]['tanggapanBy'] = tanggapanBy;
+        if (list[idx]['nomorSurat'] == null && list[idx]['tipeLaporan'] != 'PENGADUAN') {
+          list[idx]['nomorSurat'] = autoNo;
+        }
         list[idx]['tanggapanAt'] = DateTime.now().toIso8601String();
       } else {
         final allLaporan = await getLaporanList();
         final found = allLaporan.firstWhere((e) => (e['id'] ?? '').toString() == id, orElse: () => null);
         if (found != null) {
-          final updated = {
-            ...found,
-            'status': status,
-            if (tanggapanRT != null) 'tanggapanRT': tanggapanRT,
-            if (tanggapanBy != null) 'tanggapanBy': tanggapanBy,
-            'tanggapanAt': DateTime.now().toIso8601String(),
-          };
+          final updated = Map<String, dynamic>.from(found);
+          updated['status'] = status;
+          if (tanggapanRT != null) updated['tanggapanRT'] = tanggapanRT;
+          if (tanggapanBy != null) updated['tanggapanBy'] = tanggapanBy;
+          if (found['nomorSurat'] == null && found['tipeLaporan'] != 'PENGADUAN') {
+            updated['nomorSurat'] = autoNo;
+          }
+          updated['tanggapanAt'] = DateTime.now().toIso8601String();
           list.insert(0, updated);
         }
       }
@@ -936,6 +946,8 @@ class ApiService {
         body: jsonEncode({
           'status': status,
           'tanggapanRT': tanggapanRT,
+          'tanggapanBy': tanggapanBy,
+          'nomorSurat': autoNo,
         }),
       ).timeout(const Duration(seconds: 5));
     } catch (_) {}

@@ -158,6 +158,23 @@ export const api = {
     return res.json();
   },
 
+  async updateLaporanStatus(id: string, data: { status: string; tanggapanRT?: string; tanggapanBy?: string; nomorSurat?: string }) {
+    const token = this.getToken();
+    const res = await fetch(`${API_BASE_URL}/laporan/${id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Gagal memperbarui status laporan');
+    }
+    return res.json();
+  },
+
   async getLapakList() {
     const token = this.getToken();
     const res = await fetch(`${API_BASE_URL}/lapak`, {

@@ -56,45 +56,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     },
   ];
 
-  // Family members list
-  final List<Map<String, dynamic>> _familyMembers = [
-    {
-      'id': 'fam-1',
-      'nama': 'Bpk. Hendra Gunawan',
-      'hubungan': 'KEPALA_KELUARGA',
-      'nik': '3276010101800001',
-      'jenisKelamin': 'LAKI_LAKI',
-      'usia': '42 Tahun',
-      'pekerjaan': 'Karyawan Swasta',
-    },
-    {
-      'id': 'fam-2',
-      'nama': 'Ibu Ratna Dewi',
-      'hubungan': 'ISTRI',
-      'nik': '3276010101850002',
-      'jenisKelamin': 'PEREMPUAN',
-      'usia': '38 Tahun',
-      'pekerjaan': 'Ibu Rumah Tangga / UMKM',
-    },
-    {
-      'id': 'fam-3',
-      'nama': 'Rian Fauzan',
-      'hubungan': 'ANAK',
-      'nik': '3276010101120003',
-      'jenisKelamin': 'LAKI_LAKI',
-      'usia': '14 Tahun (SMP)',
-      'pekerjaan': 'Pelajar',
-    },
-    {
-      'id': 'fam-4',
-      'nama': 'Aisyah Putri',
-      'hubungan': 'ANAK',
-      'nik': '3276010101160004',
-      'jenisKelamin': 'PEREMPUAN',
-      'usia': '8 Tahun (SD)',
-      'pekerjaan': 'Pelajar',
-    },
-  ];
+  // Family members list (loaded from database)
+  final List<Map<String, dynamic>> _familyMembers = [];
 
   @override
   void initState() {
@@ -108,20 +71,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _user = userData;
         _isLoading = false;
-        final namaLengkap = _user?['profile']?['namaLengkap'];
-        final nik = _user?['profile']?['nik'];
-        if (namaLengkap != null && _familyMembers.isNotEmpty) {
-          _familyMembers[0]['nama'] = namaLengkap;
-        }
-        if (nik != null && nik.toString().length == 16 && _familyMembers.isNotEmpty) {
-          _familyMembers[0]['nik'] = nik;
-          final parsed = NikService.parseNikLocal(nik.toString());
+        _initFamilyData();
+      });
+    }
+  }
+
+  void _initFamilyData() {
+    final rawFamily = _user?['profile']?['dataKeluarga'];
+    List<Map<String, dynamic>> parsedList = [];
+    if (rawFamily != null) {
+      if (rawFamily is List) {
+        parsedList = rawFamily.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      } else if (rawFamily is String && rawFamily.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(rawFamily);
+          if (decoded is List) {
+            parsedList = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          }
+        } catch (_) {}
+      }
+    }
+
+    _familyMembers.clear();
+    if (parsedList.isNotEmpty) {
+      _familyMembers.addAll(parsedList);
+    } else {
+      // Default: siapkan profil pengguna itu sendiri sebagai entitas awal jika ada data
+      final myName = _user?['profile']?['namaLengkap']?.toString().trim();
+      final myNik = _user?['profile']?['nik']?.toString().trim();
+      if (myName != null && myName.isNotEmpty) {
+        String usia = '-';
+        String gender = 'LAKI_LAKI';
+        if (myNik != null && myNik.length == 16) {
+          final parsed = NikService.parseNikLocal(myNik);
           if (parsed.isValid) {
-            _familyMembers[0]['usia'] = '${parsed.usia} Tahun';
-            _familyMembers[0]['jenisKelamin'] = parsed.jenisKelamin == 'Perempuan' ? 'PEREMPUAN' : 'LAKI_LAKI';
+            usia = '${parsed.usia} Tahun';
+            gender = parsed.jenisKelamin == 'Perempuan' ? 'PEREMPUAN' : 'LAKI_LAKI';
           }
         }
+        _familyMembers.add({
+          'id': 'head-${_user?['id'] ?? '1'}',
+          'nama': myName,
+          'hubungan': 'KEPALA_KELUARGA',
+          'nik': (myNik != null && myNik.isNotEmpty) ? myNik : '-',
+          'jenisKelamin': gender,
+          'usia': usia,
+          'pekerjaan': 'Kepala Keluarga',
+        });
+      }
+    }
+  }
+
+  Future<void> _persistFamilyData() async {
+    try {
+      final res = await ApiService.updateProfile({
+        'dataKeluarga': _familyMembers,
       });
+      if (res['user'] != null && mounted) {
+        setState(() {
+          _user = res['user'];
+        });
+      }
+    } catch (e) {
+      debugPrint('Error saving family data: $e');
     }
   }
 
@@ -854,20 +866,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: () {
-                      if (nameCtrl.text.isEmpty) return;
+                    onPressed: () async {
+                      if (nameCtrl.text.trim().isEmpty) return;
+
+                      final itemData = {
+                        'id': isEdit ? existingMember['id'] : DateTime.now().millisecondsSinceEpoch.toString(),
+                        'nama': nameCtrl.text.trim(),
+                        'hubungan': hubungan,
+                        'nik': nikCtrl.text.trim().isEmpty ? '-' : nikCtrl.text.trim(),
+                        'jenisKelamin': jenisKelamin,
+                        'usia': usiaCtrl.text.trim().isEmpty ? '-' : usiaCtrl.text.trim(),
+                        'pekerjaan': kerjaCtrl.text.trim().isEmpty ? '-' : kerjaCtrl.text.trim(),
+                      };
 
                       setState(() {
-                        final itemData = {
-                          'id': isEdit ? existingMember['id'] : DateTime.now().millisecondsSinceEpoch.toString(),
-                          'nama': nameCtrl.text,
-                          'hubungan': hubungan,
-                          'nik': nikCtrl.text.isEmpty ? '-' : nikCtrl.text,
-                          'jenisKelamin': jenisKelamin,
-                          'usia': usiaCtrl.text.isEmpty ? '-' : usiaCtrl.text,
-                          'pekerjaan': kerjaCtrl.text.isEmpty ? '-' : kerjaCtrl.text,
-                        };
-
                         if (isEdit && index != null) {
                           _familyMembers[index] = itemData;
                         } else {
@@ -876,14 +888,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       });
 
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(isEdit
-                              ? '✅ Data ${nameCtrl.text} berhasil diperbarui!'
-                              : '✅ Anggota keluarga ${nameCtrl.text} berhasil ditambahkan!'),
-                          backgroundColor: AppTheme.successGreen,
-                        ),
-                      );
+                      await _persistFamilyData();
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isEdit
+                                ? '✅ Data ${nameCtrl.text} berhasil diperbarui di database!'
+                                : '✅ Anggota keluarga ${nameCtrl.text} berhasil ditambahkan ke database!'),
+                            backgroundColor: AppTheme.successGreen,
+                          ),
+                        );
+                      }
                     },
                     child: Text(isEdit ? 'Simpan Perubahan' : 'Tambahkan ke Kartu Keluarga', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
@@ -897,7 +913,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _handleDeleteMember(int index) {
-    if (index == 0) {
+    if (index == 0 && _familyMembers.length == 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Kepala Keluarga utama tidak dapat dihapus.')),
       );
@@ -910,16 +926,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: const Text('Hapus Anggota Keluarga', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: Text('Apakah Anda yakin ingin menghapus "$nama" dari Kartu Keluarga digital?'),
+        content: Text('Apakah Anda yakin ingin menghapus "$nama" dari Kartu Keluarga digital? Data akan diperbarui di database.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               setState(() => _familyMembers.removeAt(index));
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Anggota keluarga "$nama" telah dihapus.')),
-              );
+              await _persistFamilyData();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('✅ Anggota keluarga "$nama" telah dihapus dari database.'),
+                    backgroundColor: AppTheme.successGreen,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.alertRed),
             child: const Text('Hapus', style: TextStyle(color: Colors.white)),
@@ -1205,10 +1227,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
 
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _familyMembers.length,
+              if (_familyMembers.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.slateBorder),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.family_restroom_rounded, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                      const SizedBox(height: 8),
+                      const Text('Belum Ada Anggota Keluarga Terdaftar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      const SizedBox(height: 4),
+                      const Text('Tambahkan data keluarga Anda untuk pendataan warga dan pengajuan surat RT.',
+                          textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => _showAddEditFamilyMemberModal(),
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text('Tambah Anggota Pertama'),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _familyMembers.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final member = _familyMembers[index];

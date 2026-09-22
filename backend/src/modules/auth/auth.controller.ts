@@ -129,6 +129,7 @@ export class AuthController {
       nik?: string;
       noKk?: string;
       avatarUrl?: string;
+      dataKeluarga?: any;
     },
   ) {
     return this.authService.updateProfile(user.id, dto);

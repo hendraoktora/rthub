@@ -299,6 +299,7 @@ export class AuthService {
     nik?: string;
     noKk?: string;
     avatarUrl?: string;
+    dataKeluarga?: any;
   }) {
     if (data.phone) {
       const existing = await this.prisma.user.findFirst({
@@ -339,6 +340,7 @@ export class AuthService {
               nik: data.nik?.trim() || null,
               noKk: data.noKk?.trim() || null,
               avatarUrl: data.avatarUrl || null,
+              dataKeluarga: data.dataKeluarga !== undefined ? data.dataKeluarga : undefined,
             },
             update: {
               ...(data.namaLengkap ? { namaLengkap: data.namaLengkap.trim() } : {}),
@@ -346,6 +348,7 @@ export class AuthService {
               ...(data.nik !== undefined ? { nik: data.nik?.trim() || null } : {}),
               ...(data.noKk !== undefined ? { noKk: data.noKk?.trim() || null } : {}),
               ...(data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl } : {}),
+              ...(data.dataKeluarga !== undefined ? { dataKeluarga: data.dataKeluarga } : {}),
             },
           },
         },

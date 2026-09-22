@@ -178,6 +178,7 @@ model Profile {
   noRumah      String?  @db.VarChar(30)
   avatarUrl    String?  @db.LongText
   skDokumenUrl String?  @db.LongText
+  dataKeluarga Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

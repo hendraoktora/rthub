@@ -121,7 +121,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      isEditing ? '✏️ Edit Produk Lapak' : '🏪 Pasang Produk di Lapak Saya',
+                      isEditing ? '✏️ Edit Produk Lapak' : '🏪 Tambah Produk Baru ke Lapak',
                       style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                     ),
                     Container(
@@ -974,8 +974,8 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showFormProdukModal(),
         backgroundColor: AppTheme.primaryNavy,
-        icon: const Icon(Icons.campaign_rounded, color: Colors.white),
-        label: const Text('+ Pasang Iklan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
+        label: const Text('+ Tambah Produk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(
         child: TabBarView(
@@ -999,8 +999,8 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
           ? const Center(child: CircularProgressIndicator())
           : _lapakList.isEmpty
               ? _buildEmptyLapakView(
-                  title: 'Belum Ada Produk di Lapak Warga',
-                  subtitle: 'Jadilah yang pertama memasarkan produk / makanan / jasa Anda di lingkungan RT & RW!',
+                  title: 'Belum Ada Lapak Warga',
+                  subtitle: 'Jadilah yang pertama berjualan di lingkungan RT! Klik tombol Tambah Produk di bawah.',
                 )
               : ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -1020,25 +1020,18 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
       onRefresh: _loadLapakFromDb,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         children: [
-          // Banner Lapak Saya with "Buat Iklan" button
+          // Banner Lapak Saya & Pasang Iklan Promo
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0F766E), Color(0xFF047857)],
+                colors: [Color(0xFF0F766E), Color(0xFF065F46)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF0F766E).withValues(alpha: 0.25),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1046,27 +1039,20 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 24),
+                      child: const Icon(Icons.rocket_launch_rounded, color: Colors.amberAccent, size: 20),
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
+                    const SizedBox(width: 10),
+                    const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Kelola Lapak & Iklan Jualan Saya',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Total ${myProducts.length} produk & iklan Anda sedang aktif tayang ke seluruh warga lingkungan.',
-                            style: const TextStyle(color: Colors.white70, fontSize: 11),
-                          ),
+                          Text('Promosikan Produk Anda', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text('Tampilkan produk jualan Anda di card utama homescreen seluruh warga', style: TextStyle(color: Colors.white70, fontSize: 11)),
                         ],
                       ),
                     ),
@@ -1085,7 +1071,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                       elevation: 0,
                     ),
                     icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFF0F766E)),
-                    label: const Text('📢 Buat Iklan / Tambah Produk Jualan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                    label: const Text('+ Tambah Produk Baru ke Lapak', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
                   ),
                 ),
               ],
@@ -1096,7 +1082,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
           if (myProducts.isEmpty)
             _buildEmptyLapakView(
               title: 'Lapak Anda Masih Kosong',
-              subtitle: 'Pasang iklan jualan makanan, sembako, atau jasa Anda sekarang agar tetangga bisa langsung order via WhatsApp.',
+              subtitle: 'Tambahkan produk jualan makanan, sembako, atau jasa Anda sekarang agar tetangga bisa langsung order via WhatsApp.',
             )
           else
             ...myProducts.map((item) => _buildMyProductManagementCard(item)),
@@ -1136,8 +1122,8 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            icon: const Icon(Icons.add, size: 18, color: Colors.white),
-            label: const Text('Pasang Jualan Baru', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.add_shopping_cart_rounded, size: 18, color: Colors.white),
+            label: const Text('Tambah Produk Sekarang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

@@ -115,9 +115,21 @@ class _LaporScreenState extends State<LaporScreen> {
     }
   }
 
-  void _showBuatLaporanModal() {
+  void _showBuatLaporanModal({String? initialTemplate}) {
     final messenger = ScaffoldMessenger.of(context);
-    final judulController = TextEditingController();
+    String tipeLaporan = initialTemplate ?? 'PENGADUAN';
+
+    final initialTitle = tipeLaporan == 'SURAT_KEMATIAN'
+        ? 'Permohonan Surat Keterangan Kematian'
+        : tipeLaporan == 'SURAT_SKTM'
+            ? 'Permohonan Surat Keterangan Tidak Mampu (SKTM)'
+            : tipeLaporan == 'SURAT_DOMISILI'
+                ? 'Permohonan Surat Keterangan Domisili'
+                : tipeLaporan == 'SURAT_PENGANTAR'
+                    ? 'Permohonan Surat Pengantar Kelurahan'
+                    : '';
+
+    final judulController = TextEditingController(text: initialTitle);
     final deskripsiController = TextEditingController();
 
     // Template-specific controllers
@@ -131,11 +143,13 @@ class _LaporScreenState extends State<LaporScreen> {
     final penghasilanController = TextEditingController(text: 'Rp 1.500.000 / bulan');
     final keperluanController = TextEditingController();
 
-    final alamatDomisiliController = TextEditingController();
+    final noRumahUser = _user?['profile']?['noRumah']?.toString() ?? '';
+    final alamatDomisiliController = TextEditingController(
+      text: noRumahUser.isNotEmpty ? 'Rumah No. $noRumahUser, RT 03 / RW 05' : '',
+    );
     final lamaTinggalController = TextEditingController(text: '2 Tahun');
 
-    String tipeLaporan = 'PENGADUAN';
-    String tujuan = 'KETUA_RT';
+    String tujuan = (tipeLaporan == 'PENGADUAN') ? 'KETUA_RT' : 'SEKRETARIS_RT';
     String kategori = 'FASILITAS_UMUM';
     bool isAnonymous = false;
     String? fotoBase64;
@@ -167,8 +181,8 @@ class _LaporScreenState extends State<LaporScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Buat Laporan / Permohonan Surat RT', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                const Text('Layanan pengaduan dan surat pengantar kelurahan (100% Private & Terenkripsi)',
+                const Text('Form Layanan & Surat Resmi RT', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                const Text('Layanan permohonan surat RT & pengaduan lingkungan (100% Private & Terenkripsi)',
                     style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                 const SizedBox(height: 16),
 
@@ -192,12 +206,18 @@ class _LaporScreenState extends State<LaporScreen> {
                         tipeLaporan = val;
                         if (val == 'SURAT_KEMATIAN') {
                           judulController.text = 'Permohonan Surat Keterangan Kematian';
+                          tujuan = 'SEKRETARIS_RT';
                         } else if (val == 'SURAT_SKTM') {
                           judulController.text = 'Permohonan Surat Keterangan Tidak Mampu (SKTM)';
+                          tujuan = 'SEKRETARIS_RT';
                         } else if (val == 'SURAT_DOMISILI') {
                           judulController.text = 'Permohonan Surat Keterangan Domisili';
+                          tujuan = 'SEKRETARIS_RT';
                         } else if (val == 'SURAT_PENGANTAR') {
                           judulController.text = 'Permohonan Surat Pengantar Kelurahan';
+                          tujuan = 'SEKRETARIS_RT';
+                        } else {
+                          tujuan = 'KETUA_RT';
                         }
                       });
                     }
@@ -304,6 +324,82 @@ class _LaporScreenState extends State<LaporScreen> {
                         TextField(
                           controller: keperluanController,
                           decoration: const InputDecoration(labelText: 'Keperluan Surat SKTM *', hintText: 'Contoh: Beasiswa KIP Kuliah / BPJS PBI', isDense: true),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // FIELDS TEMPLATE: SURAT DOMISILI
+                if (tipeLaporan == 'SURAT_DOMISILI') ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF059669).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF059669).withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Data Keterangan Tempat Tinggal / Domisili:',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF065F46))),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: alamatDomisiliController,
+                          decoration: const InputDecoration(
+                            labelText: 'Alamat Lengkap Domisili di Lingkungan RT *',
+                            hintText: 'Contoh: Jl. Sukamaju No. 12 RT 03 RW 05',
+                            isDense: true,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: lamaTinggalController,
+                          decoration: const InputDecoration(
+                            labelText: 'Lama Menetap / Domisili di RT *',
+                            hintText: 'Contoh: 2 Tahun 4 Bulan',
+                            isDense: true,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: keperluanController,
+                          decoration: const InputDecoration(
+                            labelText: 'Keperluan Surat Domisili *',
+                            hintText: 'Contoh: Buka Rekening Bank / Melamar Kerja / Izin Usaha',
+                            isDense: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // FIELDS TEMPLATE: SURAT PENGANTAR KELURAHAN
+                if (tipeLaporan == 'SURAT_PENGANTAR') ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Data Permohonan Pengantar Kelurahan:',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF1E40AF))),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: keperluanController,
+                          decoration: const InputDecoration(
+                            labelText: 'Maksud / Keperluan Pengantar *',
+                            hintText: 'Contoh: Pembuatan KTP Baru / Kartu Keluarga / Akta Kelahiran / Pindah Datang / SKCK',
+                            isDense: true,
+                          ),
                         ),
                       ],
                     ),
@@ -704,9 +800,23 @@ class _LaporScreenState extends State<LaporScreen> {
                             ],
                           ),
                         ),
+                      ] else if (tipe == 'SURAT_DOMISILI') ...[
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(color: AppTheme.slateLight, borderRadius: BorderRadius.circular(8)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('KETERANGAN DOMISILI TEMPAT TINGGAL:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              Text('Alamat Domisili : ${meta['alamatDomisili'] ?? 'Lingkungan RT 03 RW 05'}', style: const TextStyle(fontSize: 10)),
+                              Text('Lama Menetap    : ${meta['lamaTinggal'] ?? '2 Tahun'}', style: const TextStyle(fontSize: 10)),
+                              Text('Keperluan       : ${meta['keperluan'] ?? item['deskripsi'] ?? 'Administrasi Warga'}', style: const TextStyle(fontSize: 10)),
+                            ],
+                          ),
+                        ),
                       ] else ...[
                         Text(
-                          'Surat pengantar ini diberikan untuk keperluan: ${meta['keperluan'] ?? item['judul'] ?? 'Pengurusan ke Kelurahan'}.',
+                          'Surat pengantar ini diberikan untuk keperluan: ${meta['keperluan'] ?? item['deskripsi'] ?? item['judul'] ?? 'Pengurusan ke Kantor Kelurahan'}.',
                           style: const TextStyle(fontSize: 10.5, height: 1.3),
                         ),
                       ],
@@ -792,6 +902,179 @@ class _LaporScreenState extends State<LaporScreen> {
     );
   }
 
+  Widget _buildTemplateSelector() {
+    final templates = [
+      {
+        'id': 'SURAT_KEMATIAN',
+        'title': 'Surat Kematian',
+        'desc': 'Surat Keterangan Kematian warga RT',
+        'icon': Icons.sentiment_very_dissatisfied_rounded,
+        'color': const Color(0xFF7C3AED),
+        'bgColor': const Color(0xFFF5F3FF),
+        'badge': 'Dukcapil',
+      },
+      {
+        'id': 'SURAT_SKTM',
+        'title': 'Surat SKTM',
+        'desc': 'Keterangan Tidak Mampu / Beasiswa & BPJS',
+        'icon': Icons.description_outlined,
+        'color': const Color(0xFFD97706),
+        'bgColor': const Color(0xFFFFFBEB),
+        'badge': 'Bansos / Beasiswa',
+      },
+      {
+        'id': 'SURAT_PENGANTAR',
+        'title': 'Pengantar Kelurahan',
+        'desc': 'Pengantar KTP, KK, Akta Lahir, SKCK, Pindah',
+        'icon': Icons.assignment_outlined,
+        'color': const Color(0xFF2563EB),
+        'bgColor': const Color(0xFFEFF6FF),
+        'badge': 'Kelurahan',
+      },
+      {
+        'id': 'SURAT_DOMISILI',
+        'title': 'Surat Domisili',
+        'desc': 'Keterangan tempat tinggal warga / kontrakan',
+        'icon': Icons.home_work_outlined,
+        'color': const Color(0xFF059669),
+        'bgColor': const Color(0xFFECFDF5),
+        'badge': 'Domisili',
+      },
+      {
+        'id': 'PENGADUAN',
+        'title': 'Pengaduan Lingkungan',
+        'desc': 'Lapor fasilitas rusak, sampah, keamanan',
+        'icon': Icons.campaign_rounded,
+        'color': const Color(0xFFE11D48),
+        'bgColor': const Color(0xFFFFF1F2),
+        'badge': 'Privat & Rahasia',
+      },
+    ];
+
+    return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.dashboard_customize_outlined, size: 18, color: AppTheme.primaryNavy),
+                  SizedBox(width: 8),
+                  Text(
+                    'Pilih Layanan & Template Surat RT',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppTheme.electricBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  '100% Private',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Klik salah satu template di bawah untuk membuka formulir instan resmi:',
+            style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 125,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: templates.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final t = templates[index];
+                final color = t['color'] as Color;
+                final bgColor = t['bgColor'] as Color;
+                final icon = t['icon'] as IconData;
+
+                return GestureDetector(
+                  onTap: () => _showBuatLaporanModal(initialTemplate: t['id'] as String),
+                  child: Container(
+                    width: 175,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: color.withValues(alpha: 0.3), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                color: bgColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(icon, color: color, size: 18),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                t['badge'] as String,
+                                style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: color),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t['title'] as String,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              t['desc'] as String,
+                              style: const TextStyle(fontSize: 9.5, color: AppTheme.textSecondary, height: 1.2),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final list = _filteredLaporanList;
@@ -809,83 +1092,120 @@ class _LaporScreenState extends State<LaporScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showBuatLaporanModal,
+        onPressed: () => _showBuatLaporanModal(),
         backgroundColor: AppTheme.primaryNavy,
         icon: const Icon(Icons.add_task_rounded, color: Colors.white),
-        label: const Text('Buat Laporan / Surat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text('Buat Surat / Laporan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadLaporanFromDb,
           child: _isLoading && list.isEmpty
               ? const Center(child: CircularProgressIndicator())
-              : list.isEmpty
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.15),
-                        Padding(
-                          padding: const EdgeInsets.all(24.0),
+              : ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    _buildTemplateSelector(),
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.history_rounded, size: 18, color: AppTheme.primaryNavy),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Riwayat Permohonan & Laporan Saya',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textPrimary),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryNavy.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${list.length}',
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (list.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: AppTheme.slateBorder),
+                          ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.lock_outline_rounded, size: 48, color: AppTheme.textMuted),
-                              const SizedBox(height: 12),
-                              const Text('Belum Ada Laporan atau Permohonan Surat Anda',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              const Icon(Icons.lock_outline_rounded, size: 40, color: AppTheme.textMuted),
+                              const SizedBox(height: 10),
+                              const Text('Belum Ada Riwayat Permohonan Surat Anda',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                               const SizedBox(height: 4),
-                              const Text('Laporan bersifat 100% private. Hanya Anda dan pihak yang ditunjuk yang dapat melihat status tindak lanjutnya.',
+                              const Text('Laporan bersifat 100% private. Silakan pilih salah satu template layanan di atas untuk mengajukan surat atau pengaduan.',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: _showBuatLaporanModal,
-                                icon: const Icon(Icons.add, size: 16),
-                                label: const Text('Buat Permohonan / Laporan'),
-                              ),
+                                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
                             ],
                           ),
                         ),
-                      ],
-                    )
-                  : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      itemCount: list.length,
-                      itemBuilder: (context, index) {
-                        final l = list[index];
-                        final statusStr = (l['status'] ?? 'PENDING').toString().toUpperCase();
-                        final isResolved = statusStr == 'RESOLVED' || statusStr == 'SELESAI';
-                        final isInProgress = statusStr == 'IN_PROGRESS' || statusStr == 'DIPROSES';
-                        final isRejected = statusStr == 'REJECTED' || statusStr == 'DITOLAK';
-                        final isAnonymous = l['isAnonymous'] == true;
-                        final fotoUrl = l['fotoUrl'] as String?;
-                        final tipe = l['tipeLaporan']?.toString() ?? 'PENGADUAN';
-                        final isSurat = tipe != 'PENGADUAN';
-                        final canRespond = _canUserRespond(l);
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          children: list.map((l) => _buildLaporanItemCard(l)).toList(),
+                        ),
+                      ),
+                    const SizedBox(height: 80),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
 
-                        String pelaporName = isAnonymous
-                            ? 'Warga Anonim'
-                            : (l['user']?['profile']?['namaLengkap'] ?? l['pelapor'] ?? 'Warga RT');
+  Widget _buildLaporanItemCard(dynamic l) {
+    final statusStr = (l['status'] ?? 'PENDING').toString().toUpperCase();
+    final isResolved = statusStr == 'RESOLVED' || statusStr == 'SELESAI';
+    final isInProgress = statusStr == 'IN_PROGRESS' || statusStr == 'DIPROSES';
+    final isRejected = statusStr == 'REJECTED' || statusStr == 'DITOLAK';
+    final isAnonymous = l['isAnonymous'] == true;
+    final fotoUrl = l['fotoUrl'] as String?;
+    final tipe = l['tipeLaporan']?.toString() ?? 'PENGADUAN';
+    final isSurat = tipe != 'PENGADUAN';
+    final canRespond = _canUserRespond(l);
 
-                        String targetLabel = l['tujuan'] ?? 'Pengurus RT';
-                        if (targetLabel == 'KETUA_RT') targetLabel = 'Ketua RT';
-                        if (targetLabel == 'SEKRETARIS_RT') targetLabel = 'Sekretaris RT';
-                        if (targetLabel == 'BENDAHARA_RT') targetLabel = 'Bendahara RT';
-                        if (targetLabel == 'KEAMANAN') targetLabel = 'Seksi Keamanan';
-                        if (targetLabel == 'KEBERSIHAN') targetLabel = 'Seksi Kebersihan';
+    String pelaporName = isAnonymous
+        ? 'Warga Anonim'
+        : (l['user']?['profile']?['namaLengkap'] ?? l['pelapor'] ?? 'Warga RT');
 
-                        String createdAtStr = 'Hari ini';
-                        if (l['createdAt'] != null) {
-                          final date = DateTime.tryParse(l['createdAt'].toString());
-                          if (date != null) {
-                            final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-                            createdAtStr = '${date.day} ${months[date.month]} ${date.year}';
-                          }
-                        }
+    String targetLabel = l['tujuan'] ?? 'Pengurus RT';
+    if (targetLabel == 'KETUA_RT') targetLabel = 'Ketua RT';
+    if (targetLabel == 'SEKRETARIS_RT') targetLabel = 'Sekretaris RT';
+    if (targetLabel == 'BENDAHARA_RT') targetLabel = 'Bendahara RT';
+    if (targetLabel == 'KEAMANAN') targetLabel = 'Seksi Keamanan';
+    if (targetLabel == 'KEBERSIHAN') targetLabel = 'Seksi Kebersihan';
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 14),
+    String createdAtStr = 'Hari ini';
+    if (l['createdAt'] != null) {
+      final date = DateTime.tryParse(l['createdAt'].toString());
+      if (date != null) {
+        final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        createdAtStr = '${date.day} ${months[date.month]} ${date.year}';
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -1077,12 +1397,7 @@ class _LaporScreenState extends State<LaporScreen> {
                                   ],
                                 ],
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-        ),
+        ],
       ),
     );
   }

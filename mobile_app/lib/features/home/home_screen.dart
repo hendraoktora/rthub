@@ -41,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _cardPageController = PageController();
   int _activeCardSlide = 0;
   final PageController _lapakAdsController = PageController();
+  int _activePromotedIndex = 0;
 
   @override
   void initState() {
@@ -1043,10 +1044,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 16),
 
-              // Sliding Cards Carousel (Kas RT, Lapak Warga Baru / Sponsored, & Agenda 7 Hari Ke Depan)
+              // Sliding Cards Carousel (Kas RT & Agenda RT)
               _buildSlidingCardsCarousel(rtNomor),
 
-              const SizedBox(height: 24),
+              // Separated Promoted Product Card (Kecil tapi Informative)
+              _buildPromotedProductSection(rtNomor),
+
+              const SizedBox(height: 20),
 
               // Quick Action Row (Termasuk Info Gempa BMKG & CCTV)
               _buildQuickActionsRow(),
@@ -1089,16 +1093,15 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             children: [
               _buildKasCard(rtNomor),
-              _buildLapakCard(rtNomor),
               _buildAgendaCard(rtNomor),
             ],
           ),
         ),
         const SizedBox(height: 10),
-        // Carousel Page Indicators
+        // Carousel Page Indicators (2 Slides: Kas RT & Agenda RT)
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(3, (index) {
+          children: List.generate(2, (index) {
             final isActive = _activeCardSlide == index;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 250),
@@ -1284,8 +1287,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Slide 2: Produk & Jasa Baru di Lapak Warga (Multi-Ads Sponsored Carousel)
-  Widget _buildLapakCard(String rtNomor) {
+  // Card Produk Warga Terpisah: Kecil tapi Informatif
+  Widget _buildPromotedProductSection(String rtNomor) {
     final promotedItems = _lapakDbList
         .where((it) => it['isPromoted'] == true || it['promotedBadge'] == 'SPONSORED')
         .toList();
@@ -1295,185 +1298,112 @@ class _HomeScreenState extends State<HomeScreen> {
         : (_lapakDbList.isNotEmpty ? _lapakDbList.take(5).toList() : []);
 
     if (displayList.isEmpty) {
-      return _buildEmptyLapakBanner(rtNomor);
+      return const SizedBox.shrink();
     }
 
-    if (displayList.length == 1) {
-      return _buildSingleLapakAdCard(
-        displayList.first,
-        rtNomor,
-        currentIndex: 0,
-        totalCount: 1,
-        isPromoted: promotedItems.isNotEmpty,
-      );
-    }
-
-    return PageView.builder(
-      controller: _lapakAdsController,
-      itemCount: displayList.length,
-      itemBuilder: (context, idx) {
-        final item = displayList[idx];
-        return _buildSingleLapakAdCard(
-          item,
-          rtNomor,
-          currentIndex: idx,
-          totalCount: displayList.length,
-          isPromoted: promotedItems.isNotEmpty,
-        );
-      },
-    );
-  }
-
-  Widget _buildEmptyLapakBanner(String rtNomor) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF065F46),
-              Color(0xFF0F766E),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF065F46).withValues(alpha: 0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.storefront_rounded, color: Colors.amberAccent, size: 16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        // Header Bar Iklan
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.stars_rounded, color: Color(0xFFD97706), size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    promotedItems.isNotEmpty ? 'Iklan Produk Warga' : 'Lapak Warga RT $rtNomor',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  if (displayList.length > 1) ...[
                     const SizedBox(width: 6),
-                    Text(
-                      'Lapak Warga RT $rtNomor',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${_activePromotedIndex + 1}/${displayList.length}',
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFB45309),
+                        ),
                       ),
                     ),
                   ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
-                  ),
-                  child: const Text(
-                    'UMKM',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.store_mall_directory_rounded, color: Colors.amberAccent, size: 26),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ],
+              ),
+              InkWell(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
                     children: [
                       Text(
-                        'Mulai Usaha di Lingkungan',
-                        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        'Lihat Lapak',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.electricBlue,
+                        ),
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Jual produk, kuliner, atau jasa ke tetangga sekitar',
-                        style: TextStyle(color: Colors.white70, fontSize: 11),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      SizedBox(width: 2),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 9, color: AppTheme.electricBlue),
                     ],
                   ),
                 ),
-              ],
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Dukung usaha tetangga lingkungan!',
-                    style: TextStyle(color: Colors.white, fontSize: 11),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF065F46),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Buka Lapak', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: 8),
+
+        // Compact Informative Card Carousel (Tinggi: 80px)
+        SizedBox(
+          height: 80,
+          child: PageView.builder(
+            controller: _lapakAdsController,
+            itemCount: displayList.length,
+            onPageChanged: (idx) {
+              setState(() {
+                _activePromotedIndex = idx;
+              });
+            },
+            itemBuilder: (context, idx) {
+              final item = displayList[idx];
+              return _buildCompactProductCard(item, rtNomor);
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildSingleLapakAdCard(
-    dynamic item,
-    String rtNomor, {
-    required int currentIndex,
-    required int totalCount,
-    required bool isPromoted,
-  }) {
+  Widget _buildCompactProductCard(dynamic item, String rtNomor) {
     final judul = item['judul'] ?? 'Produk Lapak Warga';
-    final harga = item['harga'] ?? '0';
-    final kategori = item['kategori'] ?? 'Lapak Warga';
+    final hargaRaw = item['harga'] ?? '0';
+    final hargaNum = int.tryParse(hargaRaw.toString()) ?? 0;
+    final hargaFmt = 'Rp ' + hargaNum.toString().replaceAllMapped(RegExp(r'(\\d{1,3})(?=(\\d{3})+(?!\\d))'), (m) => m[1]! + '.');
     final penjual = item['seller']?['profile']?['namaLengkap'] ??
         item['user']?['profile']?['namaLengkap'] ??
         item['sellerName'] ??
         'Warga RT';
+    final noRumah = item['seller']?['profile']?['noRumah'] ??
+        item['user']?['profile']?['noRumah'] ??
+        '';
     final waKontak = item['kontakWa'] ?? item['user']?['phone'];
 
     dynamic rawFoto = item?['fotoUrl'];
@@ -1495,204 +1425,127 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF065F46),
-              Color(0xFF0F766E),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF065F46).withValues(alpha: 0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.storefront_rounded, color: Colors.amberAccent, size: 16),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Lapak Warga RT $rtNomor',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: (isPromoted ? Colors.amber : Colors.white).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: (isPromoted ? Colors.amberAccent : Colors.white).withValues(alpha: 0.4)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isPromoted) ...[
-                        const Icon(Icons.star_rounded, color: Colors.amberAccent, size: 12),
-                        const SizedBox(width: 3),
-                      ],
-                      Text(
-                        isPromoted
-                            ? (totalCount > 1 ? '⭐ Iklan Warga (${currentIndex + 1}/$totalCount)' : '⭐ Iklan Warga')
-                            : (totalCount > 1 ? 'Produk (${currentIndex + 1}/$totalCount)' : 'Terbaru'),
-                        style: TextStyle(
-                          color: isPromoted ? Colors.amberAccent : Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                  ),
-                  child: ImageCacheHelper.buildImage(
-                    fotoUrl,
-                    width: 58,
-                    height: 58,
-                    borderRadius: BorderRadius.circular(12),
-                    placeholder: const Icon(Icons.shopping_bag_rounded, color: Colors.white, size: 28),
+                // Product Image Thumbnail
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 62,
+                    height: 62,
+                    color: const Color(0xFFF1F5F9),
+                    child: (fotoUrl != null && fotoUrl.isNotEmpty)
+                        ? Image.network(
+                            fotoUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => const Icon(
+                              Icons.storefront_rounded,
+                              color: Color(0xFF0D9488),
+                              size: 26,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.storefront_rounded,
+                            color: Color(0xFF0D9488),
+                            size: 26,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 12),
+
+                // Details (Judul, Harga, Penjual)
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         judul,
-                        style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Oleh: $penjual • $kategori',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11),
+                        hargaFmt,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF059669),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '👤 ' + penjual + (noRumah.isNotEmpty ? ' • No. ' + noRumah : ''),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Rp ${harga.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                        style: const TextStyle(color: Colors.amberAccent, fontSize: 13.5, fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: AppTheme.textMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
+
+                // Compact WhatsApp Order Button
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    if (waKontak != null && waKontak.toString().isNotEmpty) {
+                      final cleanPhone = waKontak.toString().replaceAll(RegExp(r'[^0-9]'), '');
+                      final phoneWithCode = cleanPhone.startsWith('0') ? '62' + cleanPhone.substring(1) : cleanPhone;
+                      final msg = 'Halo Kak ' + penjual + ', saya warga RT ' + rtNomor + ' tertarik memesan produk *' + judul + '* di Lapak RtHub.';
+                      final uri = Uri.parse('https://wa.me/' + phoneWithCode + '?text=' + Uri.encodeComponent(msg));
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    } else {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+                    }
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 12, color: Colors.white),
+                  label: const Text('Pesan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
               ],
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (totalCount > 1)
-                    Row(
-                      children: List.generate(totalCount, (dotIdx) {
-                        final isDotActive = dotIdx == currentIndex;
-                        return Container(
-                          margin: const EdgeInsets.only(right: 4),
-                          width: isDotActive ? 12 : 5,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: isDotActive ? Colors.amberAccent : Colors.white.withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        );
-                      }),
-                    )
-                  else
-                    const Text(
-                      'Dukung usaha tetangga RT kita!',
-                      style: TextStyle(color: Colors.white, fontSize: 10.5),
-                    ),
-                  Row(
-                    children: [
-                      if (waKontak != null && waKontak.toString().isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              final cleanPhone = waKontak.toString().replaceAll(RegExp(r'[^0-9]'), '');
-                              final phoneWithCountry = cleanPhone.startsWith('0') ? '62${cleanPhone.substring(1)}' : cleanPhone;
-                              final message = Uri.encodeComponent('Halo $penjual, saya tetangga dari RT $rtNomor berminat dengan "$judul" di Lapak Warga RtHub.');
-                              final url = Uri.parse('https://wa.me/$phoneWithCountry?text=$message');
-                              try {
-                                await launchUrl(url, mode: LaunchMode.externalApplication);
-                              } catch (_) {}
-                            },
-                            icon: const Icon(Icons.chat_rounded, size: 12, color: Color(0xFF065F46)),
-                            label: const Text('Pesan WA', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.amberAccent,
-                              foregroundColor: const Color(0xFF065F46),
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                          ),
-                        ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF065F46),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: const Text('Buka Lapak', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

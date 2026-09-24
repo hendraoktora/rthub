@@ -53,24 +53,37 @@ export class BeritaService {
       const snippet = data.konten.replace(/<[^>]*>?/gm, '').trim();
       const bodyPreview = snippet.length > 120 ? `${snippet.substring(0, 117)}...` : snippet;
       
-      // Kirim ke broadcast channel aplikasi
-      await this.notificationService.sendToTopic(
-        'rthub_broadcast',
-        `📢 ${data.judul}`,
-        bodyPreview || 'Ada pengumuman lingkungan baru untuk warga.',
-        {
-          type: 'BERITA',
-          beritaId: berita.id,
-          scope: data.scope,
-        },
-      );
-
-      // Jika ada RT spesifik, kirim juga ke channel RT
+      // Kirim Push Notification sesuai scope wilayah (hindari notifikasi ganda)
       if (data.scope === ScopeWilayah.RT && user.rtId) {
+        // Kirim HANYA ke channel RT pelapor/pengurus
         await this.notificationService.sendToTopic(
           `rt_${user.rtId}`,
           `📢 ${data.judul}`,
           bodyPreview || 'Ada pengumuman lingkungan baru untuk warga RT Anda.',
+          {
+            type: 'BERITA',
+            beritaId: berita.id,
+            scope: data.scope,
+          },
+        );
+      } else if (data.scope === ScopeWilayah.RW && user.rwId) {
+        // Kirim ke channel RW
+        await this.notificationService.sendToTopic(
+          `rw_${user.rwId}`,
+          `📢 ${data.judul}`,
+          bodyPreview || 'Ada pengumuman lingkungan baru untuk warga RW Anda.',
+          {
+            type: 'BERITA',
+            beritaId: berita.id,
+            scope: data.scope,
+          },
+        );
+      } else {
+        // Lingkup Kelurahan / Umum: kirim ke broadcast channel aplikasi
+        await this.notificationService.sendToTopic(
+          'rthub_broadcast',
+          `📢 ${data.judul}`,
+          bodyPreview || 'Ada pengumuman lingkungan baru untuk warga.',
           {
             type: 'BERITA',
             beritaId: berita.id,

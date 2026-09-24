@@ -1,11 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/nik_service.dart';
-import '../../core/services/notification_service.dart';
 import '../../core/utils/image_cache_helper.dart';
 import '../auth/login_screen.dart';
 
@@ -1344,69 +1342,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 },
               ),
-              // FCM Notification Status & Token Card
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.electricBlue.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppTheme.electricBlue.withValues(alpha: 0.25)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.notifications_active_rounded, color: AppTheme.electricBlue, size: 20),
-                        SizedBox(width: 8),
-                        Text('Push Notification Firebase (FCM)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primaryNavy)),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Aplikasi siap menerima pesan siaga, panic alert, dan pengumuman warga bahkan saat aplikasi tertutup (seperti WhatsApp).',
-                      style: TextStyle(fontSize: 11, color: AppTheme.textPrimary.withValues(alpha: 0.8), height: 1.3),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.electricBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        onPressed: () async {
-                          final token = NotificationService.cachedToken ?? await NotificationService.getToken();
-                          if (token != null && token.isNotEmpty) {
-                            await Clipboard.setData(ClipboardData(text: token));
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('✅ FCM Device Token disalin ke Clipboard!'),
-                                  backgroundColor: AppTheme.successGreen,
-                                ),
-                              );
-                            }
-                          } else {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Sedang menghubungkan ke Firebase...')),
-                              );
-                            }
-                          }
-                        },
-                        icon: const Icon(Icons.copy_rounded, size: 16),
-                        label: const Text('Salin FCM Token HP Ini (Untuk Test)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 28),
-
-              // Logout / Ganti Akun Button
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(

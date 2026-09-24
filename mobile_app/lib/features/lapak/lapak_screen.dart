@@ -87,6 +87,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
     final deskripsiController = TextEditingController(text: editItem?['deskripsi'] ?? '');
     String kategori = editItem?['kategori'] ?? 'Kuliner';
     List<String> fotoList = _extractImages(editItem?['fotoUrl']);
+    bool isSubmitting = false;
 
     showModalBottomSheet(
       context: context,
@@ -402,6 +403,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: () async {
+                      if (isSubmitting) return;
                       final judul = judulController.text.trim();
                       final harga = double.tryParse(hargaController.text.trim()) ?? 0;
                       final phone = waController.text.trim();
@@ -413,6 +415,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                         );
                         return;
                       }
+                      isSubmitting = true;
                       Navigator.pop(modalContext);
 
                       // Save encoded multiple photos
@@ -573,41 +576,55 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
     final productTitle = item['judul'] ?? 'Produk Lapak';
     final productId = (item['id'] ?? '').toString();
 
-    String selectedPackage = 'SUPER_7D'; // 'KILAT_3D', 'SUPER_7D', 'SULTAN_14D'
+    String selectedPackage = 'IKLAN_RT';
     int durationDays = 7;
-    double price = 30000;
+    double price = 10000;
     String paymentMethod = 'QRIS';
 
     final packages = [
       {
-        'id': 'KILAT_3D',
-        'nama': 'Paket Kilat (Shopee Ads)',
-        'durasi': 3,
-        'harga': 15000.0,
-        'tag': 'Ekonomis',
-        'tagColor': AppTheme.electricBlue,
-        'estViews': '150+ tayangan warga',
-        'desc': 'Cocok untuk jualan menu harian, PO makanan, atau promo akhir pekan.',
-      },
-      {
-        'id': 'SUPER_7D',
-        'nama': 'Paket Super Populer ⭐',
+        'id': 'IKLAN_RT',
+        'nama': 'Paket RT (Lingkungan Sendiri)',
+        'scope': 'RT',
         'durasi': 7,
-        'harga': 30000.0,
-        'tag': 'Paling Laris (Hemat 17%)',
-        'tagColor': Colors.amber.shade800,
-        'estViews': '500+ tayangan warga',
-        'desc': '⭐ Rekomendasi UMKM! Tampil di Banner Homescreen selama 1 minggu penuh.',
+        'harga': 10000.0,
+        'tag': 'Hemat 7 Hari',
+        'tagColor': AppTheme.electricBlue,
+        'estViews': 'Homescreen Warga RT Anda',
+        'desc': 'Target warga 1 RT! Tampil di Banner Iklan Homescreen warga RT sendiri selama 7 hari.',
       },
       {
-        'id': 'SULTAN_14D',
-        'nama': 'Paket Sultan Eksklusif 👑',
+        'id': 'IKLAN_RW',
+        'nama': 'Paket RW (Satu RW & Semua RT) ⭐',
+        'scope': 'RW',
+        'durasi': 7,
+        'harga': 25000.0,
+        'tag': 'Paling Laris',
+        'tagColor': Colors.amber.shade800,
+        'estViews': 'Homescreen Semua RT se-RW',
+        'desc': '⭐ Jangkauan lebih luas! Tampil di Homescreen seluruh warga dalam 1 lingkungan RW.',
+      },
+      {
+        'id': 'IKLAN_KELURAHAN',
+        'nama': 'Paket Kelurahan (Seluruh RW) 🏙️',
+        'scope': 'KELURAHAN',
         'durasi': 14,
         'harga': 50000.0,
-        'tag': 'Hemat Rp 20.000',
+        'tag': 'Jangkauan Luas',
+        'tagColor': const Color(0xFF7C3AED),
+        'estViews': 'Homescreen Warga se-Kelurahan',
+        'desc': '🔥 Tampil di Homescreen seluruh warga se-Kelurahan aktif selama 14 hari penuh.',
+      },
+      {
+        'id': 'IKLAN_GLOBAL',
+        'nama': 'Paket Nasional / Global 🌐',
+        'scope': 'SEMUA',
+        'durasi': 30,
+        'harga': 100000.0,
+        'tag': 'Maksimal 30 Hari',
         'tagColor': Colors.deepOrange,
-        'estViews': '1.200+ tayangan warga',
-        'desc': '🔥 Prioritas #1 di Carousel Homescreen & katalog teratas selama 2 minggu.',
+        'estViews': 'Seluruh Pengguna RT Hub',
+        'desc': '👑 Prioritas tertinggi! Tampil di Homescreen seluruh pengguna RT Hub di semua wilayah.',
       },
     ];
 
@@ -678,7 +695,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                   const SizedBox(height: 16),
 
                   // Package Options
-                  const Text('Pilih Paket Iklan Shopee Ads:', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+                  const Text('Pilih Paket Jangkauan Iklan:', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
 
                   ...packages.map((pkg) {
@@ -747,7 +764,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                                 ),
                                 Row(
                                   children: [
-                                    const Icon(Icons.visibility_outlined, size: 12, color: AppTheme.textSecondary),
+                                    const Icon(Icons.location_on_outlined, size: 12, color: AppTheme.textSecondary),
                                     const SizedBox(width: 4),
                                     Text(pkg['estViews'] as String, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
                                   ],
@@ -795,26 +812,47 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                       const SizedBox(width: 8),
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => setModalState(() => paymentMethod = 'KAS_RT'),
+                          onTap: () => setModalState(() => paymentMethod = 'VA_APP'),
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                             decoration: BoxDecoration(
-                              color: paymentMethod == 'KAS_RT' ? AppTheme.successGreen.withValues(alpha: 0.1) : Colors.white,
+                              color: paymentMethod == 'VA_APP' ? AppTheme.electricBlue.withValues(alpha: 0.1) : Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: paymentMethod == 'KAS_RT' ? AppTheme.successGreen : AppTheme.slateBorder),
+                              border: Border.all(color: paymentMethod == 'VA_APP' ? AppTheme.electricBlue : AppTheme.slateBorder),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.account_balance_wallet_outlined, size: 16, color: AppTheme.successGreen),
+                                const Icon(Icons.account_balance_rounded, size: 16, color: AppTheme.electricBlue),
                                 const SizedBox(width: 6),
-                                Text('Tunai Pengurus', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: paymentMethod == 'KAS_RT' ? AppTheme.successGreen : AppTheme.textPrimary)),
+                                Text('Transfer / VA Aplikasi', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: paymentMethod == 'VA_APP' ? AppTheme.electricBlue : AppTheme.textPrimary)),
                               ],
                             ),
                           ),
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.slateLight,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.slateBorder),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.shield_outlined, size: 14, color: AppTheme.textMuted),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '🛡️ Pembayaran iklan disalurkan langsung ke pihak aplikasi RT Hub untuk pemeliharaan server & layanan.',
+                            style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 18),
 
@@ -833,9 +871,11 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                         Navigator.pop(modalContext);
 
                         try {
+                          final selectedScope = (selectedPkgData['scope'] ?? 'RT').toString();
                           await ApiService.boostLapakProduk(
                             productId,
                             packageType: selectedPackage,
+                            scope: selectedScope,
                             durationDays: durationDays,
                             price: price,
                             paymentMethod: paymentMethod,
@@ -859,7 +899,7 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Selamat! Produk "$productTitle" telah di-boost ke posisi teratas dan langsung tampil di Slide Homescreen dengan badge ⭐ SPONSORED.',
+                                    'Selamat! Produk "$productTitle" telah berhasil dipromosikan dan langsung tampil di Slide Homescreen dengan badge ⭐ SPONSORED.',
                                     style: const TextStyle(fontSize: 13, height: 1.4),
                                   ),
                                   const SizedBox(height: 12),
@@ -876,6 +916,14 @@ class _LapakScreenState extends State<LapakScreen> with SingleTickerProviderStat
                                           children: [
                                             const Text('Paket:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                                             Text(selectedPkgData['nama'] as String, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            const Text('Jangkauan:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                                            Text(selectedScope, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.indigo)),
                                           ],
                                         ),
                                         const SizedBox(height: 4),

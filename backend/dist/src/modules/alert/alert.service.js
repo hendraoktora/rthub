@@ -58,9 +58,6 @@ let AlertService = class AlertService {
                 timestamp: new Date().toISOString(),
             };
             await this.notificationService.sendToTopic(topic, '🚨 PERINGATAN DARURAT (SOS)!', `${nama} (${noRumah}) butuh bantuan: "${catatan}"`, payloadData);
-            if (topic !== 'rthub_broadcast') {
-                await this.notificationService.sendToTopic('rthub_broadcast', '🚨 PERINGATAN DARURAT (SOS)!', `${nama} (${noRumah}) butuh bantuan: "${catatan}"`, payloadData);
-            }
         }
         catch (_) { }
         return {

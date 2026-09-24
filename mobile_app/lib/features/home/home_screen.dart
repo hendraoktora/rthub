@@ -483,7 +483,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _loadLapakData() async {
     try {
       final lapak = await ApiService.getLapakList();
-      if (mounted && lapak.isNotEmpty) {
+      if (mounted) {
         setState(() {
           _lapakDbList = lapak;
         });
@@ -1087,6 +1087,8 @@ class _HomeScreenState extends State<HomeScreen> {
               // Quick Action Row (Termasuk Info Gempa BMKG & CCTV)
               _buildQuickActionsRow(),
 
+              const SizedBox(height: 24),
+
               // Calendar & Agenda Section
               _buildCalendarAgendaSection(),
 
@@ -1328,6 +1330,14 @@ class _HomeScreenState extends State<HomeScreen> {
           it['paketIklan'] != null;
       if (!isPromoted) return false;
 
+      // Selalu tampilkan iklan milik sendiri ke pengguna
+      if (it['isOwner'] == true) return true;
+      final currentUserId = _user?['id']?.toString();
+      final itemUserId = (it['userId'] ?? it['sellerId'] ?? it['seller']?['id'])?.toString();
+      if (currentUserId != null && itemUserId != null && itemUserId == currentUserId) {
+        return true;
+      }
+
       // Filter jangkauan berdasarkan paket iklan:
       // RT (hanya RT yang sama) | RW (satu RW) | KELURAHAN (satu kelurahan) | SEMUA / NASIONAL (seluruh pengguna)
       final paket = (it['paketIklan'] ?? 'RT').toString().toUpperCase();
@@ -1409,7 +1419,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               InkWell(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen())).then((_) => _loadLapakData());
                 },
                 borderRadius: BorderRadius.circular(6),
                 child: const Padding(
@@ -1481,7 +1491,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final judul = item['judul'] ?? 'Produk Lapak Warga';
     final hargaRaw = item['harga'] ?? '0';
     final hargaNum = int.tryParse(hargaRaw.toString()) ?? 0;
-    final hargaFmt = 'Rp ' + hargaNum.toString().replaceAllMapped(RegExp(r'(\\d{1,3})(?=(\\d{3})+(?!\\d))'), (m) => m[1]! + '.');
+    final hargaFmt = 'Rp ' + hargaNum.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => m[1]! + '.');
     final penjual = item['seller']?['profile']?['namaLengkap'] ??
         item['user']?['profile']?['namaLengkap'] ??
         item['sellerName'] ??
@@ -1528,7 +1538,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen())).then((_) => _loadLapakData());
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -1542,10 +1552,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: 62,
                     color: const Color(0xFFF1F5F9),
                     child: (fotoUrl != null && fotoUrl.isNotEmpty)
-                        ? Image.network(
+                        ? ImageCacheHelper.buildImage(
                             fotoUrl,
+                            width: 62,
+                            height: 62,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Icon(
+                            placeholder: const Icon(
                               Icons.storefront_rounded,
                               color: Color(0xFF0D9488),
                               size: 26,
@@ -1613,7 +1625,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         await launchUrl(uri, mode: LaunchMode.externalApplication);
                       }
                     } else {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen())).then((_) => _loadLapakData());
                     }
                   },
                   icon: const Icon(Icons.chat_bubble_outline_rounded, size: 12, color: Colors.white),
@@ -1968,7 +1980,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Lapak RT',
             color: AppTheme.successGreen,
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen())).then((_) => _loadLapakData());
             },
           ),
           const SizedBox(width: 14),

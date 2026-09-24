@@ -509,13 +509,23 @@ class ApiService {
   // Real Database Lapak UMKM API
   static Future<List<dynamic>> getLapakList() async {
     List<dynamic> liveList = [];
+    final currentUser = await getCurrentUser();
+    final currentUserId = currentUser?['id']?.toString();
+
     try {
       final token = await getToken();
       final response = await _getWithFallback('/lapak', token: token);
       if (response.statusCode == 200) {
         final list = jsonDecode(response.body);
         if (list is List && list.isNotEmpty) {
-          liveList = list;
+          liveList = list.map((item) {
+            final m = Map<String, dynamic>.from(item as Map);
+            final sellerId = (m['sellerId'] ?? m['seller']?['id'])?.toString();
+            if (currentUserId != null && sellerId != null && sellerId == currentUserId) {
+              m['isOwner'] = true;
+            }
+            return m;
+          }).toList();
         }
       }
     } catch (_) {}
@@ -530,10 +540,33 @@ class ApiService {
       }
     } catch (_) {}
 
+    // Deduplicate against server items:
+    // If a server item has the same title as a local custom dummy, merge promotion tags to server item and discard local dummy
+    final liveTitles = liveList.map((e) => (e['judul'] ?? '').toString().toLowerCase().trim()).toSet();
+    final filteredLocal = <dynamic>[];
+
+    for (final loc in localCustomList) {
+      final locTitle = (loc['judul'] ?? '').toString().toLowerCase().trim();
+      if (liveTitles.contains(locTitle)) {
+        // Find matching server item and copy promotion fields if promoted locally
+        final matchIdx = liveList.indexWhere((e) => (e['judul'] ?? '').toString().toLowerCase().trim() == locTitle);
+        if (matchIdx != -1) {
+          if (loc['isPromoted'] == true) {
+            liveList[matchIdx]['isPromoted'] = true;
+            liveList[matchIdx]['promotedBadge'] = loc['promotedBadge'] ?? 'SPONSORED';
+            liveList[matchIdx]['promotedPackage'] = loc['promotedPackage'];
+            liveList[matchIdx]['paketIklan'] = loc['paketIklan'] ?? 'RT';
+            liveList[matchIdx]['promotedUntil'] = loc['promotedUntil'];
+          }
+        }
+      } else {
+        filteredLocal.add(loc);
+      }
+    }
+
     final token = await getToken();
     if (token != null || liveList.isNotEmpty) {
-      // Merge unique local items
-      final combined = [...localCustomList, ...liveList];
+      final combined = [...liveList, ...filteredLocal];
       final seenIds = <String>{};
       final uniqueList = <dynamic>[];
       for (final item in combined) {
@@ -569,6 +602,7 @@ class ApiService {
         'sellerId': 'seller_ibu_siti',
         'isPromoted': true,
         'promotedBadge': 'SPONSORED',
+        'paketIklan': 'RT',
         'seller': {'profile': {'namaLengkap': 'Ibu Siti Aminah (Bendahara RT)', 'noRumah': 'Blok A2 No. 05'}},
         'fotoUrl': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&fit=crop&q=80',
         'createdAt': '2026-09-08T06:00:00.000Z',
@@ -599,7 +633,7 @@ class ApiService {
       },
     ];
 
-    final combined = [...localCustomList, ...defaultLapak];
+    final combined = [...filteredLocal, ...defaultLapak];
     final seenIds = <String>{};
     final uniqueList = <dynamic>[];
     for (final item in combined) {
@@ -617,6 +651,7 @@ class ApiService {
     required String packageType,
     required int durationDays,
     required double price,
+    String? scope,
     String? paymentMethod,
   }) async {
     try {
@@ -625,12 +660,14 @@ class ApiService {
       List<dynamic> list = savedStr != null ? jsonDecode(savedStr) : [];
 
       final expireDate = DateTime.now().add(Duration(days: durationDays)).toIso8601String();
+      final finalScope = (scope != null && scope.isNotEmpty) ? scope : 'RT';
       final index = list.indexWhere((e) => (e['id'] ?? '').toString() == id);
 
       if (index != -1) {
         list[index]['isPromoted'] = true;
         list[index]['promotedBadge'] = 'SPONSORED';
         list[index]['promotedPackage'] = packageType;
+        list[index]['paketIklan'] = finalScope;
         list[index]['promotedUntil'] = expireDate;
         final item = list.removeAt(index);
         list.insert(0, item);
@@ -643,6 +680,7 @@ class ApiService {
             'isPromoted': true,
             'promotedBadge': 'SPONSORED',
             'promotedPackage': packageType,
+            'paketIklan': finalScope,
             'promotedUntil': expireDate,
           };
           list.insert(0, updated);
@@ -653,8 +691,43 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> createLapak(Map<String, dynamic> data) async {
-    // Generate id and save to local cache for instant zero-latency availability
     final currentUser = await getCurrentUser();
+
+    // 1. Try sending directly to backend first
+    try {
+      final token = await getToken();
+      final configuredUrl = await getBaseUrl();
+      final res = await http.post(
+        Uri.parse('$configuredUrl/lapak'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(data),
+      ).timeout(const Duration(seconds: 7));
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final decoded = jsonDecode(res.body);
+        if (decoded is Map<String, dynamic>) {
+          // If server succeeds, clean up any local cache dummy with same title
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            final savedStr = prefs.getString('local_custom_lapak');
+            if (savedStr != null) {
+              List<dynamic> list = jsonDecode(savedStr);
+              list.removeWhere((e) =>
+                  (e['id'] ?? '').toString().startsWith('lapak_local_') &&
+                  (e['judul'] ?? '').toString().toLowerCase().trim() ==
+                      (data['judul'] ?? '').toString().toLowerCase().trim());
+              await prefs.setString('local_custom_lapak', jsonEncode(list));
+            }
+          } catch (_) {}
+          return decoded;
+        }
+      }
+    } catch (_) {}
+
+    // 2. Offline / fallback only: save local dummy
     final localItem = {
       ...data,
       'id': 'lapak_local_${DateTime.now().millisecondsSinceEpoch}',
@@ -675,23 +748,6 @@ class ApiService {
       List<dynamic> list = savedStr != null ? jsonDecode(savedStr) : [];
       list.insert(0, localItem);
       await prefs.setString('local_custom_lapak', jsonEncode(list));
-    } catch (_) {}
-
-    try {
-      final token = await getToken();
-      final configuredUrl = await getBaseUrl();
-      final res = await http.post(
-        Uri.parse('$configuredUrl/lapak'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(data),
-      ).timeout(const Duration(seconds: 5));
-
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        return jsonDecode(res.body);
-      }
     } catch (_) {}
 
     return localItem;

@@ -58,13 +58,22 @@ let BeritaService = class BeritaService {
         try {
             const snippet = data.konten.replace(/<[^>]*>?/gm, '').trim();
             const bodyPreview = snippet.length > 120 ? `${snippet.substring(0, 117)}...` : snippet;
-            await this.notificationService.sendToTopic('rthub_broadcast', `📢 ${data.judul}`, bodyPreview || 'Ada pengumuman lingkungan baru untuk warga.', {
-                type: 'BERITA',
-                beritaId: berita.id,
-                scope: data.scope,
-            });
             if (data.scope === client_1.ScopeWilayah.RT && user.rtId) {
                 await this.notificationService.sendToTopic(`rt_${user.rtId}`, `📢 ${data.judul}`, bodyPreview || 'Ada pengumuman lingkungan baru untuk warga RT Anda.', {
+                    type: 'BERITA',
+                    beritaId: berita.id,
+                    scope: data.scope,
+                });
+            }
+            else if (data.scope === client_1.ScopeWilayah.RW && user.rwId) {
+                await this.notificationService.sendToTopic(`rw_${user.rwId}`, `📢 ${data.judul}`, bodyPreview || 'Ada pengumuman lingkungan baru untuk warga RW Anda.', {
+                    type: 'BERITA',
+                    beritaId: berita.id,
+                    scope: data.scope,
+                });
+            }
+            else {
+                await this.notificationService.sendToTopic('rthub_broadcast', `📢 ${data.judul}`, bodyPreview || 'Ada pengumuman lingkungan baru untuk warga.', {
                     type: 'BERITA',
                     beritaId: berita.id,
                     scope: data.scope,

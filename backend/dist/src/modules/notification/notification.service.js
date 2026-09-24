@@ -62,8 +62,10 @@ let NotificationService = NotificationService_1 = class NotificationService {
             const keyPaths = [
                 path.resolve(process.cwd(), 'firebase-key.json'),
                 path.resolve(process.cwd(), 'serviceAccountKey.json'),
+                path.resolve(__dirname, '../../../../firebase-key.json'),
                 path.resolve(__dirname, '../../../firebase-key.json'),
-                path.resolve(__dirname, '../../..', 'serviceAccountKey.json'),
+                path.resolve(__dirname, '../../firebase-key.json'),
+                path.resolve(__dirname, 'firebase-key.json'),
             ];
             let keyFilePath = null;
             for (const p of keyPaths) {

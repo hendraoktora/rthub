@@ -7,6 +7,8 @@ admin_web/dist/
 .env
 .env.*
 !.env.example
+*firebase-key*.json
+*serviceAccountKey*.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

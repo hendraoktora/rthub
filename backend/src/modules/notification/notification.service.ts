@@ -23,8 +23,10 @@ export class NotificationService implements OnModuleInit {
       const keyPaths = [
         path.resolve(process.cwd(), 'firebase-key.json'),
         path.resolve(process.cwd(), 'serviceAccountKey.json'),
+        path.resolve(__dirname, '../../../../firebase-key.json'),
         path.resolve(__dirname, '../../../firebase-key.json'),
-        path.resolve(__dirname, '../../..', 'serviceAccountKey.json'),
+        path.resolve(__dirname, '../../firebase-key.json'),
+        path.resolve(__dirname, 'firebase-key.json'),
       ];
 
       let keyFilePath: string | null = null;

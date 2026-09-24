@@ -117,6 +117,7 @@ export declare class WilayahService {
                 updatedAt: Date;
                 userId: string;
                 avatarUrl: string | null;
+                dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
             };
             phone: string;
             email: string | null;
@@ -153,6 +154,7 @@ export declare class WilayahService {
                 updatedAt: Date;
                 userId: string;
                 avatarUrl: string | null;
+                dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
             };
             phone: string;
             email: string | null;
@@ -190,6 +192,7 @@ export declare class WilayahService {
             updatedAt: Date;
             userId: string;
             avatarUrl: string | null;
+            dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
         };
         phone: string;
         email: string | null;
@@ -220,6 +223,7 @@ export declare class WilayahService {
             updatedAt: Date;
             userId: string;
             avatarUrl: string | null;
+            dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
         };
         phone: string;
         email: string | null;

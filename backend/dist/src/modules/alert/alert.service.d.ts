@@ -1,7 +1,9 @@
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationService } from '../notification/notification.service';
 export declare class AlertService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private notificationService;
+    constructor(prisma: PrismaService, notificationService: NotificationService);
     triggerPanic(user: any, data: {
         latitude?: number;
         longitude?: number;

@@ -318,6 +318,7 @@ let AuthService = class AuthService {
                             nik: data.nik?.trim() || null,
                             noKk: data.noKk?.trim() || null,
                             avatarUrl: data.avatarUrl || null,
+                            dataKeluarga: data.dataKeluarga !== undefined ? data.dataKeluarga : undefined,
                         },
                         update: {
                             ...(data.namaLengkap ? { namaLengkap: data.namaLengkap.trim() } : {}),
@@ -325,6 +326,7 @@ let AuthService = class AuthService {
                             ...(data.nik !== undefined ? { nik: data.nik?.trim() || null } : {}),
                             ...(data.noKk !== undefined ? { noKk: data.noKk?.trim() || null } : {}),
                             ...(data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl } : {}),
+                            ...(data.dataKeluarga !== undefined ? { dataKeluarga: data.dataKeluarga } : {}),
                         },
                     },
                 },

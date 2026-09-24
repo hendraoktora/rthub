@@ -13,9 +13,11 @@ exports.AlertService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const client_1 = require("@prisma/client");
+const notification_service_1 = require("../notification/notification.service");
 let AlertService = class AlertService {
-    constructor(prisma) {
+    constructor(prisma, notificationService) {
         this.prisma = prisma;
+        this.notificationService = notificationService;
     }
     async triggerPanic(user, data) {
         const alert = await this.prisma.alertPanic.create({
@@ -31,6 +33,17 @@ let AlertService = class AlertService {
                 user: { select: { profile: { select: { namaLengkap: true, noRumah: true } }, phone: true } },
             },
         });
+        try {
+            const nama = alert.user?.profile?.namaLengkap || 'Warga';
+            const noRumah = alert.user?.profile?.noRumah ? ` (Rumah: ${alert.user.profile.noRumah})` : '';
+            const topic = user.rtId ? `rt_${user.rtId}` : 'rthub_broadcast';
+            await this.notificationService.sendToTopic(topic, '🚨 PERINGATAN DARURAT (SOS)!', `${nama}${noRumah} menekan tombol darurat: "${alert.catatan}". Harap segera merapat/bantu!`, {
+                type: 'PANIC',
+                alertId: alert.id,
+                rtId: user.rtId || '',
+            });
+        }
+        catch (_) { }
         return {
             message: '🚨 ALARM DARURAT AKTIF! Notifikasi telah dikirim ke Pos Keamanan & Pengurus RT.',
             alert,
@@ -58,6 +71,7 @@ let AlertService = class AlertService {
 exports.AlertService = AlertService;
 exports.AlertService = AlertService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notification_service_1.NotificationService])
 ], AlertService);
 //# sourceMappingURL=alert.service.js.map

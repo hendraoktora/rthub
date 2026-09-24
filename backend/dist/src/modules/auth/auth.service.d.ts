@@ -36,6 +36,7 @@ export declare class AuthService {
         nik?: string;
         noKk?: string;
         avatarUrl?: string;
+        dataKeluarga?: any;
     }): Promise<{
         message: string;
         user: any;

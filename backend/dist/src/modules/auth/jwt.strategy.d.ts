@@ -30,6 +30,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
             updatedAt: Date;
             userId: string;
             avatarUrl: string | null;
+            dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
         };
         rw: {
             id: string;

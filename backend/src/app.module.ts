@@ -12,11 +12,13 @@ import { AgendaModule } from './modules/agenda/agenda.module';
 import { AlertModule } from './modules/alert/alert.module';
 import { CctvModule } from './modules/cctv/cctv.module';
 import { LaporanModule } from './modules/laporan/laporan.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    NotificationModule,
     AuthModule,
     WilayahModule,
     KasModule,

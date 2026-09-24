@@ -81,6 +81,7 @@ export declare class AuthController {
         nik?: string;
         noKk?: string;
         avatarUrl?: string;
+        dataKeluarga?: any;
     }): Promise<{
         message: string;
         user: any;

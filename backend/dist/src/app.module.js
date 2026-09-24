@@ -21,6 +21,7 @@ const agenda_module_1 = require("./modules/agenda/agenda.module");
 const alert_module_1 = require("./modules/alert/alert.module");
 const cctv_module_1 = require("./modules/cctv/cctv.module");
 const laporan_module_1 = require("./modules/laporan/laporan.module");
+const notification_module_1 = require("./modules/notification/notification.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -29,6 +30,7 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             prisma_module_1.PrismaModule,
+            notification_module_1.NotificationModule,
             auth_module_1.AuthModule,
             wilayah_module_1.WilayahModule,
             kas_module_1.KasModule,

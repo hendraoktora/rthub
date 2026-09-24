@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeWilayah } from '@prisma/client';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class BeritaService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationService: NotificationService,
+  ) {}
 
   async getFeed(user: any) {
     const rtId = user?.rtId;
@@ -30,7 +34,7 @@ export class BeritaService {
   }
 
   async createBerita(user: any, data: { judul: string; konten: string; scope: ScopeWilayah; coverUrl?: string; isPinned?: boolean }) {
-    return this.prisma.berita.create({
+    const berita = await this.prisma.berita.create({
       data: {
         authorId: user.id,
         judul: data.judul,
@@ -43,6 +47,40 @@ export class BeritaService {
         isPinned: data.isPinned ?? false,
       },
     });
+
+    // Kirim Push Notification ke seluruh warga (Broadcast & RT)
+    try {
+      const snippet = data.konten.replace(/<[^>]*>?/gm, '').trim();
+      const bodyPreview = snippet.length > 120 ? `${snippet.substring(0, 117)}...` : snippet;
+      
+      // Kirim ke broadcast channel aplikasi
+      await this.notificationService.sendToTopic(
+        'rthub_broadcast',
+        `📢 ${data.judul}`,
+        bodyPreview || 'Ada pengumuman lingkungan baru untuk warga.',
+        {
+          type: 'BERITA',
+          beritaId: berita.id,
+          scope: data.scope,
+        },
+      );
+
+      // Jika ada RT spesifik, kirim juga ke channel RT
+      if (data.scope === ScopeWilayah.RT && user.rtId) {
+        await this.notificationService.sendToTopic(
+          `rt_${user.rtId}`,
+          `📢 ${data.judul}`,
+          bodyPreview || 'Ada pengumuman lingkungan baru untuk warga RT Anda.',
+          {
+            type: 'BERITA',
+            beritaId: berita.id,
+            scope: data.scope,
+          },
+        );
+      }
+    } catch (_) {}
+
+    return berita;
   }
 
   async updateBerita(id: string, user: any, data: {

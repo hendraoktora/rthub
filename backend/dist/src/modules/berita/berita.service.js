@@ -13,9 +13,11 @@ exports.BeritaService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const client_1 = require("@prisma/client");
+const notification_service_1 = require("../notification/notification.service");
 let BeritaService = class BeritaService {
-    constructor(prisma) {
+    constructor(prisma, notificationService) {
         this.prisma = prisma;
+        this.notificationService = notificationService;
     }
     async getFeed(user) {
         const rtId = user?.rtId;
@@ -40,7 +42,7 @@ let BeritaService = class BeritaService {
         });
     }
     async createBerita(user, data) {
-        return this.prisma.berita.create({
+        const berita = await this.prisma.berita.create({
             data: {
                 authorId: user.id,
                 judul: data.judul,
@@ -53,6 +55,24 @@ let BeritaService = class BeritaService {
                 isPinned: data.isPinned ?? false,
             },
         });
+        try {
+            const snippet = data.konten.replace(/<[^>]*>?/gm, '').trim();
+            const bodyPreview = snippet.length > 120 ? `${snippet.substring(0, 117)}...` : snippet;
+            await this.notificationService.sendToTopic('rthub_broadcast', `📢 ${data.judul}`, bodyPreview || 'Ada pengumuman lingkungan baru untuk warga.', {
+                type: 'BERITA',
+                beritaId: berita.id,
+                scope: data.scope,
+            });
+            if (data.scope === client_1.ScopeWilayah.RT && user.rtId) {
+                await this.notificationService.sendToTopic(`rt_${user.rtId}`, `📢 ${data.judul}`, bodyPreview || 'Ada pengumuman lingkungan baru untuk warga RT Anda.', {
+                    type: 'BERITA',
+                    beritaId: berita.id,
+                    scope: data.scope,
+                });
+            }
+        }
+        catch (_) { }
+        return berita;
     }
     async updateBerita(id, user, data) {
         return this.prisma.berita.update({
@@ -80,6 +100,7 @@ let BeritaService = class BeritaService {
 exports.BeritaService = BeritaService;
 exports.BeritaService = BeritaService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notification_service_1.NotificationService])
 ], BeritaService);
 //# sourceMappingURL=berita.service.js.map

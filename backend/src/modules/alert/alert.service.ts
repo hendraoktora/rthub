@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StatusAlert } from '@prisma/client';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class AlertService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationService: NotificationService,
+  ) {}
 
   async triggerPanic(user: any, data: { latitude?: number; longitude?: number; catatan?: string }) {
     const alert = await this.prisma.alertPanic.create({
@@ -20,6 +24,24 @@ export class AlertService {
         user: { select: { profile: { select: { namaLengkap: true, noRumah: true } }, phone: true } },
       },
     });
+
+    // Kirim notifikasi darurat ke channel RT
+    try {
+      const nama = alert.user?.profile?.namaLengkap || 'Warga';
+      const noRumah = alert.user?.profile?.noRumah ? ` (Rumah: ${alert.user.profile.noRumah})` : '';
+      const topic = user.rtId ? `rt_${user.rtId}` : 'rthub_broadcast';
+
+      await this.notificationService.sendToTopic(
+        topic,
+        '🚨 PERINGATAN DARURAT (SOS)!',
+        `${nama}${noRumah} menekan tombol darurat: "${alert.catatan}". Harap segera merapat/bantu!`,
+        {
+          type: 'PANIC',
+          alertId: alert.id,
+          rtId: user.rtId || '',
+        },
+      );
+    } catch (_) {}
 
     return {
       message: '🚨 ALARM DARURAT AKTIF! Notifikasi telah dikirim ke Pos Keamanan & Pengurus RT.',

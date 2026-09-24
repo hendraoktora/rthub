@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/utils/image_cache_helper.dart';
 import '../invoice/invoice_screen.dart';
 import '../panic/panic_screen.dart';
@@ -95,7 +96,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         final userData = results[0] as Map<String, dynamic>?;
-        if (userData != null) _user = userData;
+        if (userData != null) {
+          _user = userData;
+          if (userData['rtId'] != null) {
+            NotificationService.subscribeToRt(userData['rtId'].toString());
+          }
+        }
 
         final summary = results[1] as Map<String, dynamic>?;
         if (summary != null) {

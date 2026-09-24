@@ -2,11 +2,17 @@ import 'dart:developer' as developer;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   developer.log('Handling background message: ${message.messageId} - Type: ${message.data['type']}', name: 'FCM');
+  if (message.data['type'] == 'PANIC') {
+    try {
+      const MethodChannel('com.rthub.rthub_mobile/widget').invokeMethod('playPanicAlarm');
+    } catch (_) {}
+  }
 }
 
 class NotificationService {

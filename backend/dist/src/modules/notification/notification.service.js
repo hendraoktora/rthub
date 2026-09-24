@@ -118,16 +118,17 @@ let NotificationService = NotificationService_1 = class NotificationService {
                 },
                 data: {
                     click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                    channel_id: isPanic ? 'rthub_sos_alarm_v3' : 'rthub_high_importance_channel',
+                    sound: isPanic ? 'siren' : 'default',
                     ...data,
                 },
                 android: {
                     priority: 'high',
                     notification: {
-                        channelId: isPanic ? 'rthub_panic_channel' : 'rthub_high_importance_channel',
+                        channelId: isPanic ? 'rthub_sos_alarm_v3' : 'rthub_high_importance_channel',
                         sound: isPanic ? 'siren' : 'default',
                         priority: isPanic ? 'max' : 'high',
                         visibility: 'public',
-                        defaultSound: !isPanic,
                         defaultVibrateTimings: true,
                     },
                 },

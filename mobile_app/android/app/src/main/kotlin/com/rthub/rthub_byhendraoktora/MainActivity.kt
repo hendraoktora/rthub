@@ -3,6 +3,7 @@ package com.rthub.rthub_byhendraoktora
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -21,8 +22,19 @@ class MainActivity : FlutterActivity() {
     private var initialAction: String? = null
     private var panicMediaPlayer: MediaPlayer? = null
 
+    companion object {
+        var instance: MainActivity? = null
+        fun playAlarm() {
+            instance?.playPanicAlarm()
+        }
+        fun stopAlarm() {
+            instance?.stopPanicAlarm()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        instance = this
         createNotificationChannels()
     }
 
@@ -44,14 +56,19 @@ class MainActivity : FlutterActivity() {
             notificationManager.createNotificationChannel(generalChannel)
 
             // 2. CRITICAL EMERGENCY SOS / PANIC CHANNEL (Overriding Silent via USAGE_ALARM & Siren Sound)
-            val sirenUri = Uri.parse("android.resource://" + packageName + "/" + R.raw.siren)
+            val sirenUri = Uri.parse("${ContentResolver.SCHEME_ANDROID_RESOURCE}://${packageName}/raw/siren")
             val alarmAttributes = AudioAttributes.Builder()
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .setUsage(AudioAttributes.USAGE_ALARM) // Uses STREAM_ALARM to sound even on silent/vibrate!
                 .build()
 
+            // Delete old channel ID to force Android to apply new sound settings
+            try {
+                notificationManager.deleteNotificationChannel("rthub_panic_channel")
+            } catch (_: Exception) {}
+
             val panicChannel = NotificationChannel(
-                "rthub_panic_channel",
+                "rthub_sos_alarm_v3",
                 "🚨 RTHub Alarm Darurat (SOS)",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
@@ -67,6 +84,25 @@ class MainActivity : FlutterActivity() {
                 }
             }
             notificationManager.createNotificationChannel(panicChannel)
+
+            // Also keep rthub_panic_channel configured with siren for backwards-compatibility
+            val legacyPanicChannel = NotificationChannel(
+                "rthub_panic_channel",
+                "🚨 RTHub Alarm Darurat (SOS)",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Alarm darurat SOS warga RTHub"
+                setSound(sirenUri, alarmAttributes)
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 1000, 300, 1000, 300, 1000, 300, 1000)
+                enableLights(true)
+                lightColor = Color.RED
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    setBypassDnd(true)
+                }
+            }
+            notificationManager.createNotificationChannel(legacyPanicChannel)
         }
     }
 
@@ -112,6 +148,9 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         stopPanicAlarm()
+        if (instance == this) {
+            instance = null
+        }
         super.onDestroy()
     }
 

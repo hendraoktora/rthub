@@ -45,6 +45,8 @@ let AlertService = class AlertService {
             const payloadData = {
                 type: 'PANIC',
                 alertId: alert.id,
+                senderUserId: user.id || '',
+                senderPhone: phone || '',
                 rtId: user.rtId || '',
                 namaPelapor: nama,
                 noRumah: alert.user?.profile?.noRumah || '-',

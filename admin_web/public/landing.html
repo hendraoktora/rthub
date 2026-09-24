@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f2">
+  <meta name="description" content="RT Hub menyatukan warga, pengurus, dan usaha lokal. Kelola data, iuran, surat, lapak, dan keamanan lingkungan dalam satu tempat.">
+  <title>RT Hub — Satu kampung. Banyak cerita.</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%232261e8'/%3E%3Cpath d='m9 20 11-10 11 10v12H16V21h9v11' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
+  <style>
+/* RT HUB — LIGHT, EDITORIAL, PLAYFUL. All application styles are embedded. */
+:root{--bg:#f7f8f2;--panel:#fff;--green:#2261e8;--mint:#32664c;--amber:#bd7523;--cyan:#2261e8;--red:#bc4748;--text:#263a32;--muted:#69776e;--line:#dce1d7;--heading:'Space Grotesk',sans-serif;--body:'Plus Jakarta Sans',sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:104px}body{margin:0;color:var(--text);background:var(--bg);font:14px/1.7 var(--body);overflow-x:hidden}button,input,select{font:inherit}button,a{-webkit-tap-highlight-color:transparent}button{color:inherit;cursor:pointer}a{color:inherit;text-decoration:none}svg{display:block}h1,h2,h3,p{margin:0}h1,h2,h3{font-family:var(--heading);font-weight:500;line-height:1.08;letter-spacing:-.06em}h2{font-size:clamp(40px,4.8vw,66px)}h3{font-size:23px;letter-spacing:-.04em}[hidden]{display:none!important}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #2261e8;outline-offset:5px}::selection{color:#fff;background:#32664c}.container{width:min(1240px,calc(100% - 112px));margin:auto}.icon{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}.green{color:var(--mint)}.muted{color:var(--muted)}.tiny{font-size:11px;color:var(--muted)}.eyebrow{display:flex;gap:9px;align-items:center;text-transform:uppercase;letter-spacing:.13em;font-size:10px;font-weight:700;color:#5a6b5e}.eyebrow:before{content:'';height:6px;width:6px;background:#749675;border-radius:50%}.label{font-size:9px;letter-spacing:.12em}.section{padding:112px 0;position:relative}.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:45px;margin-bottom:48px}.section-head h2{margin-top:22px}.section-head>p{font-size:14px;max-width:330px;color:var(--muted);line-height:1.9}.center-head{text-align:center;margin-bottom:58px}.center-head .eyebrow{justify-content:center}.center-head h2{margin-top:21px}.center-head>p{font-size:14px;max-width:470px;color:var(--muted);margin:23px auto 0}.btn{display:inline-flex;align-items:center;justify-content:center;gap:22px;padding:0 25px;min-height:53px;border-radius:50px;border:1px solid var(--line);font-size:12px;font-weight:700;background:transparent;line-height:1.5;transition:background .25s,box-shadow .25s}.btn .icon{width:17px;height:17px}.btn-primary{background:#2261e8;border-color:#2261e8;color:white;box-shadow:0 5px 0 #184abd0d}.btn-primary:hover{background:#164fc9;box-shadow:0 7px 20px #2261e821}.btn-secondary{background:#ffffff75;border-color:#b8c2b780}.btn-secondary:hover{background:white;border-color:#819783}.logo{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;font-family:var(--heading);font-size:27px;font-weight:700;letter-spacing:-1.4px}.logo-mark{display:grid;place-items:center;color:#2261e8;width:35px;height:39px;border:2px solid #2261e8;border-radius:14px 14px 7px 7px;transform:rotate(-5deg)}.logo-mark .icon{height:26px;width:26px;stroke-width:1.8}.logo .hub{color:#2261e8}.official-logo{width:132px;height:45px;object-fit:contain;object-position:left}.skip-link{position:fixed;top:-80px;left:16px;z-index:999;background:white;padding:12px}.skip-link:focus{top:10px}.sr-only{position:absolute;height:1px;width:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;margin:-1px;padding:0;border:0}
+/* Loading curtain & airy navigation */
+#preloader{position:fixed;inset:0;display:grid;place-items:center;background:#f7f8f2;z-index:500;transform-origin:top}.loader-inner{width:260px;text-align:center}.loader-inner .logo{margin-bottom:36px;font-size:34px}.load-track{height:2px;background:#dce3d9}.load-bar-fill{height:100%;width:0;background:#2261e8;transition:width .2s}.load-caption{display:flex;justify-content:space-between;margin-top:12px;color:#667665;font-size:8px;letter-spacing:.12em}#navbar{position:fixed;inset:0 0 auto;z-index:100;transition:background .3s,border-color .3s;border-bottom:1px solid transparent}#navbar.is-compact{background:#f7f8f2ed;border-color:#dce1d79c;backdrop-filter:blur(16px)}.nav-inner{height:100px;display:flex;align-items:center;justify-content:space-between;gap:25px;transition:height .3s}#navbar.is-compact .nav-inner{height:77px}#nav-menu{display:flex;align-items:center;gap:28px}#nav-menu a{font-size:11px;font-weight:500;color:#677466}#nav-menu a:hover{color:#2261e8}.nav-actions{display:flex;gap:12px;align-items:center}.nav-actions .btn{min-height:42px;padding:0 19px;font-size:10px}.nav-login{font-size:11px;font-weight:600;color:#526452}#menu-toggle{display:none;width:37px;height:37px;place-items:center;background:white;border:1px solid var(--line);border-radius:50%}#menu-toggle .icon{height:17px;width:17px}#motion-toggle{position:fixed;bottom:20px;right:20px;z-index:90;display:flex;align-items:center;gap:7px;background:#ffffffed;color:#586651;border:1px solid #dbe1d2;backdrop-filter:blur(14px);border-radius:30px;padding:8px 13px;font-size:9px}#motion-toggle .icon{width:12px;height:12px}
+/* HERO — an open stage, oversized type, a neighbourhood you can touch */
+.hero{position:relative;min-height:1110px;overflow:hidden;background:#f7f8f2}.hero-inner{position:relative;min-height:1110px;padding-top:155px}.hero-copy{position:relative;z-index:3;width:100%;text-align:center;pointer-events:none}.hero-copy>*{pointer-events:auto}.hero-tag{display:inline-flex;align-items:center;gap:8px;color:#6d7c6e;font-size:10px;letter-spacing:.12em;font-weight:500;margin-bottom:25px}.hero-tag .dot{height:6px;width:6px;background:#658969;border-radius:50%}.hero-tag>span:last-child{display:none}.hero h1{font-size:clamp(68px,7.5vw,104px);letter-spacing:-.075em;line-height:1.01;font-weight:500}.hero h1 .green{color:#71916e}.hero-description{margin:25px auto 0;max-width:485px;color:#687969;font-size:13px;line-height:1.9}.hero-buttons{display:flex;justify-content:center;gap:12px;margin-top:26px}.hero-buttons .btn{min-height:48px;font-size:11px}.hero-proof{position:absolute;top:595px;left:0;text-align:left;max-width:180px;display:flex;flex-direction:column;gap:12px;color:#7a897a;font-size:10px;line-height:1.7}.hero-proof strong{color:#435740;font-size:11px;font-weight:600}.avatar-stack{display:flex}.avatar{height:29px;width:29px;border:2px solid var(--bg);border-radius:50%;display:grid;place-items:center;color:#263a32;background:#ccd8b6;font-size:8px;font-weight:800;margin-left:-7px}.avatar:first-child{margin-left:0}.avatar:nth-child(2){background:#e5c7b2}.avatar:nth-child(3){background:#c5d9e5}.avatar:nth-child(4){background:#53755d;color:white}.hero-visual{position:absolute;inset:490px -30px 70px;z-index:2;pointer-events:none}.hero-visual>*{pointer-events:auto}#village-stage{position:absolute;inset:0;isolation:isolate}#village-stage:before{content:'';position:absolute;width:67%;height:50%;left:17%;bottom:7%;background:#dde5d75e;border-radius:50%;filter:blur(45px);z-index:-1}#village-canvas{display:block;width:100%;height:100%;outline:0;cursor:grab;touch-action:pan-y}#village-canvas:active{cursor:grabbing}.scene-top-label{position:absolute;right:42px;top:36px;display:flex;align-items:center;gap:7px;font-size:9px;color:#5a7358}.scene-top-label .label{font-size:8px;letter-spacing:.03em}.scene-coordinates{position:absolute;right:43px;top:62px;font-size:8px;color:#8b9785;font-family:var(--heading);letter-spacing:.1em}.live-dot{display:inline-block;height:5px;width:5px;background:#639266;border-radius:50%}.float-card{position:absolute;z-index:4;display:flex;align-items:center;gap:11px;background:#ffffffef;border:1px solid #fff;border-radius:14px;padding:14px 18px;box-shadow:0 8px 28px #3b4b2710,0 1px 0 #dce3d4;animation:bob 7s ease-in-out infinite}.float-icon{height:33px;width:33px;display:grid;place-items:center;background:#e9f0e2;border-radius:50%;color:#527948;flex-shrink:0}.float-card strong{display:block;font-size:10px;color:#3e543e;font-weight:600}.float-card p{font-size:9px;color:#7a8673;margin-top:2px;line-height:1.6}.float-card .live-dot{margin-left:5px}.security-card{left:140px;bottom:112px;transform:rotate(-5deg);animation-delay:-2s}.security-card .float-icon{background:#e6ecfb;color:#3b72ce}#notification{right:72px;top:160px;width:280px;transform:rotate(5deg)}.scene-orbit{position:absolute;left:40%;right:40%;bottom:8px;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px;font-size:9px;color:#788b71;white-space:nowrap;pointer-events:none}.scene-orbit .icon{height:14px;width:14px}.scene-orbit span{display:none}.hero-bottom{position:absolute;bottom:28px;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:20px;z-index:4;color:#82917a;font-size:9px}.hero-bottom a{display:flex;align-items:center;gap:9px}.hero-bottom .icon{width:12px;height:12px}.hero-bottom>span{display:flex;gap:22px}.hero-bottom>span span{display:flex;align-items:center;gap:6px}.hero-sticker{position:absolute;top:90px;left:56px;width:83px;height:83px;border:1px solid #bacaaa;border-radius:50%;display:grid;place-items:center;font-family:var(--heading);font-size:11px;line-height:1.4;color:#6e8a5f;text-align:center;transform:rotate(-15deg);background:#edf2e4}.hero-sticker span{display:block;font-size:24px;line-height:1}#scene-fallback{position:absolute;inset:0;display:grid;place-content:center;text-align:center;color:var(--muted);font-size:12px;z-index:-1}.fallback-house{font-size:110px;filter:drop-shadow(0 20px 20px #69845622)}
+/* Ticker & statistics */
+.quake-ticker{height:43px;background:#efece5;display:flex;align-items:center;overflow:hidden;border-block:1px solid #e3ded4}.quake-title{display:flex;align-items:center;gap:9px;flex-shrink:0;padding:0 22px 0 max(28px,calc((100vw - 1240px)/2));height:100%;color:#955d50;font-size:9px;font-weight:600;letter-spacing:.07em;background:#efece5;border-right:1px solid #ddd7cd;z-index:2}.quake-title svg{width:23px;height:23px;animation:seismic 1s linear infinite}.quake-title small{border:1px solid #d8bcb0;border-radius:3px;padding:1px 4px;font-size:7px}.ticker-window{flex:1;overflow:hidden}.ticker-track{width:max-content;display:flex;animation:marquee 48s linear infinite}.ticker-track span{white-space:nowrap;padding-right:60px;color:#938273;font-size:10px}.ticker-track b{color:#987464;font-weight:600}.stats{padding:57px 0 35px;border-bottom:1px solid var(--line);background:#f7f8f2}.stats-grid{display:grid;grid-template-columns:repeat(5,1fr)}.stat{text-align:center;border-right:1px solid var(--line)}.stat:last-child{border:0}.stat strong{font:500 38px/1.4 var(--heading);letter-spacing:-1.8px;color:#476044}.stat p{font-size:10px;color:#7e8a76;margin-top:4px}.stats-note{text-align:center;font-size:8px;letter-spacing:.1em;color:#9ba58d;margin-top:25px}
+/* FEATURES — four product vignettes, eight quiet utility cards */
+#fitur{background:#fffefb}.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}.feature-card{grid-column:span 3;background:#f4f5ef;border:1px solid transparent;border-radius:22px;padding:27px;overflow:hidden;position:relative;transform-style:preserve-3d;transition:box-shadow .3s}.feature-card:hover{box-shadow:0 10px 25px #34492a08}.feature-large{grid-column:span 7;min-height:370px}.feature-medium{grid-column:span 5;min-height:370px}.feature-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:22px}.feature-heading h3{font-size:27px;font-weight:500;margin-bottom:12px}.feature-heading p{font-size:12px;line-height:1.85;color:#71806a;max-width:410px}.feature-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:#e2ebd7;color:#5a774e;margin-bottom:23px;flex-shrink:0}.feature-heading .feature-icon{margin:0;width:39px;height:39px}.feature-icon.blue{color:#5079b2;background:#e1eafa}.feature-icon.amber{color:#957b3e;background:#eee5c6}.feature-icon.red{color:#ab6956;background:#eed8cf}.feature-icon .icon{width:18px;height:18px}.feature-small{min-height:218px;background:#fffefb;border:1px solid #e9eade;border-radius:15px}.feature-small h3{font-size:18px;letter-spacing:-.03em;margin-bottom:12px}.feature-small>p{font-size:11px;line-height:1.85;color:#7b8474}.lapak{background:#f0edda}.feature-medium:not(.quake-card){background:#e5ecf4}.quake-card{background:#f5e8e0}.feature-large:not(.lapak){background:#eaf0e2}.catalog-window{overflow:hidden;margin-top:27px;border-radius:12px}.catalog-track{display:flex;gap:13px}.product{flex:0 0 calc((100% - 26px)/3);min-width:0;background:#fffef9;border-radius:12px;overflow:hidden}.product-art{height:114px;display:grid;place-items:center;position:relative;background:#dde4c8}.product:nth-child(2) .product-art{background:#e9d7c7}.product:nth-child(3) .product-art{background:#e0dbe8}.product-emoji{font-size:50px;transform:rotate(-8deg);filter:drop-shadow(0 8px 5px #6e72501c);transition:transform .4s}.product:hover .product-emoji{transform:translateY(-5px) rotate(5deg)}.product-badge{position:absolute;top:8px;left:8px;font-size:6px;letter-spacing:.05em;background:#fffaf3b5;border-radius:30px;padding:2px 5px;color:#6a7451}.product-info{padding:11px 12px}.product-info b{display:block;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.product-info p{font-size:8px;color:#879078;margin-top:1px}.product-info strong{display:block;font-size:10px;color:#657d4e;margin-top:7px;font-weight:600}.catalog-footer{display:flex;align-items:center;justify-content:space-between;margin-top:15px}.catalog-footer .tiny{font-size:10px}.catalog-dots{display:flex;gap:2px}.catalog-dot{display:block;border:0;background:none;padding:8px 4px}.catalog-dot:after{content:'';display:block;width:5px;height:5px;border-radius:4px;background:#c3c9ae;transition:width .3s,background .3s}.catalog-dot.is-active:after{width:17px;background:#748c62}.cctv-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:25px}.cctv-feed{position:relative;overflow:hidden;border-radius:8px;height:102px;background:#728b7e;isolation:isolate}.cctv-feed:after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(transparent 0 2px,#dde8d609 3px 4px);z-index:3;pointer-events:none}.cctv-street{position:absolute;inset:0;background:linear-gradient(145deg,transparent 45%,#a5b5a980 46% 62%,transparent 63%),linear-gradient(25deg,#6f8c7a,#a8bdae)}.cctv-street:before,.cctv-street:after{content:'';position:absolute;width:49px;height:35px;left:18px;top:23px;background:#4d7564;border-top:12px solid #89a78c;transform:skewY(-12deg);box-shadow:55px 10px 0 #5e826b,95px -8px 0 #648571}.cctv-street:after{left:auto;right:-5px;top:45px;transform:skewY(14deg);opacity:.6}.cctv-feed:nth-child(2) .cctv-street{transform:scaleX(-1);filter:brightness(.9)}.cctv-feed:nth-child(3) .cctv-street{filter:brightness(1.1);transform:scale(1.3)}.cctv-feed:nth-child(4) .cctv-street{transform:rotate(10deg) scale(1.3)}.feed-label,.cctv-time{position:absolute;left:7px;font-family:monospace;font-size:7px;color:white;z-index:4;text-shadow:0 1px 3px #355245}.feed-label{top:6px}.cctv-time{bottom:6px}.rec{position:absolute;top:6px;right:7px;display:flex;gap:3px;align-items:center;font-size:6px;color:white;z-index:4}.rec:before{content:'';width:3px;height:3px;background:#f77c6c;border-radius:50%;animation:blink 1.5s infinite}.cctv-bottom{display:flex;justify-content:space-between;font-size:8px;color:#73859c;margin-top:12px}.cctv-bottom span{display:flex;gap:5px;align-items:center}.quake-monitor{border-radius:12px;background:#fffaf7bd;margin-top:25px;padding:16px}.quake-meta{display:flex;align-items:center;justify-content:space-between;font-size:8px;color:#ab8a7d}.quake-magnitude{padding:2px 8px;border-radius:5px;color:#b76e5e;background:#f5e2d8;font:500 15px var(--heading)}.waveform{height:86px;overflow:hidden;margin:12px 0 10px;background:linear-gradient(#e7c5b332 1px,transparent 1px),linear-gradient(90deg,#e7c5b332 1px,transparent 1px);background-size:22px 18px}.waveform svg{height:100%;width:200%;animation:wave 5s linear infinite}.waveform path{stroke:#b67666;stroke-width:1.3}.quake-location{display:flex;justify-content:space-between;gap:8px;font-size:8px;color:#a08377}.quake-location span:last-child{color:#8b966d}.report-chart{display:flex;align-items:flex-end;gap:18px;height:130px;margin:26px 0 20px;padding:0 12px;border-bottom:1px solid #a0b28b44;background:repeating-linear-gradient(to top,transparent 0 35px,#b8c7a22e 36px 37px)}.chart-column{height:var(--height);flex:1;min-height:5px;background:#b5c799;border-radius:6px 6px 0 0;transform-origin:bottom;animation:chart-grow 3s ease-in-out infinite alternate;animation-delay:var(--delay)}.chart-column:last-child{background:#749361}.report-bottom{display:flex;align-items:center;justify-content:space-between;gap:16px}.report-total{font:500 24px/1.3 var(--heading);letter-spacing:-1px;color:#506a3b}.report-total small{display:block;font:8px var(--body);letter-spacing:.07em;color:#7c8c6b;margin-bottom:5px}.btn-download{border:1px solid #cbd5bc;background:#fffef780;border-radius:25px;display:flex;align-items:center;gap:7px;padding:9px 13px;font-size:9px;color:#61764a}.btn-download .icon{height:13px;width:13px}.feature-bottom-note{display:flex;justify-content:center;align-items:center;gap:7px;margin-top:27px;font-size:9px;color:#9ba18e}.feature-bottom-note .icon{width:12px;height:12px}
+/* HOW IT WORKS — quiet line drawing */
+.how-section{background:#eaf0e2}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:70px;position:relative}.timeline{position:absolute;top:27px;height:1px;left:10%;right:10%;background:#ced9c2}.timeline-progress{height:100%;width:100%;transform:scaleX(0);transform-origin:left;background:#6d8a59}.step{position:relative;z-index:1;text-align:center}.step-number{display:grid;place-items:center;height:55px;width:55px;margin:0 auto 26px;border:1px solid #b5c8a5;border-radius:50%;font:19px var(--heading);background:#eaf0e2;color:#678556;box-shadow:0 0 0 12px #eaf0e2}.step h3{font-size:22px;margin-bottom:15px}.step p{max-width:300px;margin:auto;font-size:12px;line-height:1.9;color:#74856a}.step-time{display:block;margin-top:17px;color:#8c9b7d;font-size:8px;letter-spacing:.08em}.steps-foot{margin-top:49px;text-align:center}.steps-foot a{font-size:12px;color:#557d40;display:inline-flex;align-items:center;gap:9px}.steps-foot .icon{width:16px;height:16px}
+/* STORIES */
+.testimonials{background:#fffefb;overflow:hidden}.story-label{font-size:9px;letter-spacing:.07em;color:#89957b}.testimonial-marquee{overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 5% 95%,transparent)}.testimonial-track{width:max-content;display:flex;gap:20px;padding:5px 0 20px;animation:marquee 55s linear infinite}.testimonial-marquee:hover .testimonial-track,.testimonial-marquee:focus-within .testimonial-track{animation-play-state:paused}.quote-card{display:flex;flex-direction:column;width:365px;min-height:263px;border:1px solid #e6e8dd;border-radius:16px;padding:29px;background:#fffefb}.quote-stars{font-size:10px;letter-spacing:3px;color:#a89b66;margin-bottom:18px}.quote-card blockquote{font-size:13px;line-height:1.9;color:#6c7b67;margin:0 0 27px}.quote-person{display:flex;align-items:center;gap:11px;margin-top:auto}.quote-person .avatar{width:34px;height:34px;border:0}.quote-person b{display:block;font-size:11px;font-weight:600}.quote-person p{font-size:9px;color:#8e9981}.quote-mark{font:43px/1 Georgia,serif;color:#c7d0b8;margin-left:auto}
+/* PRICING */
+#harga{padding-top:90px;background:#f7f8f2}.pricing-caption{margin-top:-30px;margin-bottom:50px;text-align:center;font-size:8px;letter-spacing:.07em;color:#97a089}.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:stretch}.price-card{position:relative;display:flex;flex-direction:column;padding:33px;border:1px solid #dfe4d6;border-radius:20px;background:#fffef8}.price-card.pro{background:#e1ebd4;border-color:#abc29b;animation:price-float 7s ease-in-out infinite;box-shadow:0 0 28px #718d410e}.popular{position:absolute;left:50%;top:-13px;transform:translateX(-50%);white-space:nowrap;font-size:8px;letter-spacing:.04em;font-weight:700;color:#44612f;background:#d4e4c2;border:1px solid #abc29b;border-radius:30px;padding:4px 14px}.plan-name{font-size:16px;font-weight:500;letter-spacing:-.02em}.plan-description{font-size:11px;color:#809071;margin-top:9px}.price{font:500 41px/1.3 var(--heading);letter-spacing:-2px;margin-top:26px;color:#43603d}.price small{font:9px var(--body);letter-spacing:0;color:#839377}.price.custom{font-size:35px;letter-spacing:-1.7px;margin-top:30px;margin-bottom:4px}.price-period{font-size:9px;color:#98a286;min-height:18px;margin-top:3px}.plan-features{list-style:none;padding:25px 0 0;margin:26px 0 29px;border-top:1px solid #d6dfca;display:grid;gap:13px;font-size:11px;color:#697d5b}.plan-features li{display:flex;gap:10px;align-items:flex-start}.plan-features li:before{content:'✓';color:#648648}.plan-features li.unavailable{color:#a3ad95}.plan-features li.unavailable:before{content:'−';color:#a3ad95}.price-card .btn{margin-top:auto;width:100%;min-height:46px;font-size:11px}.price-card.pro .btn{background:#487441;border-color:#487441}.price-card.pro .btn:hover{background:#355b30}.pricing-note{display:flex;justify-content:center;gap:23px;flex-wrap:wrap;margin-top:30px;font-size:10px;color:#8a997b}.pricing-note span{display:flex;align-items:center;gap:7px}.pricing-note .icon{width:13px;height:13px}
+/* FINAL CTA AND FOOTER */
+.cta-section{padding:10px 0 95px}.cta-panel{position:relative;isolation:isolate;min-height:390px;border-radius:26px;overflow:hidden;background:#e4eddb}.cta-copy{position:relative;z-index:3;padding:54px;width:65%;pointer-events:none}.cta-copy>*{pointer-events:auto}.cta-copy h2{font-size:53px;margin-top:21px}.cta-copy h2 .green{color:#7f9b64}.cta-copy p{color:#7c8f6d;font-size:12px;line-height:1.8;margin-top:21px}.cta-buttons{display:flex;gap:12px;margin-top:27px}.cta-buttons .btn{min-height:46px;font-size:11px}.community-scene{position:absolute;inset:0 -60px 0 48%;z-index:1;pointer-events:none}#community-canvas{width:100%;height:100%;display:block}.cta-grid{position:absolute;inset:0;opacity:.3;background-image:radial-gradient(#718b5b66 .65px,transparent .65px);background-size:22px 22px;mask-image:linear-gradient(90deg,transparent 20%,#000)}footer{padding:52px 0 25px;background:#f7f8f2;border-top:1px solid var(--line)}.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:50px;padding-bottom:46px}.footer-brand>p{font-size:11px;color:#8c9a80;line-height:1.9;max-width:240px;margin-top:16px}.footer-column h3{font:600 11px var(--body);letter-spacing:0;margin:5px 0 18px}.footer-column>a,.footer-column>button{display:block;background:none;border:0;padding:0;font-size:11px;line-height:1.8;color:#819274;margin-top:9px}.footer-column a:hover,.footer-column button:hover{color:#2261e8}.socials{display:flex;gap:8px}.socials a{height:31px;width:31px;border:1px solid #d8e1cc;border-radius:50%;display:grid;place-items:center;color:#819274}.socials .icon{height:14px;width:14px}.footer-bottom{display:flex;justify-content:space-between;gap:20px;border-top:1px solid var(--line);padding-top:23px;font-size:9px;color:#98a18e}.footer-bottom>span:last-child{display:flex;align-items:center;gap:6px}.footer-bottom .icon{height:12px;width:12px;color:#98aa8a}.footer-big-word{font:500 clamp(70px,18.5vw,255px)/1 var(--heading);letter-spacing:-.09em;text-align:center;color:#e0e7d7;padding-top:45px;user-select:none}
+/* DIALOGS, CURSOR AND MOTION PREFERENCES */
+dialog{padding:36px;border:1px solid #d6e0cc;border-radius:20px;background:#fffef9;color:var(--text);width:min(440px,calc(100% - 32px));max-height:90svh;overflow:auto;box-shadow:0 40px 100px #283b2820}dialog::backdrop{background:#25382360;backdrop-filter:blur(10px)}dialog h2{font-size:32px;margin:14px 0}dialog>p{font-size:12px;color:var(--muted)}.dialog-close{position:absolute;right:13px;top:12px;width:32px;height:32px;line-height:1;border:0;background:transparent;color:#809273;font-size:24px}form{display:grid;gap:13px;margin-top:24px}form label{display:grid;gap:5px;font-size:11px;color:#6f825e}input,select{width:100%;padding:11px 12px;background:#f4f7ee;color:#354b2e;border:1px solid #d6dfc9;border-radius:8px;font-size:12px;min-height:43px}input::placeholder{color:#a5af97}.form-note{font-size:9px;line-height:1.8;color:#879979}form .btn{margin-top:6px}#form-success{padding-top:23px;color:#687f55;font-size:12px}#form-success h3{font-size:24px;margin-bottom:14px}#form-success .btn{margin-top:20px}.contact-options{margin:24px 0;background:#f0f4e9;border-radius:12px;padding:18px;font-size:12px;color:#7d8c70}.contact-options p+p{margin-top:13px}.contact-options b{color:#527047}.contact-action{width:100%;margin-top:10px}.start-options{display:grid;gap:12px;margin-top:25px}.start-option{display:block;border:1px solid #dce3d2;border-radius:13px;padding:18px;transition:background .2s}.start-option:hover{background:#f0f5e8}.start-option strong{display:flex;align-items:center;justify-content:space-between;font:500 19px var(--heading);letter-spacing:-.04em}.start-option p{font-size:11px;color:#8a967b;margin-top:8px}.start-option small{display:inline-block;margin-top:13px;font-size:9px;font-weight:600;color:#2261e8}.start-note{font-size:9px;color:#93a088;margin-top:16px}.api-message{font-size:11px;color:#6e875b;line-height:1.8}#cursor-dot,#cursor-ring{display:none;position:fixed;top:0;left:0;border-radius:50%;pointer-events:none;z-index:600;opacity:0}#cursor-dot{width:4px;height:4px;background:#2261e8;margin:-2px}#cursor-ring{width:28px;height:28px;border:1px solid #78967c66;margin:-14px;transition:width .2s,height .2s,margin .2s}#cursor-ring.is-hover{width:43px;height:43px;margin:-21.5px;border-color:#648965}.motion-paused *,.motion-paused *:before,.motion-paused *:after{animation-play-state:paused!important}html.motion-paused{scroll-behavior:auto!important}.motion-paused .timeline-progress{transform:scale(1)}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}.lenis.lenis-stopped{overflow:hidden}.lenis.lenis-smooth iframe{pointer-events:none}@keyframes bob{50%{translate:0 -9px}}@keyframes marquee{to{transform:translateX(-50%)}}@keyframes wave{to{transform:translateX(-50%)}}@keyframes blink{50%{opacity:.3}}@keyframes seismic{25%{transform:translateY(-1px)}75%{transform:translateY(1px)}}@keyframes chart-grow{from{transform:scaleY(.82)}to{transform:scaleY(1)}}@keyframes price-float{50%{transform:translateY(-5px)}}
+.footer-big-word{font-size:clamp(48px,10.5vw,148px);overflow-wrap:anywhere}.hero-visual{top:460px}.hero-description{color:#64735e}.feature-heading p,.feature-small>p{color:#5d6d54}.stat p,.step p,.quote-card blockquote{color:#607153}.plan-features{color:#5e714f}.plan-description,.footer-column>a,.footer-column>button,.footer-brand>p{color:#657657}.cta-copy p{color:#627752}.center-head>p,.section-head>p{color:#63735d}.float-card p{color:#647459}
+body.motion-paused [data-reveal],body.motion-paused .split-char{opacity:1!important;filter:none!important;transform:none!important}
+/* TABLET */
+@media(min-width:1000px) and (pointer:fine){#cursor-dot,#cursor-ring{display:block}}
+@media(max-width:1100px){.container{width:calc(100% - 72px)}#nav-menu{gap:19px}.nav-login{display:none}.hero h1{font-size:84px}.hero-proof{left:0;top:650px;max-width:150px}.security-card{left:65px;bottom:95px}#notification{right:20px;top:150px;width:250px}.hero-sticker{left:25px}.feature-card{padding:24px}.feature-heading h3{font-size:25px}.feature-heading p{font-size:11px}.price-card{padding:27px}.cta-copy{padding:42px}.cta-copy h2{font-size:45px}.footer-top{gap:35px}}
+@media(max-width:800px){.container{width:calc(100% - 44px)}.nav-inner{height:83px}.logo{font-size:25px}.logo-mark{width:32px;height:35px}#menu-toggle{display:grid}#nav-menu{position:absolute;left:22px;right:22px;top:80px;display:none;flex-direction:column;align-items:stretch;gap:18px;background:#fffef9f5;backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:18px;padding:23px}#nav-menu.is-open{display:flex}#nav-menu a{font-size:13px}.hero,.hero-inner{min-height:1030px}.hero-inner{padding-top:147px}.hero h1{font-size:clamp(56px,8.5vw,75px)}.hero-description{max-width:460px;font-size:13px}.hero-visual{inset:460px -40px 95px}.hero-proof{display:none}.hero-sticker{left:47px;top:46px;width:67px;height:67px;font-size:9px}.hero-sticker span{font-size:19px}.scene-top-label{right:65px;top:39px;font-size:8px}.scene-top-label .label{display:none}.scene-coordinates{right:65px;font-size:7px}.security-card{left:35px;bottom:85px;padding:11px 14px}#notification{right:32px;top:127px;width:245px;padding:11px 14px}.float-card strong{font-size:9px}.float-card p{font-size:8px}.scene-orbit{bottom:15px;left:20%;right:20%;font-size:9px}.hero-bottom{bottom:31px}.hero-bottom>span{gap:13px}.stats{padding:40px 0 30px}.stat strong{font-size:32px}.stat p{font-size:9px}.section{padding:80px 0}.section-head>p{font-size:12px;max-width:265px}.bento{gap:13px}.feature-large,.feature-medium{grid-column:span 6}.feature-small{grid-column:span 6;min-height:205px}.feature-heading{gap:12px}.feature-heading h3{font-size:23px}.feature-heading .feature-icon{width:32px;height:32px}.feature-heading p{font-size:11px}.product{flex-basis:calc((100% - 13px)/2)}.product-info b{font-size:9px}.product-art{height:105px}.cctv-feed{height:104px}.catalog-footer .tiny{font-size:9px}.feature-bottom-note{font-size:8px}.quake-location{flex-direction:column;gap:3px}.steps{gap:26px}.step h3{font-size:20px}.step p{font-size:11px}.pricing-grid{gap:13px}.price-card{padding:25px 19px}.plan-features{font-size:10px}.price{font-size:33px}.price.custom{font-size:28px}.price small{font-size:8px}.price-card .btn{font-size:10px;padding:0 13px}.pricing-caption{font-size:7px}.cta-section{padding-bottom:65px}.cta-panel{min-height:370px}.cta-copy{padding:36px;width:67%}.cta-copy h2{font-size:39px}.cta-copy p{font-size:11px}.cta-buttons .btn{padding:0 16px;font-size:10px;gap:12px}.community-scene{inset:0 -110px 0 43%}.footer-top{grid-template-columns:1.5fr 1fr 1fr;gap:30px}.footer-column:last-child{grid-column:2/4}.footer-bottom{font-size:8px}}
+/* MOBILE */
+@media(max-width:560px){.container{width:calc(100% - 38px)}.nav-inner{height:78px;gap:14px}.nav-actions{gap:9px}.nav-actions .btn{min-height:36px;font-size:10px;padding:0 14px}.nav-actions .btn .icon{display:none}.logo{font-size:23px;gap:6px}.logo-mark{height:31px;width:29px;border-width:1.5px;border-radius:10px 10px 5px 5px}.logo-mark .icon{width:23px;height:23px}.official-logo{width:112px;height:39px}.hero,.hero-inner{min-height:960px}.hero-inner{padding-top:135px}.hero-tag{font-size:8px;letter-spacing:.1em;margin-bottom:24px}.hero h1{font-size:clamp(40px,10.6vw,59px);line-height:1.07;letter-spacing:-.067em}.hero-description{font-size:12px;line-height:1.85;max-width:330px;margin-top:23px}.hero-buttons{gap:9px;margin-top:25px}.hero-buttons .btn{font-size:10px;min-height:45px;padding:0 17px;gap:10px}.hero-visual{inset:455px -36px 77px}.hero-sticker{width:61px;height:61px;left:48px;top:29px;font-size:8px}.hero-sticker span{font-size:17px}.scene-top-label{right:47px;top:40px;font-size:7px}.scene-coordinates{right:47px;top:61px;font-size:6px}.security-card{left:42px;bottom:49px;padding:9px 12px;gap:8px}.security-card .live-dot{display:none}.security-card strong{font-size:8px}.security-card p{font-size:7px}.security-card .float-icon{width:26px;height:26px}.security-card .icon{width:16px;height:16px}#notification{right:35px;top:117px;width:220px;padding:10px 12px;gap:8px}.float-icon{height:28px;width:28px}.float-card strong{font-size:9px}.float-card p{font-size:7px}.scene-orbit{bottom:6px;font-size:8px}.hero-bottom{font-size:8px;bottom:28px}.hero-bottom>span span:last-child{display:none}.quake-title{padding-left:19px;padding-right:12px;font-size:7px;gap:6px}.quake-title svg{height:19px;width:19px}.quake-title small{display:none}.ticker-track span{font-size:9px}.stats-grid{grid-template-columns:repeat(6,1fr);row-gap:27px}.stat{grid-column:span 2}.stat:nth-child(3){border:0}.stat:nth-child(4){grid-column:2/4}.stat:nth-child(5){grid-column:4/6}.stat strong{font-size:29px}.stat p{font-size:8px}.stats-note{font-size:7px}.section{padding:68px 0}.section-head{display:block;margin-bottom:31px}.section-head h2{font-size:42px;margin-top:20px}.section-head>p{font-size:12px;margin-top:23px;max-width:310px}.eyebrow{font-size:8px;letter-spacing:.11em}.bento{gap:12px}.feature-large,.feature-medium{grid-column:span 12;min-height:0}.feature-card{padding:23px;border-radius:20px}.feature-heading h3{font-size:26px}.feature-heading p{font-size:11px}.feature-heading .feature-icon{width:31px;height:31px}.catalog-window{margin-top:22px}.product{flex-basis:calc((100% - 18px)/3)}.catalog-track{gap:9px}.product-art{height:89px}.product-emoji{font-size:37px}.product-badge{font-size:5px;padding:2px 4px;left:5px;top:6px}.product-info{padding:9px 8px}.product-info b{font-size:8px}.product-info p{font-size:7px}.product-info strong{font-size:8px}.catalog-footer .tiny{font-size:8px}.cctv-feed{height:105px}.cctv-time,.feed-label{font-size:6px}.cctv-bottom{font-size:8px}.quake-location{flex-direction:row;font-size:7px}.report-chart{height:115px;gap:15px}.report-total{font-size:23px}.report-total small{font-size:7px}.btn-download{font-size:8px;padding:8px 10px}.feature-small{padding:22px 17px;min-height:223px;border-radius:14px}.feature-small h3{font-size:18px}.feature-small>p{font-size:10px}.feature-icon{width:32px;height:32px;margin-bottom:19px}.feature-bottom-note{font-size:8px;align-items:flex-start;line-height:1.8}.feature-bottom-note .icon{margin-top:2px}.center-head{margin-bottom:44px}.center-head h2{font-size:40px}.center-head p{font-size:12px}.steps{display:flex;flex-direction:column;gap:35px;max-width:340px;margin:auto}.step{text-align:left;padding-left:74px;min-height:115px}.step-number{position:absolute;top:0;left:0;height:45px;width:45px;font-size:17px;margin:0;box-shadow:0 0 0 9px #eaf0e2}.step h3{font-size:21px;margin:4px 0 13px}.step p{font-size:11px}.step-time{font-size:7px;margin-top:13px}.timeline{left:22px;right:auto;top:20px;bottom:80px;width:1px;height:auto}.timeline-progress{transform-origin:top}.steps-foot{margin-top:35px}.steps-foot a{font-size:11px}.story-label{display:inline-block;margin-top:24px;font-size:8px}.quote-card{width:310px;min-height:261px;padding:26px}.quote-card blockquote{font-size:12px}.testimonials{padding-bottom:50px}#harga{padding-top:50px}.pricing-grid{grid-template-columns:1fr;gap:26px;max-width:390px;margin:auto}.pricing-caption{font-size:7px;margin-top:-18px;margin-bottom:37px}.price-card{padding:30px}.plan-name{font-size:18px}.plan-description{font-size:12px}.price{font-size:43px}.price.custom{font-size:35px}.price small{font-size:9px}.plan-features{font-size:12px;gap:12px}.price-card .btn{font-size:12px;min-height:48px}.pricing-note{gap:12px 16px;font-size:8px}.cta-section{padding-top:0;padding-bottom:60px}.cta-panel{min-height:650px;border-radius:23px}.cta-copy{width:100%;text-align:center;padding:37px 23px}.cta-copy .eyebrow{justify-content:center}.cta-copy h2{font-size:39px;margin-top:19px}.cta-copy p{font-size:11px}.cta-buttons{justify-content:center;gap:8px}.cta-buttons .btn{font-size:9px;padding:0 14px}.community-scene{inset:315px -28px 0}.footer-top{grid-template-columns:1fr 1fr;gap:29px;padding-bottom:35px}.footer-brand{grid-column:1/-1}.footer-brand>p{font-size:11px;max-width:260px}.footer-column:last-child{grid-column:auto}.footer-column h3{font-size:10px}.footer-column>a,.footer-column>button{font-size:10px}.footer-bottom{flex-direction:column;gap:9px;font-size:7px;padding-right:90px}.footer-big-word{padding-top:35px}#motion-toggle{bottom:15px;right:15px;padding:7px 10px;font-size:8px}dialog{padding:31px 25px}}
+@media(max-width:360px){.hero h1{font-size:38px}.hero-description{font-size:11px}.hero-buttons .btn{font-size:9px;padding:0 13px}.hero-sticker{left:40px}#notification{width:203px;right:29px}.security-card{left:30px}.feature-card{padding:20px}.feature-small{padding:21px 15px}.feature-heading h3{font-size:24px}.feature-small h3{font-size:17px}.report-total{font-size:21px}.quake-location{flex-direction:column}.cta-copy h2{font-size:35px}.cta-buttons .btn{font-size:8px;padding:0 11px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*:before,*:after{animation:none!important;transition:none!important}.timeline-progress{transform:scale(1)}#cursor-dot,#cursor-ring{display:none!important}}
+
+</style>
+  <noscript><style>#preloader{display:none}.timeline-progress{transform:scaleX(1)}</style></noscript>
+
+<script>
+function handleGoToLogin() {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'RTHUB_GOTO_LOGIN' }, '*');
+  } else {
+    window.location.href = '/#login';
+  }
+}
+</script>
+
+</head>
+<body>
+  <!-- SHARED PROCEDURAL SVG ICONS -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v10H3Z"/><path d="M9 21v-8h6v8"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v16m-6-6 6 6 6-6"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 4a3 3 0 0 1 0 6m2 4a5 5 0 0 1 2 4v3"/></symbol>
+    <symbol id="i-shop" viewBox="0 0 24 24"><path d="M3 9h18l-2-6H5Zm1 4v8h16v-8M3 9v2a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0V9M9 21v-6h6v6"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><rect x="3" y="6" width="12" height="12" rx="3"/><path d="m15 10 6-3v10l-6-3M7 10h4"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M1 12h5l3-8 4 16 3-11 2 3h5"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 3v18h17M8 16v-4m5 4V7m5 9v-6"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M5 10a7 7 0 0 1 14 0v6l2 2H3l2-2Zm5 11h4M12 1v2"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 7V4H6a3 3 0 0 0 0 6h15v11H6a3 3 0 0 1-3-3V7m18 6h-5v5h5"/><path d="M17 15.5h.1"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H5v18h14V8Zm0 0v5h5M8 12h8m-8 4h6"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2m-8 3h2"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2Zm0 6v5m0 3v.1"/></symbol>
+    <symbol id="i-vote" viewBox="0 0 24 24"><path d="m8 10-3-3 3-5 10 6-3 5ZM5 12l-2 4v5h18v-5l-2-4M3 16h18m-12-3h6"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 2 8 3v7c0 5-8 10-8 10S4 17 4 12V5Z"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-orbit" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="5" transform="rotate(-30 12 12)"/><circle cx="12" cy="12" r="3"/><path d="m18 3 3 1-1 3"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20 5a5 5 0 0 0-8 1 5 5 0 0 0-8-1C-2 11 12 21 12 21S26 11 20 5Z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11a9 9 0 0 1-13 8l-5 2 1-6a9 9 0 1 1 17-4Z"/><path d="M8 8c1 4 3 6 7 7l2-2-3-2-1 1-2-2 1-1-2-3Z"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">Lewati ke konten</a>
+  <!-- PRELOADER -->
+  <div id="preloader" aria-label="Memuat RT Hub" role="status"><div class="loader-inner"><div class="logo"><span class="logo-mark"><svg class="icon"><use href="#i-home"/></svg></span>RT <span class="hub">Hub</span></div><div class="load-track"><div class="load-bar-fill"></div></div><div class="load-caption"><span>MENYIAPKAN KAMPUNG ANDA</span><span id="load-percent">0%</span></div></div></div>
+  <!-- Bounded loading fallback also works when a CDN request stalls. -->
+  <script>setTimeout(()=>{const loader=document.getElementById('preloader');if(loader&&!loader.hidden){document.getElementById('load-percent').textContent='100%';loader.hidden=true;loader.style.display='none';}},8000);</script>
+  <!-- NAVBAR -->
+  <header id="navbar"><div class="container nav-inner"><a class="logo" href="#beranda" aria-label="RtHub" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
+      <img src="/rthub_logo.png" alt="RtHub" style="height:36px;width:auto;object-fit:contain;" onerror="this.onerror=null;this.src='rthub_logo.png';" />
+    </a><nav id="nav-menu" aria-label="Navigasi utama"><a href="#beranda">Beranda</a><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a><a href="#cerita-warga">Cerita Warga</a></nav><div class="nav-actions"><a class="nav-login" href="javascript:void(0)" onclick="handleGoToLogin()">Portal Pengurus ↗</a><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><button id="menu-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Buka menu"><svg class="icon"><use href="#i-menu"/></svg></button></div></div></header>
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero" id="beranda"><div class="container hero-inner"><div class="hero-copy"><div class="pill hero-tag"><span class="dot"></span> RUANG DIGITAL UNTUK HIDUP BERTETANGGA <span>RT Hub</span></div><h1 data-split>Satu kampung.<br><span class="green">Banyak cerita.</span></h1><p class="hero-description">Urusan RT, sekarang lebih sederhana. Dari kas warga sampai lapak tetangga, semuanya terhubung. Jadi, ada lebih banyak waktu untuk saling sapa.</p><div class="hero-buttons"><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><a class="btn btn-secondary magnetic" href="/rthub-mobile.apk" target="_blank" rel="noopener noreferrer"><svg class="icon"><use href="#i-download"/></svg> Unduh Android</a></div><div class="hero-proof"><div class="avatar-stack" aria-hidden="true"><span class="avatar">BS</span><span class="avatar">SR</span><span class="avatar">DP</span><span class="avatar">+</span></div><div><strong>Untuk setiap peran di kampung.</strong><br>Ketua RT, pengurus, warga, dan pemilik usaha.</div></div></div>
+    <div class="hero-visual"><div class="hero-sticker" aria-hidden="true">tetangga dekat<span>✳</span>hidup hangat</div><div id="village-stage"><canvas id="village-canvas" aria-label="Kampung 3D interaktif dengan rumah, warung, taman, dan CCTV. Geser untuk melihat sekeliling."></canvas><div id="scene-fallback"><div class="fallback-house" aria-hidden="true">🏘️</div><p>Kampung digital, dekat dengan Anda.</p></div></div><div class="scene-top-label"><span class="live-dot"></span> RT 05 / SUKAMAJU <span class="label">• KAMPUNG DEMO</span></div><span class="scene-coordinates">6° 54′ S &nbsp; 107° 36′ E</span><div class="float-card security-card"><span class="float-icon"><svg class="icon"><use href="#i-camera"/></svg></span><div><strong>Lingkungan dalam pantauan</strong><p>4 kamera online · contoh tampilan</p></div><span class="live-dot"></span></div><div class="float-card" id="notification"><span class="float-icon" id="notice-icon">✓</span><div><strong id="notice-title">Iuran Pak Budi sudah masuk!</strong><p id="notice-detail">Kas RT bertambah Rp50.000 · simulasi</p></div></div><div class="scene-orbit"><svg class="icon"><use href="#i-orbit"/></svg> Geser untuk keliling kampung <span>↔</span></div></div>
+    <div class="hero-bottom"><a href="#fitur"><svg class="icon"><use href="#i-down"/></svg> Ada banyak hal baik di bawah sini</a><span><span><svg class="icon"><use href="#i-check"/></svg> Mulai gratis</span><span><svg class="icon"><use href="#i-shield"/></svg> Tanpa kartu kredit</span></span></div></div></section>
+    <!-- INFO GEMPA TICKER — ALL ALERTS ARE CLEARLY MARKED AS SIMULATION -->
+    <div class="quake-ticker" aria-label="Simulasi informasi gempa, bukan peringatan aktual"><div class="quake-title"><svg class="icon"><use href="#i-wave"/></svg><span>INFO GEMPA</span><small>SIMULASI</small></div><div class="ticker-window"><div class="ticker-track"><span><b>DATA DEMO, BUKAN PERINGATAN AKTUAL</b> &nbsp;•&nbsp; M4.8 — 12 km Selatan Bandung — 09:41 WIB — Kedalaman 25 km — Tidak Berpotensi Tsunami &nbsp;•&nbsp; M3.1 — Kab. Garut — 06:12 WIB — Tidak Berpotensi Tsunami &nbsp;•&nbsp;</span><span aria-hidden="true"><b>DATA DEMO, BUKAN PERINGATAN AKTUAL</b> &nbsp;•&nbsp; M4.8 — 12 km Selatan Bandung — 09:41 WIB — Kedalaman 25 km — Tidak Berpotensi Tsunami &nbsp;•&nbsp; M3.1 — Kab. Garut — 06:12 WIB — Tidak Berpotensi Tsunami &nbsp;•&nbsp;</span></div></div></div>
+    <!-- STATS -->
+    <section class="stats" aria-label="Ilustrasi skala komunitas"><div class="container"><div class="stats-grid"><div class="stat"><strong data-count="250" data-suffix="+">250+</strong><p>RT aktif & terhubung</p></div><div class="stat"><strong data-count="45" data-suffix="rb">45rb</strong><p>Warga dalam satu ekosistem</p></div><div class="stat"><strong data-count="1.2" data-decimals="1" data-suffix="rb">1,2rb</strong><p>Lapak UMKM tayang</p></div><div class="stat"><strong data-count="300" data-suffix="+">300+</strong><p>Pos CCTV terhubung</p></div><div class="stat"><strong data-count="24" data-suffix="/7">24/7</strong><p>Pemantauan info gempa</p></div></div><p class="stats-note">ANGKA ILUSTRASI UNTUK PRATINJAU PRODUK</p></div></section>
+    <!-- FEATURES — 12 FEATURES, FOUR INTERACTIVE LARGE CARDS -->
+    <section class="section" id="fitur"><div class="container"><div class="section-head" data-reveal><div><div class="eyebrow">Satu hub, seluruh kebutuhan</div><h2 data-split>Dari urusan wajib,<br>sampai ide seru.</h2></div><p>Dari surat pengantar sampai jualan tetangga. Hal kecil yang bikin kehidupan di kampung jauh lebih nyaman.</p></div><div class="bento">
+      <article class="feature-card feature-large lapak tilt" data-reveal><div class="feature-heading"><div><h3>Lapak Kampung</h3><p>Sarapan dari ujung gang. Tanaman dari rumah sebelah. Buka etalase dan temukan pelanggan dari tetangga sendiri.</p></div><div class="feature-icon amber"><svg class="icon"><use href="#i-shop"/></svg></div></div><div class="catalog-window" aria-label="Contoh katalog UMKM"><div class="catalog-track" id="catalog-track"><div class="product"><div class="product-art"><span class="product-badge">BUATAN TETANGGA</span><span class="product-emoji">🍌</span></div><div class="product-info"><b>Keripik Bu Ratna</b><p>Bu Ratna · RT 05</p><strong>Rp15.000</strong></div></div><div class="product"><div class="product-art"><span class="product-badge">FAVORIT WARGA</span><span class="product-emoji">🍱</span></div><div class="product-info"><b>Dapur Bu Sari</b><p>Bu Sari · RT 03</p><strong>Rp25.000</strong></div></div><div class="product"><div class="product-art"><span class="product-badge">DIBUAT DENGAN HATI</span><span class="product-emoji">🪴</span></div><div class="product-info"><b>Kebun Pak Joko</b><p>Pak Joko · RT 05</p><strong>Rp35.000</strong></div></div></div></div><div class="catalog-footer"><span class="tiny">Usaha lokal, tumbuh bareng. <span class="green">↗</span></span><div class="catalog-dots" aria-label="Navigasi katalog"><button class="catalog-dot is-active" data-slide="0" aria-label="Katalog pertama" aria-pressed="true"></button><button class="catalog-dot" data-slide="1" aria-label="Katalog kedua" aria-pressed="false"></button><button class="catalog-dot" data-slide="2" aria-label="Katalog ketiga" aria-pressed="false"></button></div></div></article>
+      <article class="feature-card feature-medium tilt" data-reveal><div class="feature-heading"><div><h3>Lebih aman, bareng-bareng.</h3><p>CCTV Terintegrasi: multi-pos, pantauan langsung, dan putar ulang rekaman dari dashboard.</p></div><div class="feature-icon blue"><svg class="icon"><use href="#i-camera"/></svg></div></div><div class="cctv-grid" aria-label="Empat ilustrasi kamera, bukan rekaman langsung"><div class="cctv-feed"><div class="cctv-street"></div><span class="feed-label">CAM 01 · GERBANG</span><span class="rec">REC</span><span class="cctv-time">00:00:00</span></div><div class="cctv-feed"><div class="cctv-street"></div><span class="feed-label">CAM 02 · TAMAN</span><span class="rec">REC</span><span class="cctv-time">00:00:00</span></div><div class="cctv-feed"><div class="cctv-street"></div><span class="feed-label">CAM 03 · POS RONDA</span><span class="rec">REC</span><span class="cctv-time">00:00:00</span></div><div class="cctv-feed"><div class="cctv-street"></div><span class="feed-label">CAM 04 · JALAN UTAMA</span><span class="rec">REC</span><span class="cctv-time">00:00:00</span></div></div><div class="cctv-bottom"><span><i class="live-dot"></i> 4 / 4 kamera aktif</span><span>SIMULASI FEED</span></div></article>
+      <article class="feature-card feature-small tilt" data-reveal><div class="feature-icon"><svg class="icon"><use href="#i-users"/></svg></div><h3>Database Warga</h3><p>Data KK dan anggota keluarga terpusat. Cari warga tanpa bongkar tumpukan berkas.</p></article>
+      <article class="feature-card feature-small tilt" data-reveal><div class="feature-icon amber"><svg class="icon"><use href="#i-bell"/></svg></div><h3>Pengumuman RT</h3><p>Kabar penting sampai ke semua warga secara real-time. Tak tenggelam di grup chat.</p></article>
+      <article class="feature-card feature-small tilt" data-reveal><div class="feature-icon"><svg class="icon"><use href="#i-wallet"/></svg></div><h3>Kas & Keuangan</h3><p>Iuran tercatat, laporan terbuka. Warga tahu ke mana setiap rupiah digunakan.</p></article>
+      <article class="feature-card feature-small tilt" data-reveal><div class="feature-icon blue"><svg class="icon"><use href="#i-file"/></svg></div><h3>Surat Online</h3><p>Pengantar atau domisili, ajukan dari rumah. Pantau persetujuan tanpa perlu antre.</p></article>
+      <article class="feature-card feature-medium quake-card tilt" data-reveal><div class="feature-heading"><div><h3>Kabar cepat. Warga sigap.</h3><p>Info Gempa: rancangan integrasi data BMKG dan early warning langsung di dashboard.</p></div><div class="feature-icon red"><svg class="icon"><use href="#i-wave"/></svg></div></div><div class="quake-monitor"><div class="quake-meta"><span>MONITOR SEISMIK · DATA DEMO</span><span class="quake-magnitude">M 4.8</span></div><div class="waveform" aria-hidden="true"><svg viewBox="0 0 800 60" preserveAspectRatio="none"><path d="M0 30h25l4-4 4 8 5-4h30l6-7 5 14 5-7h20l5-18 5 36 6-44 7 53 6-34 6 14 5-7h30l4-3 5 6 5-3h37l5-10 6 19 5-9h36l5-3 5 6 5-3h62l5-5 5 10 5-5h16 M400 30h25l4-4 4 8 5-4h30l6-7 5 14 5-7h20l5-18 5 36 6-44 7 53 6-34 6 14 5-7h30l4-3 5 6 5-3h37l5-10 6 19 5-9h36l5-3 5 6 5-3h62l5-5 5 10 5-5h16" stroke="#e78488" stroke-width="1.4" fill="none"/></svg></div><div class="quake-location"><span>12 km Selatan Bandung</span><span>Tidak berpotensi tsunami</span></div></div></article>
+      <article class="feature-card feature-large tilt" data-reveal><div class="feature-heading"><div><h3>Yang terbuka, bikin percaya.</h3><p>Laporan & Aduan: kirim foto kerusakan, ikuti penanganannya, unduh laporan keuangan dalam PDF atau Excel.</p></div><div class="feature-icon"><svg class="icon"><use href="#i-chart"/></svg></div></div><div class="report-chart" aria-label="Ilustrasi grafik iuran Januari sampai Juni"><span class="chart-column" style="--height:36%;--delay:-1s"></span><span class="chart-column" style="--height:50%;--delay:-.4s"></span><span class="chart-column" style="--height:44%;--delay:-1.5s"></span><span class="chart-column" style="--height:67%;--delay:-.7s"></span><span class="chart-column" style="--height:75%;--delay:-1.8s"></span><span class="chart-column" style="--height:96%;--delay:-.2s"></span></div><div class="report-bottom"><div class="report-total"><small>CONTOH TOTAL IURAN BULAN INI</small>Rp3.250.000</div><button class="btn-download" id="download-report"><svg class="icon"><use href="#i-download"/></svg> Unduh PDF</button></div></article>
+      <article class="feature-card feature-small tilt" data-reveal><div class="feature-icon amber"><svg class="icon"><use href="#i-calendar"/></svg></div><h3>Agenda Kampung</h3><p>Kerja bakti, rapat, sampai tujuh belasan. Jadwal rapi, tak ada yang ketinggalan.</p></article>
+      <article class="feature-card feature-small tilt" data-reveal><div class="feature-icon red"><svg class="icon"><use href="#i-alert"/></svg></div><h3>i-Klas Darurat</h3><p>Satu tombol panic alert untuk memberi tahu pengurus saat warga butuh bantuan.</p></article>
+      <article class="feature-card feature-small tilt" data-reveal><div class="feature-icon blue"><svg class="icon"><use href="#i-vote"/></svg></div><h3>Polling Warga</h3><p>Setiap suara ikut menentukan. Ambil keputusan bersama dengan voting yang mudah.</p></article>
+      <article class="feature-card feature-small tilt" data-reveal><div class="feature-icon"><svg class="icon"><use href="#i-grid"/></svg></div><h3>Dashboard Role-Based</h3><p>Ketua RT, bendahara, dan warga punya tampilan dan akses sesuai tanggung jawabnya.</p></article>
+    </div><p class="feature-bottom-note"><svg class="icon"><use href="#i-shield"/></svg> Pratinjau interaktif dengan data contoh. CCTV dan info gempa belum terhubung ke layanan langsung.</p></div></section>
+    <!-- HOW IT WORKS -->
+    <section class="section how-section" id="cara-kerja"><div class="container"><div class="center-head" data-reveal><div class="eyebrow">Mulainya gampang, manfaatnya panjang</div><h2 data-split>Bukan ribet.<br>Cuma tiga langkah.</h2><p>Tak perlu jago teknologi. Cukup semangat untuk bikin lingkungan jadi lebih baik.</p></div><div class="steps"><div class="timeline" aria-hidden="true"><div class="timeline-progress"></div></div><article class="step" data-reveal><div class="step-number">01</div><h3>Daftarkan RT Anda</h3><p>Buat ruang digital untuk lingkungan Anda. Isi nama RT dan mulai dari hal yang paling dibutuhkan.</p><span class="step-time">MULAI DARI INFORMASI DASAR</span></article><article class="step" data-reveal><div class="step-number">02</div><h3>Ajak tetangga bergabung</h3><p>Bagikan undangan ke warga dan pengurus. Setiap orang punya peran, semua punya tempat.</p><span class="step-time">BAGIKAN TAUTAN UNDANGAN</span></article><article class="step" data-reveal><div class="step-number">03</div><h3>Kelola, tinggal klik saja</h3><p>Catat iuran, terbitkan surat, buka lapak. Lebih sedikit administrasi, lebih banyak silaturahmi.</p><span class="step-time">NIKMATI KAMPUNG YANG LEBIH RAPI</span></article></div><div class="steps-foot"><a href="javascript:handleGoToLogin()">Daftarkan & Kelola RT Anda Sekarang <svg class="icon"><use href="#i-arrow"/></svg></a></div></div></section>
+    <!-- TESTIMONIALS — ILLUSTRATIVE, NOT VERIFIED CUSTOMER ENDORSEMENTS -->
+    <section class="section testimonials" id="cerita-warga"><div class="container"><div class="section-head" data-reveal><div><div class="eyebrow">Beda peran, sama-sama terbantu</div><h2 data-split>Cerita kecil.<br>Perubahan yang terasa.</h2></div><span class="story-label">CERITA ILUSTRASI PENGGUNA</span></div></div><div class="testimonial-marquee" tabindex="0" aria-label="Empat contoh cerita warga. Arahkan penunjuk atau fokus untuk menjeda."><div class="testimonial-track" id="testimonial-track"><article class="quote-card"><div class="quote-stars" aria-label="Ilustrasi 5 bintang">★★★★★</div><blockquote>“Dulu cari data satu warga bisa seharian. Sekarang urusan surat dan data rapi, saya punya lebih banyak waktu buat warga.”</blockquote><div class="quote-person"><span class="avatar">BS</span><div><b>Pak Budi Santoso</b><p>Ketua RT · karakter ilustrasi</p></div><span class="quote-mark">“</span></div></article><article class="quote-card"><div class="quote-stars" aria-label="Ilustrasi 5 bintang">★★★★★</div><blockquote>“Paling lega waktu laporan kas tinggal dibuka. Warga bisa lihat, saya juga nggak perlu rekap buku sampai malam.”</blockquote><div class="quote-person"><span class="avatar" style="background:#d8bca0">SW</span><div><b>Bu Sari Wulandari</b><p>Bendahara RT · karakter ilustrasi</p></div><span class="quote-mark">“</span></div></article><article class="quote-card"><div class="quote-stars" aria-label="Ilustrasi 5 bintang">★★★★★</div><blockquote>“Ajukan surat sambil berangkat kerja. Pulang-pulang sudah disetujui. Tetap dekat dengan pengurus, tanpa harus bolak-balik.”</blockquote><div class="quote-person"><span class="avatar" style="background:#acc9da">DP</span><div><b>Dimas Pratama</b><p>Warga · karakter ilustrasi</p></div><span class="quote-mark">“</span></div></article><article class="quote-card"><div class="quote-stars" aria-label="Ilustrasi 5 bintang">★★★★★</div><blockquote>“Sejak ada Lapak Kampung, keripik saya laku 3x lipat. Ternyata tetangga baru tahu kalau saya jualan. Senangnya!”</blockquote><div class="quote-person"><span class="avatar" style="background:#c5b7d4">RP</span><div><b>Bu Ratna Puspita</b><p>Pemilik lapak UMKM · karakter ilustrasi</p></div><span class="quote-mark">“</span></div></article></div></div></section>
+    <!-- PRICING — EDIT THESE ILLUSTRATIVE PRICES BEFORE PUBLICATION -->
+    <!-- FINAL CTA WITH SECOND PROCEDURAL THREE.JS SCENE -->
+    <section class="cta-section"><div class="container"><div class="cta-panel" data-reveal><div class="cta-grid"></div><div class="cta-copy"><div class="eyebrow">Kampung baik dimulai dari kita</div><h2 data-split>Waktunya RT Anda<br><span class="green">Naik Kelas.</span></h2><p>Lebih rapi administrasinya. Lebih hidup usahanya.<br>Lebih akrab warganya. Yuk, mulai dari RT Anda.</p><div class="cta-buttons"><button class="btn btn-primary magnetic" id="final-cta" onclick="handleGoToLogin()">Coba Gratis Sekarang <svg class="icon"><use href="#i-arrow"/></svg></button><a class="btn btn-secondary magnetic"  href="https://wa.me/6285280039433?text=Halo%20tim%20RT%20Hub%2C%20saya%20ingin%20tahu%20lebih%20lanjut%20tentang%20RT%20Hub%20untuk%20lingkungan%20saya." target="_blank" rel="noopener noreferrer">Hubungi Kami</a></div></div><div class="community-scene"><canvas id="community-canvas" aria-label="Rumah-rumah berkumpul menjadi satu komunitas"></canvas></div></div></div></section>
+  </main>
+  <!-- FOOTER -->
+  <footer><div class="container"><div class="footer-top"><div class="footer-brand"><a class="logo" href="#beranda" aria-label="RtHub" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
+      <img src="/rthub_logo.png" alt="RtHub" style="height:36px;width:auto;object-fit:contain;" onerror="this.onerror=null;this.src='rthub_logo.png';" />
+    </a><p>Teknologi yang mendekatkan.<br>Untuk kampung yang lebih hidup.</p></div><div class="footer-column"><h3>Jelajahi RT Hub</h3><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a></div><div class="footer-column"><h3>Mari terhubung</h3><a href="#cerita-warga">Cerita Warga</a><a  href="https://wa.me/6285280039433?text=Halo%20tim%20RT%20Hub%2C%20saya%20ingin%20tahu%20lebih%20lanjut%20tentang%20RT%20Hub%20untuk%20lingkungan%20saya." target="_blank" rel="noopener noreferrer">WhatsApp RT Hub</a><button data-open-signup="Enterprise">Untuk Kelurahan</button></div><div class="footer-column"><h3>Kabarkan ke tetangga</h3><div class="socials"><a href="https://wa.me/?text=Kenalan%20dengan%20RT%20Hub%3A%20https%3A%2F%2Frthub-dash.hendraoktora.com" target="_blank" rel="noopener noreferrer" aria-label="Bagikan cerita RT Hub melalui WhatsApp"><svg class="icon"><use href="#i-chat"/></svg></a><a href="mailto:?subject=Kenalan%20dengan%20RT%20Hub&body=RT%20Hub%20menyatukan%20urusan%20RT%2C%20lapak%20warga%2C%20dan%20keamanan%20lingkungan%20dalam%20satu%20tempat." aria-label="Bagikan cerita RT Hub melalui email"><svg class="icon"><use href="#i-mail"/></svg></a></div></div></div><div class="footer-big-word" aria-hidden="true">hidup bertetangga.</div><div class="footer-bottom"><span>© 2026 RT Hub. Bertumbuh bersama, bertetangga selamanya.</span><span>Dibuat dengan <svg class="icon"><use href="#i-heart"/></svg> untuk lingkungan kita.</span></div></div></footer>
+  <!-- START: VERIFIED LINKS TO THE EXISTING RT HUB APPLICATION -->
+  <dialog id="signup-dialog" aria-labelledby="signup-title" data-lenis-prevent>
+    <button class="dialog-close" id="dialog-close" aria-label="Tutup pilihan mulai">×</button>
+    <div class="eyebrow">Selamat datang, tetangga</div>
+    <h2 id="signup-title">Mulai dari peran Anda.</h2>
+    <p>RT Hub menemani warga dan pengurus lewat aplikasi yang saling terhubung.</p>
+    <div class="start-options">
+      <a class="start-option" href="/rthub-mobile.apk" target="_blank" rel="noopener noreferrer"><strong>Saya warga <svg class="icon"><use href="#i-download"/></svg></strong><p>Bayar iuran, lihat kabar kampung, buka lapak, dan sampaikan laporan dari ponsel Anda.</p><small>UNDUH APLIKASI ANDROID ↗</small></a>
+      <a class="start-option" href="javascript:handleGoToLogin()" target="_blank" rel="noopener noreferrer"><strong>Saya pengurus RT <svg class="icon"><use href="#i-arrow"/></svg></strong><p>Kelola data warga, kas, dan lingkungan melalui portal web RT Hub yang sudah tersedia.</p><small>BUKA PORTAL PENGURUS ↗</small></a>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:18px" data-open-register>Daftarkan RT Baru <svg class="icon"><use href="#i-arrow"/></svg></button>
+    <p class="start-note">Sudah terdaftar? Masuk dengan akun RT Hub Anda. Pendaftaran warga dikelola oleh pengurus lingkungan.</p>
+  </dialog>
+<button id="motion-toggle" aria-pressed="false" aria-label="Jeda animasi"><svg class="icon"><use href="#i-pause"/></svg><span>Jeda animasi</span></button><div id="cursor-dot" aria-hidden="true"></div><div id="cursor-ring" aria-hidden="true"></div>
+  <p id="report-status" class="sr-only" role="status"></p>
+  <!-- REGISTRATION_INLINE -->
+  <!-- REAL RT REGISTRATION — SUBMITS ONLY WHEN THE FORM IS CONFIRMED -->
+  <style>
+    #register-dialog{width:min(500px,calc(100% - 32px))}
+    #register-fields{border:0;padding:0;margin:0;min-width:0;display:grid;gap:13px}
+    #register-fields:disabled{opacity:.7}
+    .register-row{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+    #register-dialog .field-help{font-size:9px;color:#879979;line-height:1.7;font-weight:400}
+    #register-status{min-height:0;font-size:11px;color:#527047}
+    #register-status:empty{display:none}
+    #register-error{padding:12px 14px;background:#fff0ed;border:1px solid #eac5bd;border-radius:8px;color:#8d3e34;font-size:11px;line-height:1.75}
+    #register-success{padding-top:23px;color:#527047;font-size:12px}
+    #register-success h3{font-size:25px;margin-bottom:13px}
+    #register-success .btn{margin-top:20px}
+    #register-dialog .register-login{font-size:10px;color:#879979;margin-top:19px}
+    #register-dialog .register-login a{color:#2261e8;text-decoration:underline;text-underline-offset:3px}
+  </style>
+  <dialog id="register-dialog" aria-labelledby="register-title" aria-describedby="register-intro" data-lenis-prevent>
+    <button class="dialog-close" id="register-close" type="button" aria-label="Tutup pendaftaran RT">×</button>
+    <div class="eyebrow">Mulai dari lingkungan Anda</div>
+    <h2 id="register-title">Daftarkan RT Anda.</h2>
+    <p id="register-intro">Buat akun pengurus dan ruang digital untuk RT Anda. Isi data sebagai Ketua RT atau pengurus yang ditunjuk.</p>
+    <form id="register-form">
+      <fieldset id="register-fields">
+        <label>Nama lengkap pengurus
+          <input name="namaLengkap" required maxlength="100" autocomplete="name" placeholder="Nama lengkap Anda">
+        </label>
+        <label>Nomor WhatsApp
+          <input name="phone" type="tel" required minlength="8" maxlength="20" pattern="[+]?[0-9]{8,15}" inputmode="tel" autocomplete="tel" placeholder="081234567890" aria-describedby="register-phone-help">
+          <span class="field-help" id="register-phone-help">Gunakan nomor aktif tanpa spasi. Nomor ini digunakan saat masuk.</span>
+        </label>
+        <label>Email <span class="field-help">Opsional</span>
+          <input name="email" type="email" maxlength="150" autocomplete="email" placeholder="nama@email.com">
+        </label>
+        <label>Kata sandi
+          <input name="password" type="password" required minlength="6" maxlength="128" autocomplete="new-password" placeholder="Minimal 6 karakter" aria-describedby="register-password-help">
+          <span class="field-help" id="register-password-help">Simpan kata sandi Anda untuk masuk ke Portal Pengurus.</span>
+        </label>
+        <div class="register-row">
+          <label>Nomor RT
+            <input name="nomorRt" required maxlength="10" pattern="[0-9]+" inputmode="numeric" placeholder="03">
+          </label>
+          <label>Nomor RW
+            <input name="nomorRw" required maxlength="10" pattern="[0-9]+" inputmode="numeric" placeholder="05">
+          </label>
+        </div>
+        <label>Kelurahan / desa
+          <input name="namaKelurahan" required maxlength="120" placeholder="Nama kelurahan atau desa">
+        </label>
+        <p class="form-note">Dengan memilih “Daftarkan RT Saya”, data ini dikirim ke RT Hub untuk membuat akun pengurus dan mendaftarkan lingkungan Anda.</p>
+        <button type="submit" id="register-submit" class="btn btn-primary">Daftarkan RT Saya</button>
+      </fieldset>
+      <p id="register-status" role="status" aria-live="polite"></p>
+      <div id="register-error" role="alert" aria-live="assertive" tabindex="-1" hidden></div>
+    </form>
+    <div id="register-success" role="status" aria-live="polite" tabindex="-1" hidden>
+      <h3 id="register-success-title">RT Anda sudah terdaftar.</h3>
+      <p id="register-success-detail"></p>
+      <p>Masuk menggunakan nomor WhatsApp dan kata sandi yang baru Anda buat.</p>
+      <a class="btn btn-primary" href="javascript:handleGoToLogin()" target="_blank" rel="noopener noreferrer">Buka Portal Pengurus ↗</a>
+    </div>
+    <p class="register-login">Sudah punya akun? <a href="javascript:handleGoToLogin()" target="_blank" rel="noopener noreferrer">Buka Portal Pengurus</a>, lalu pilih Login Pengurus RT.</p>
+  </dialog>
+
+<!-- END_REGISTRATION_INLINE -->
+  <!-- CDN LIBRARIES. Application styles and scripts stay inline. -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
+  <!-- INTERACTIONS_INLINE -->
+<script>
+/* RT Hub: accessible interactions, progressive motion, and local demo actions. */
+(() => {
+  'use strict';
+  const boot = () => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+    const gs = window.gsap, ST = window.ScrollTrigger;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+    const fine = matchMedia('(hover: hover) and (pointer: fine)');
+    const cursorAllowed = matchMedia('(min-width: 1000px) and (hover: hover) and (pointer: fine)');
+    const verticalTimeline = matchMedia('(max-width: 560px)');
+    const desktopParallax = matchMedia('(min-width: 801px)');
+    const dot = $('#cursor-dot'), ring = $('#cursor-ring');
+    const hideCursor = () => [dot, ring].forEach(el => { if (el) el.style.opacity = '0'; });
+    let paused = reduce.matches, lenis, progressTween;
+    let parallaxTweens = [], sceneFocusTrigger;
+    const countTweens = new Set();
+    const revealTweens = new Set();
+    const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
+    if (gs && ST) gs.registerPlugin(ST);
+    if (gs) gs.ticker.lagSmoothing(0);
+
+    /* Loading curtain has a bounded fallback, including when the CDN is offline. */
+    const loader = $('#preloader');
+    let load = 6, finished = false;
+    let curtainGone = !loader, onCurtainGone = () => {};
+    const setLoad = n => {
+      load = n;
+      if ($('#load-percent')) $('#load-percent').textContent = `${n}%`;
+      if ($('.load-bar-fill')) $('.load-bar-fill').style.width = `${n}%`;
+    };
+    const loadingTimer = setInterval(() => setLoad(Math.min(92, load + Math.ceil((95 - load) / 5))), 180);
+    const finishLoad = () => {
+      if (finished) return;
+      finished = true;
+      clearInterval(loadingTimer);
+      setLoad(100);
+      const hide = () => {
+        if (loader) { loader.hidden = true; loader.style.display = 'none'; }
+        curtainGone = true;
+        onCurtainGone();
+      };
+      if (!loader) { hide(); return; }
+      if (gs && !paused) {
+        loader.style.transition = 'none';
+        gs.to(loader, { scaleY: 0, transformOrigin: 'top', duration: .65, delay: .2, ease: 'power3.inOut', onComplete: hide });
+      }
+      else hide();
+    };
+    window.addEventListener('rt-scene-ready', finishLoad, { once: true });
+    setTimeout(finishLoad, 5000);
+    if (window.rtSceneReady) finishLoad();
+
+    /* Heading characters remain readable to assistive technology. */
+    $$('[data-split]').forEach(el => {
+      el.setAttribute('aria-label', el.innerText.replace(/\s+/g, ' ').trim());
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(node => {
+        const fragment = document.createDocumentFragment();
+        node.textContent.split(/(\s+)/).forEach(word => {
+          if (/^\s*$/.test(word)) fragment.append(document.createTextNode(word));
+          else {
+            const wordSpan = document.createElement('span');
+            wordSpan.className = 'split-word';
+            wordSpan.style.whiteSpace = 'nowrap';
+            wordSpan.style.display = 'inline-block';
+            wordSpan.setAttribute('aria-hidden', 'true');
+            Array.from(word).forEach(char => {
+              const span = document.createElement('span');
+              span.className = 'split-char';
+              span.textContent = char;
+              span.style.display = 'inline-block';
+              wordSpan.append(span);
+            });
+            fragment.append(wordSpan);
+          }
+        });
+        node.replaceWith(fragment);
+      });
+    });
+    const formatCount = el => {
+      const decimals = Number(el.dataset.decimals || 0);
+      return n => n.toLocaleString('id-ID', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + (el.dataset.suffix || '');
+    };
+    const reveal = el => {
+      if (el.dataset.revealed) return;
+      if (el.closest('.hero') && !curtainGone) return;
+      el.dataset.revealed = 'true';
+      if (el.matches('[data-count]')) {
+        const end = Number(el.dataset.count), format = formatCount(el), value = { n: 0 };
+        if (gs && !paused) {
+          const tween = gs.to(value, { n: end, duration: 1.8, ease: 'power2.out', onUpdate: () => { el.textContent = format(value.n); }, onComplete: () => countTweens.delete(tween) });
+          countTweens.add(tween);
+        }
+        else el.textContent = format(end);
+      } else if (gs && !paused) {
+        const chars = el.matches('[data-split]') ? $$('.split-char', el) : [];
+        const rowBefore = el.matches('.bento > [data-reveal]')
+          ? [...el.parentElement.children].slice(0, [...el.parentElement.children].indexOf(el)).filter(sibling => sibling.offsetTop === el.offsetTop).length : 0;
+        const tween = gs.fromTo(chars.length ? chars : el, { opacity: 0, y: chars.length ? 22 : 28, filter: 'blur(5px)' }, {
+          opacity: 1, y: 0, filter: 'blur(0px)', stagger: chars.length ? .013 : 0, delay: rowBefore * .06,
+          duration: .8, ease: 'power3.out', clearProps: 'opacity,transform,filter', onComplete: () => revealTweens.delete(tween)
+        });
+        revealTweens.add(tween);
+      }
+    };
+    const revealEls = $$('[data-reveal], [data-split], [data-count]');
+    const heroReveals = revealEls.filter(el => el.closest('.hero'));
+    if (gs && !paused && !curtainGone) gs.set($$('.hero .split-char'), { opacity: 0 });
+    onCurtainGone = () => heroReveals.forEach(reveal);
+    if (curtainGone) onCurtainGone();
+    if (ST && gs) revealEls.forEach(el => ST.create({ trigger: el, start: 'top 92%', once: true, onEnter: () => reveal(el) }));
+    else if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+        if (entry.isIntersecting) { reveal(entry.target); observer.unobserve(entry.target); }
+      }), { threshold: .12 });
+      revealEls.forEach(el => observer.observe(el));
+    } else revealEls.forEach(reveal);
+
+    /* A stopped animation never stops ordinary wheel, touch, or keyboard scrolling. */
+    let lenisTick;
+    const setupTimeline = () => {
+      if (progressTween) {
+        progressTween.scrollTrigger?.kill();
+        progressTween.kill();
+        progressTween = null;
+      }
+      const line = $('.timeline-progress');
+      if (!line) return;
+      const vertical = verticalTimeline.matches;
+      line.style.transformOrigin = vertical ? 'top' : 'left';
+      if (gs && ST && !paused) {
+        progressTween = gs.fromTo(line, vertical ? { scaleX: 1, scaleY: 0 } : { scaleX: 0, scaleY: 1 }, {
+          scaleX: 1, scaleY: 1, ease: 'none',
+          scrollTrigger: { trigger: line.closest('section'), start: 'top 75%', end: 'bottom 60%', scrub: .5 }
+        });
+      } else line.style.transform = 'scale(1)';
+    };
+    const setupParallax = () => {
+      sceneFocusTrigger?.kill();
+      sceneFocusTrigger = null;
+      emit('rt-scene-focus', { progress: 0 });
+      if (!paused && ST && $('.hero')) sceneFocusTrigger = ST.create({
+        trigger: $('.hero'), start: 'top top', end: 'bottom top',
+        onUpdate: self => emit('rt-scene-focus', { progress: self.progress })
+      });
+      parallaxTweens.forEach(tween => { tween.scrollTrigger?.kill(); tween.kill(); });
+      parallaxTweens = [];
+      const layers = [{ element: $('.hero-copy'), amount: 12 }, { element: $('.scene-coordinates'), amount: -70 }];
+      layers.forEach(({ element, amount }) => {
+        if (!element || !gs) return;
+        gs.set(element, { clearProps: 'transform' });
+        if (!paused && desktopParallax.matches && ST) parallaxTweens.push(gs.fromTo(element, { yPercent: 0 }, {
+          yPercent: amount, ease: 'none',
+          scrollTrigger: { trigger: $('.hero'), start: 'top top', end: 'bottom top', scrub: .6 }
+        }));
+      });
+    };
+    const setMotion = value => {
+      paused = value;
+      window.rtMotionPaused = value;
+      document.body.classList.toggle('motion-paused', value);
+      document.documentElement.classList.toggle('motion-paused', value);
+      document.body.classList.toggle('has-custom-cursor', cursorAllowed.matches && !value);
+      hideCursor();
+      const toggle = $('#motion-toggle');
+      if (toggle) {
+        toggle.setAttribute('aria-pressed', String(value));
+        toggle.setAttribute('aria-label', value ? 'Aktifkan animasi' : 'Jeda animasi');
+        toggle.title = value ? 'Aktifkan animasi' : 'Jeda animasi';
+        if ($('span', toggle)) $('span', toggle).textContent = toggle.title;
+      }
+      if (lenis) { lenis.destroy(); lenis = null; }
+      if (gs && lenisTick) { gs.ticker.remove(lenisTick); lenisTick = null; }
+      if (!value && window.Lenis && gs) {
+        lenis = new window.Lenis({ duration: 1.05, smoothWheel: true, autoRaf: false });
+        if (ST) lenis.on('scroll', ST.update);
+        lenisTick = time => lenis && lenis.raf(time * 1000);
+        gs.ticker.add(lenisTick);
+      }
+      setupTimeline();
+      setupParallax();
+      if (value && gs) {
+        countTweens.forEach(tween => tween.kill());
+        countTweens.clear();
+        /* Finish and kill the parent stagger so delayed children cannot hide text again. */
+        revealTweens.forEach(tween => { tween.progress(1); tween.kill(); });
+        revealTweens.clear();
+        const animated = $$('[data-reveal], .split-char, .magnetic, .tilt');
+        gs.killTweensOf(animated);
+        gs.set(animated, { clearProps: 'transform,opacity,filter' });
+        animated.forEach(el => ['transform', 'opacity', 'filter'].forEach(property => el.style.removeProperty(property)));
+      }
+      if (value) $$('[data-count]').forEach(el => { el.textContent = formatCount(el)(Number(el.dataset.count)); });
+      emit('rt-motion', { paused: value });
+    };
+    $('#motion-toggle')?.addEventListener('click', () => setMotion(!paused));
+    reduce.addEventListener('change', event => setMotion(event.matches));
+    cursorAllowed.addEventListener('change', () => {
+      document.body.classList.toggle('has-custom-cursor', cursorAllowed.matches && !paused);
+      hideCursor();
+    });
+    verticalTimeline.addEventListener('change', setupTimeline);
+    desktopParallax.addEventListener('change', setupParallax);
+    let resizeTimer;
+    addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { setupTimeline(); setupParallax(); ST?.refresh(); }, 180);
+    });
+    setMotion(paused);
+
+    /* Navigation, menus, and focus-visible keyboard paths. */
+    const menuToggle = $('#menu-toggle'), menu = $('#nav-menu');
+    const closeMenu = () => {
+      menu?.classList.remove('is-open');
+      document.body.classList.remove('menu-open');
+      menuToggle?.setAttribute('aria-expanded', 'false');
+    };
+    menuToggle?.addEventListener('click', () => {
+      const open = menu?.classList.toggle('is-open');
+      document.body.classList.toggle('menu-open', Boolean(open));
+      menuToggle.setAttribute('aria-expanded', String(Boolean(open)));
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(); });
+    const navScroll = () => $('#navbar')?.classList.toggle('is-compact', scrollY > 28);
+    addEventListener('scroll', navScroll, { passive: true });
+    navScroll();
+    $$('a[href^="#"]').forEach(anchor => anchor.addEventListener('click', event => {
+      const id = anchor.getAttribute('href').slice(1), target = id && document.getElementById(id);
+      if (!target) return;
+      event.preventDefault();
+      closeMenu();
+      if (lenis && !paused) lenis.scrollTo(target, { offset: -90 });
+      else target.scrollIntoView({ behavior: paused ? 'auto' : 'smooth', block: 'start' });
+      history.replaceState(null, '', `#${id}`);
+      if (!target.hasAttribute('tabindex')) target.tabIndex = -1;
+      target.focus({ preventScroll: true });
+    }));
+    const moveElement = (el, transform) => { el.style.transform = transform; };
+    $$('.magnetic, .tilt').forEach(el => {
+      el.addEventListener('pointermove', event => {
+        if (paused || !fine.matches) return;
+        const box = el.getBoundingClientRect(), x = (event.clientX - box.left) / box.width - .5, y = (event.clientY - box.top) / box.height - .5;
+        moveElement(el, el.matches('.magnetic') ? `translate(${x * 10}px,${y * 8}px)` : `perspective(900px) rotateX(${-y * 5}deg) rotateY(${x * 5}deg)`);
+      });
+      el.addEventListener('pointerleave', () => moveElement(el, ''));
+    });
+    document.addEventListener('pointermove', event => {
+      if (!cursorAllowed.matches || paused) { hideCursor(); return; }
+      [dot, ring].forEach(el => {
+        if (el) { el.style.left = `${event.clientX}px`; el.style.top = `${event.clientY}px`; el.style.opacity = '1'; }
+      });
+      ring?.classList.toggle('is-hover', Boolean(event.target.closest('a,button,input,select,canvas')));
+    }, { passive: true });
+    document.documentElement.addEventListener('pointerleave', hideCursor);
+    addEventListener('blur', hideCursor);
+
+    /* Seven explicitly illustrative neighbourhood notifications. */
+    const notices = [
+      ['✓', 'Iuran kas diterima', 'Bapak Budi · Pembayaran bulan ini lunas'],
+      ['↗', 'Kerja bakti Sabtu, 07.00', 'Pengumuman RT · Yuk, bawa semangat!'],
+      ['▤', 'Surat pengantar disetujui', 'Sudah ditandatangani Ketua RT'],
+      ['🛍', 'Lapak baru Bu Ratna', 'Keripik singkong · Sudah tayang di kampung'],
+      ['◉', 'CCTV Pos 3 online', 'Simulasi · 4 kamera lingkungan aktif'],
+      ['⚒', 'Laporan sedang ditindaklanjuti', 'Lampu jalan mati · Pengurus sudah menerima'],
+      ['⚠', 'Simulasi gempa · M4.8', 'Selatan Bandung · Data contoh, bukan peringatan nyata']
+    ];
+    let noticeIndex = 0;
+    setInterval(() => {
+      if (paused || document.hidden) return;
+      noticeIndex = (noticeIndex + 1) % notices.length;
+      const [icon, title, detail] = notices[noticeIndex];
+      if ($('#notice-icon')) $('#notice-icon').textContent = icon;
+      if ($('#notice-title')) $('#notice-title').textContent = title;
+      if ($('#notice-detail')) $('#notice-detail').textContent = detail;
+      $('#notification')?.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 450, easing: 'ease-out' });
+      if (noticeIndex === 6) emit('rt-earthquake', { demo: true });
+    }, 6000);
+    const catalog = $('#catalog-track');
+    const products = catalog ? [...catalog.children] : [];
+    let slide = 0, lastManual = 0, catalogAnimation;
+    const showSlide = (n, animate = true) => {
+      if (!products.length) return;
+      slide = ((n % products.length) + products.length) % products.length;
+      catalogAnimation?.cancel();
+      catalog.style.transform = 'none';
+      /* Reorder real cards: every breakpoint retains a filled product viewport. */
+      products.forEach((_, index) => catalog.append(products[(index + slide) % products.length]));
+      if (animate && !paused) catalogAnimation = catalog.animate([
+        { transform: 'translateX(14px)', opacity: .45 },
+        { transform: 'translateX(0)', opacity: 1 }
+      ], { duration: 450, easing: 'ease-out' });
+      $$('.catalog-dot').forEach(button => {
+        const active = Number(button.dataset.slide) === slide;
+        button.setAttribute('aria-pressed', String(active));
+        button.classList.toggle('is-active', active);
+      });
+    };
+    $$('.catalog-dot').forEach(button => button.addEventListener('click', () => { lastManual = Date.now(); showSlide(Number(button.dataset.slide)); }));
+    setInterval(() => { if (!paused && !document.hidden && Date.now() - lastManual > 8000 && !catalog?.closest('.tilt')?.matches(':hover, :focus-within')) showSlide(slide + 1); }, 4200);
+    showSlide(0, false);
+
+    /* Duplicate the visual strip while keeping four accessible testimonials. */
+    const testimonials = $('#testimonial-track');
+    if (testimonials) {
+      [...testimonials.children].forEach(card => {
+        const clone = card.cloneNode(true);
+        clone.setAttribute('aria-hidden', 'true');
+        clone.setAttribute('inert', '');
+        clone.removeAttribute('id');
+        $$('[id]', clone).forEach(el => el.removeAttribute('id'));
+        testimonials.append(clone);
+      });
+      /* Include the joining gap so translateX(-50%) lands exactly on card five. */
+      testimonials.style.paddingRight = getComputedStyle(testimonials).columnGap;
+    }
+    const tick = () => $$('.cctv-time').forEach(el => { el.textContent = new Date().toLocaleTimeString('id-ID', { hour12: false }); });
+    tick(); setInterval(tick, 1000);
+    $('#final-cta')?.addEventListener('pointerenter', () => { if (!paused) emit('rt-confetti'); });
+
+    /* Small valid PDF: local sample data, no service or library required. */
+    const download = (text, type, filename) => {
+      const url = URL.createObjectURL(new Blob([text], { type }));
+      const link = document.createElement('a');
+      link.href = url; link.download = filename; document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    };
+    $('#download-report')?.addEventListener('click', () => {
+      const lines = ['RT HUB / LAPORAN KAS', 'CONTOH DEMO - BUKAN DATA KEUANGAN NYATA', 'Periode: September 2026', '', 'Total pemasukan: Rp3.250.000', 'Total terpakai: Rp2.100.000', 'Saldo akhir: Rp1.150.000', '', 'Dokumen ini dibuat secara lokal di browser.', 'Tanpa data pribadi. Tanpa unggahan ke server.'];
+      const stream = 'BT /F1 14 Tf 55 775 Td 25 TL ' + lines.map((line, i) => `${i ? 'T* ' : ''}(${line}) Tj`).join('\n') + '\nET';
+      const objects = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>', '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>', `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`];
+      let pdf = '%PDF-1.4\n';
+      const offsets = [0];
+      objects.forEach((object, i) => { offsets.push(pdf.length); pdf += `${i + 1} 0 obj\n${object}\nendobj\n`; });
+      const xref = pdf.length;
+      pdf += `xref\n0 6\n0000000000 65535 f \n${offsets.slice(1).map(offset => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+      download(pdf, 'application/pdf', 'RT-Hub-Laporan-Demo.pdf');
+      if ($('#report-status')) $('#report-status').textContent = 'PDF contoh siap diunduh.';
+    });
+
+    /* Choose an existing app or open explicit RT registration. */
+    const signup = $('#signup-dialog');
+    const contact = $('#contact-dialog');
+    const register = $('#register-dialog');
+    const dialogs = [signup, contact, register].filter(Boolean);
+    const openDialog = dialog => {
+      if (!dialog) return;
+      closeMenu();
+      dialogs.forEach(other => { if (other !== dialog && other.open) other.close(); });
+      if (!dialog.open) dialog.showModal();
+    };
+    $$('[data-open-signup]').forEach(button => button.addEventListener('click', () => {
+      openDialog(signup);
+    }));
+    $$('[data-open-contact]').forEach(button => button.addEventListener('click', () => openDialog(contact)));
+    $$('[data-open-register]').forEach(button => button.addEventListener('click', () => openDialog(register)));
+    $('#dialog-close')?.addEventListener('click', () => signup?.close());
+    $('#contact-close')?.addEventListener('click', () => contact?.close());
+    $('#register-close')?.addEventListener('click', () => register?.close());
+    dialogs.forEach(dialog => {
+      dialog.setAttribute('data-lenis-prevent', '');
+      dialog.addEventListener('click', event => {
+        if (event.target !== dialog) return;
+        const bounds = dialog.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+      });
+    });
+
+    /* The live API is called only after the visitor explicitly submits this form. */
+    const registerForm = $('#register-form'), registerFields = $('#register-fields');
+    const registerSubmit = $('#register-submit'), registerStatus = $('#register-status');
+    const registerError = $('#register-error'), registerSuccess = $('#register-success');
+    const uncertainStatus = 'Status pendaftaran belum dapat dipastikan. Coba masuk di Portal Pengurus sebelum mengirim pendaftaran ulang.';
+    let registrationRequest = null;
+    const setRegisterBusy = busy => {
+      if (registerFields) registerFields.disabled = busy;
+      if (registerSubmit) {
+        registerSubmit.disabled = busy;
+        registerSubmit.textContent = busy ? 'Mendaftarkan RT…' : 'Daftarkan RT Saya';
+      }
+      registerForm?.setAttribute('aria-busy', String(busy));
+      if (registerStatus) registerStatus.textContent = busy ? 'Mengirim pendaftaran ke RT Hub…' : '';
+    };
+    const showRegisterError = message => {
+      if (!registerError) return;
+      registerError.textContent = message;
+      registerError.hidden = false;
+      registerError.focus({ preventScroll: true });
+    };
+    const resetRegistration = () => {
+      if (registrationRequest) {
+        clearTimeout(registrationRequest.timer);
+        registrationRequest.controller.abort();
+        registrationRequest = null;
+      }
+      setRegisterBusy(false);
+      if (registerForm) { registerForm.reset(); registerForm.hidden = false; }
+      if (registerSuccess) registerSuccess.hidden = true;
+      if (registerError) { registerError.hidden = true; registerError.textContent = ''; }
+    };
+    register?.addEventListener('close', resetRegistration);
+    registerForm?.addEventListener('input', event => event.target.setCustomValidity?.(''));
+    registerForm?.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (registrationRequest || !register?.open) return;
+      const payload = {};
+      const required = ['namaLengkap', 'phone', 'password', 'nomorRt', 'nomorRw', 'namaKelurahan'];
+      required.forEach(name => {
+        const input = registerForm.elements.namedItem(name);
+        const value = name === 'password' ? input.value : input.value.trim();
+        input.setCustomValidity(value ? '' : 'Isi bagian ini terlebih dahulu.');
+        if (name === 'password' && value.length < 6) input.setCustomValidity('Kata sandi minimal 6 karakter.');
+        payload[name] = value;
+      });
+      const email = registerForm.elements.namedItem('email').value.trim();
+      if (email) payload.email = email;
+      if (!registerForm.reportValidity()) return;
+      if (registerError) { registerError.hidden = true; registerError.textContent = ''; }
+      const request = { controller: new AbortController(), timedOut: false, timer: null };
+      registrationRequest = request;
+      setRegisterBusy(true);
+      request.timer = setTimeout(() => {
+        request.timedOut = true;
+        request.controller.abort();
+      }, 15000);
+      try {
+        const response = await fetch('https://api.rthub.id/api/auth/register-rt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          mode: 'cors',
+          credentials: 'omit',
+          body: JSON.stringify(payload),
+          signal: request.controller.signal
+        });
+        const data = await response.json().catch(() => null);
+        if (registrationRequest !== request || !register.open) return;
+        if (!response.ok) {
+          const messages = Array.isArray(data?.message) ? data.message : [data?.message];
+          const detail = messages.filter(message => typeof message === 'string').join(' ').slice(0, 600);
+          throw new Error(response.status === 400 || response.status === 409
+            ? detail || 'Periksa kembali data pendaftaran Anda.'
+            : `Layanan belum dapat memproses pendaftaran. ${uncertainStatus}`);
+        }
+        const group = data?.autoGrouped;
+        const confirmed = response.status === 201
+          && typeof data?.user?.id === 'string' && data.user.id.length > 0
+          && data?.user?.role === 'ADMIN_RT'
+          && ['rt', 'rw', 'kelurahan'].every(key => typeof group?.[key] === 'string' && group[key].trim());
+        if (response.status !== 201) throw new Error(`Respons pendaftaran belum dapat dikonfirmasi. ${uncertainStatus}`);
+        /* accessToken is deliberately unused: the portal manages its own login. */
+        registerForm.reset();
+        registerForm.hidden = true;
+        if ($('#register-success-title')) $('#register-success-title').textContent = confirmed ? 'RT Anda sudah terdaftar.' : 'Pendaftaran diterima.';
+        if ($('#register-success-detail')) $('#register-success-detail').textContent = confirmed
+          ? `RT ${group.rt} / RW ${group.rw}, ${group.kelurahan}, berhasil didaftarkan bersama akun pengurus Anda.`
+          : 'Pendaftaran diterima, tetapi detail respons tidak lengkap. Periksa Portal Pengurus atau hubungi tim sebelum mencoba lagi.';
+        if (registerSuccess) { registerSuccess.hidden = false; registerSuccess.focus({ preventScroll: true }); }
+      } catch (error) {
+        if (registrationRequest !== request || !register.open) return;
+        if (request.timedOut) showRegisterError(`Waktu tunggu koneksi habis. ${uncertainStatus}`);
+        else if (error.name !== 'AbortError') showRegisterError(error instanceof TypeError
+          ? `Koneksi ke RT Hub tidak tersedia. ${uncertainStatus}`
+          : error.message || `Pendaftaran belum dapat diproses. ${uncertainStatus}`);
+      } finally {
+        payload.password = '';
+        clearTimeout(request.timer);
+        if (registrationRequest === request) {
+          registrationRequest = null;
+          setRegisterBusy(false);
+        }
+      }
+    });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+  else boot();
+})();
+
+</script>
+<!-- END_INTERACTIONS_INLINE -->
+  <!-- SCENE_INLINE -->
+<script type="module">
+/* DIGITAL KAMPUNG — all geometry, textures and animation are procedural. */
+(async () => {
+  const fallback = document.getElementById('scene-fallback');
+  try {
+    const THREE = await import('three');
+    const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+    let mobile = matchMedia('(max-width: 767px)').matches;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let paused = window.rtMotionPaused ?? reduced, heroVisible = true, footerVisible = false, shakeUntil = 0;
+    let focusTarget=0,focusProgress=0;
+    const canvas = document.getElementById('village-canvas');
+    const stage = document.getElementById('village-stage');
+    if (!canvas || !stage) throw new Error('Missing village canvas');
+    const scene = new THREE.Scene();
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.4 : 2));
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    renderer.shadowMap.enabled = !mobile;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    const camera = new THREE.OrthographicCamera(-15, 15, 13, -13, .1, 100);
+    camera.position.set(22, 22, 27);
+    const controls = new OrbitControls(camera, canvas);
+    controls.target.set(0, .6, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = .065;
+    controls.enableZoom = false;
+    controls.enablePan = false;
+    controls.autoRotate = !paused;
+    controls.autoRotateSpeed = .075;
+    controls.minPolarAngle = .55;
+    controls.maxPolarAngle = 1.2;
+    // Preserve vertical page scrolling on touch screens. Horizontal dragging still orbits.
+    canvas.style.touchAction = 'pan-y';
+    // Warm paper, soft daylight and deeper material colors complement the ivory page.
+    scene.add(new THREE.HemisphereLight(0xf3f5ec, 0xb0a17d, 1.75));
+    const sun = new THREE.DirectionalLight(0xffeed6, 2.6);
+    sun.position.set(-8, 18, 12);
+    sun.castShadow = !mobile;
+    sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 15, bottom: -15, near: 1, far: 50 });
+    sun.shadow.bias = -.001;
+    sun.shadow.normalBias = .05;
+    sun.shadow.radius=3;
+    scene.add(sun);
+    const fill = new THREE.DirectionalLight(0xe0edee, .75);
+    fill.position.set(8, 8, -12);
+    scene.add(fill);
+    const world = new THREE.Group();
+    scene.add(world);
+    // Static details share instanced meshes, keeping the village inexpensive to render.
+    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+    const cylinderGeo = new THREE.CylinderGeometry(1, 1, 1, 10);
+    const sphereGeo = new THREE.IcosahedronGeometry(1, 1);
+    const roofGeo = new THREE.BufferGeometry();
+    const roofVertices = [
+      -.5,0,.5, .5,0,.5, 0,.55,.5, .5,0,-.5, -.5,0,-.5, 0,.55,-.5,
+      -.5,0,-.5, -.5,0,.5, 0,.55,.5, -.5,0,-.5, 0,.55,.5, 0,.55,-.5,
+      .5,0,.5, .5,0,-.5, 0,.55,-.5, .5,0,.5, 0,.55,-.5, 0,.55,.5,
+      -.5,0,-.5, .5,0,-.5, .5,0,.5, -.5,0,-.5, .5,0,.5, -.5,0,.5
+    ];
+    roofGeo.setAttribute('position', new THREE.Float32BufferAttribute(roofVertices, 3));
+    roofGeo.computeVertexNormals();
+    const batches = new Map(), dummy = new THREE.Object3D();
+    const mat = (color) => new THREE.MeshStandardMaterial({ color, roughness: .84, metalness: .02, ...(color === 0xf2c680 ? { emissive: color, emissiveIntensity: .2 } : {}) });
+    function part(geo, color, x, y, z, sx, sy, sz, ry = 0, rx = 0, rz=0) {
+      const key = geo.uuid + ':' + color;
+      if (!batches.has(key)) batches.set(key, { geo, material: mat(color), matrices: [] });
+      dummy.position.set(x,y,z); dummy.rotation.set(rx,ry,rz); dummy.scale.set(sx,sy,sz); dummy.updateMatrix();
+      batches.get(key).matrices.push(dummy.matrix.clone());
+    }
+    const box = (color,x,y,z,sx,sy,sz,ry=0) => part(boxGeo,color,x,y,z,sx,sy,sz,ry);
+    const ball = (color,x,y,z,sx,sy=sx,sz=sx) => part(sphereGeo,color,x,y,z,sx,sy,sz);
+    const pole = (color,x,y,z,r,h) => part(cylinderGeo,color,x,y,z,r,h,r);
+    // Floating island: softly bevelled perimeter and three visible strata.
+    const islandShape = new THREE.Shape();
+    const corners = [[-8.6,-7.3],[8.6,-7.3],[9.7,-6.2],[9.7,6.2],[8.6,7.3],[-8.6,7.3],[-9.7,6.2],[-9.7,-6.2]];
+    corners.forEach(([x,y],i)=>i ? islandShape.lineTo(x,y) : islandShape.moveTo(x,y));
+    islandShape.closePath();
+    function island(color, depth, y, scale=1) {
+      const geo = new THREE.ExtrudeGeometry(islandShape, { depth, bevelEnabled:true, bevelThickness:depth<.1?.025:.1, bevelSize:.18, bevelSegments:2, steps:1 });
+      geo.rotateX(-Math.PI/2);
+      const mesh = new THREE.Mesh(geo, mat(color));
+      mesh.position.y = y; mesh.scale.set(scale,1,scale); mesh.receiveShadow=true; world.add(mesh);
+    }
+    island(0xd6c4a8,.62,-.95,.97);
+    island(0xaab78d,.32,-.4);
+    island(0xc5d1a5,.07,-.015);
+    const shadowCanvas=document.createElement('canvas');shadowCanvas.width=shadowCanvas.height=128;
+    const shadowContext=shadowCanvas.getContext('2d'),shadowGradient=shadowContext.createRadialGradient(64,64,8,64,64,64);
+    shadowGradient.addColorStop(0,'rgba(64,76,48,.22)');shadowGradient.addColorStop(.6,'rgba(64,76,48,.1)');shadowGradient.addColorStop(1,'rgba(64,76,48,0)');
+    shadowContext.fillStyle=shadowGradient;shadowContext.fillRect(0,0,128,128);
+    const groundShadow=new THREE.Mesh(new THREE.PlaneGeometry(28,23),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shadowCanvas),transparent:true,depthWrite:false}));
+    groundShadow.rotation.x=-Math.PI/2;groundShadow.position.y=-1.24;groundShadow.renderOrder=-1;scene.add(groundShadow);
+    // A gently winding lane with raised pavement and centre dashes.
+    const curve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-10,.1,-1.4), new THREE.Vector3(-6,.1,-1.4),new THREE.Vector3(-2,.1,-.25),
+      new THREE.Vector3(2,.1,-.3),new THREE.Vector3(6,.1,-1),new THREE.Vector3(10,.1,.1)
+    ]);
+    function ribbon(width,color,y) {
+      const positions=[],indices=[];
+      for(let i=0;i<=80;i++) {
+        const p=curve.getPoint(i/80),t=curve.getTangent(i/80),nx=-t.z,nz=t.x;
+        positions.push(p.x+nx*width/2,y,p.z+nz*width/2,p.x-nx*width/2,y,p.z-nz*width/2);
+        if(i<80) {const n=i*2;indices.push(n,n+2,n+1,n+1,n+2,n+3);}
+      }
+      const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
+      const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color,side:THREE.DoubleSide,roughness:1}));mesh.receiveShadow=true;world.add(mesh);
+    }
+    ribbon(2.45,0xe3dac5,.11); ribbon(1.85,0x83928b,.125);
+    for(let i=1;i<27;i++) {const p=curve.getPoint(i/27),t=curve.getTangent(i/27);box(0xe8e6c9,p.x,.145,p.z,.35,.012,.065,-Math.atan2(t.z,t.x));}
+    box(0xe3dac5,1.7,.12,3.1,1.45,.04,7.4);
+    box(0x83928b,1.7,.145,3.1,1.03,.02,7.4);
+    for(let z=1.1;z<6.5;z+=.8)box(0xe8e6c9,1.7,.163,z,.06,.01,.31);
+    // Zebra crossing, curb planters and paving squares.
+    for(let x=-.35;x<1.1;x+=.29)box(0xf2eeda,x,.158,-.2,.15,.015,1.55);
+    function house(x,z,color,roof,scale=1,ry=0) {
+      const width=2.05*scale,depth=1.75*scale,h=1.52*scale,y=.15;
+      box(0xe8ddbb,x,y+.12,z,width+.23,.22,depth+.23);
+      box(color,x,y+h/2,z,width,h,depth,ry);
+      part(roofGeo,roof,x,y+h,z,width+.34,.95*scale,depth+.4,ry);
+      box(roof,x,y+h+.54*.95*scale,z,.085,.075,depth+.44);
+      for(const side of [-1,1])box(roof,x+side*(width+.34)/2,y+h-.015,z,.065,.08,depth+.43);
+      // Alternate blue glass and amber windows to give the village a lived-in warmth.
+      const glass = color === 0xefb399 || roof === 0xb7775b ? 0xf2c680 : 0x396e71;
+      for(const dx of [-.64,.64]) {
+        box(0xfff1d1,x+dx*scale,y+.85*scale,z+depth/2+.021,.46*scale,.56*scale,.075);
+        box(glass,x+dx*scale,y+.85*scale,z+depth/2+.068,.32*scale,.39*scale,.035);
+        box(0xb5e0c9,x+dx*scale,y+.85*scale,z+depth/2+.093,.035,.4*scale,.012);
+      }
+      box(0x496653,x,y+.43*scale,z+depth/2+.03,.38*scale,.86*scale,.06);
+      box(0xd2bd8f,x,y+.05,z+depth/2+.27,.63*scale,.13,.42);
+      box(0xefdcc0,x+width/2+.02,y+.9*scale,z,.03,.44*scale,.42*scale);
+      box(0x3d757a,x+width/2+.042,y+.9*scale,z,.015,.29*scale,.28*scale);
+      box(0xf4e8cd,x-.5*scale,y+h+.12,z-.3,.28,.48,.3);
+      ball(0x648b57,x+width/2+.33,.47,z+.55,.31,.37,.31);
+      if(x<0)for(const dx of [-.64,.64]) {
+        box(0xb7775b,x+dx*scale,y+.51*scale,z+depth/2+.14,.43*scale,.1,.18);
+        for(const offset of [-.12,0,.12])ball(0x91af70,x+dx*scale+offset,y+.59*scale,z+depth/2+.14,.075,.09,.08);
+      }
+    }
+    const cream=0xf3deb5,sage=0xc3d5ac,peach=0xefb399,blue=0xb3d4d1;
+    const emerald=0x648876,terracotta=0xb7775b,deep=0x577b67;
+    [[-7,-5.2,cream,terracotta],[-3.6,-5.2,sage,emerald],[-.25,-5.2,blue,terracotta],[3.1,-5.2,peach,deep],[6.6,-5.2,cream,emerald],
+      [-7.6,1.8,blue,emerald],[-7,5.25,peach,terracotta],[-3.7,5.2,cream,emerald],[-.4,5.1,sage,terracotta],[4,5.3,blue,emerald],
+      [7.2,5.1,cream,terracotta],[7.2,-2,peach,deep]].forEach(p=>house(...p,.9));
+    function sign(text,x,y,z,width,bg='#f5edce',ink='#285451') {
+      const c=document.createElement('canvas');c.width=512;c.height=128;
+      const ctx=c.getContext('2d');ctx.fillStyle=bg;ctx.fillRect(0,0,512,128);ctx.fillStyle=ink;ctx.font='700 44px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,66);
+      const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;
+      const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,width/4),new THREE.MeshBasicMaterial({map:texture}));mesh.position.set(x,y,z);world.add(mesh);
+    }
+    // Three tiny Indonesian warung, each with striped canopies and stocked counters.
+    function warung(x,z,color,label) {
+      box(0xf4d6a5,x,.72,z,1.72,1.2,1.22);
+      box(0x254f48,x,1,z+.621,1.46,.55,.035);
+      box(0xf2dfb5,x,.75,z+.86,1.82,.13,.55);
+      for(let i=0;i<8;i++) {
+        const xx=x-.91+i*.26;
+        box(i%2?0xfff3d8:color,xx,1.58,z+.5,.26,.095,1.2);
+        box(i%2?0xfff3d8:color,xx,1.45,z+1.05,.26,.25,.09);
+      }
+      for(const dx of [-.96,.96])pole(0xebd8ad,x+dx,.82,z+1.02,.032,1.5);
+      for(let i=0;i<5;i++)ball([0xf1b342,0xf18552,0x86ad58][i%3],x-.6+i*.3,.89,z+.95,.105);
+      sign(label,x,1.06,z+.648,1.37);
+    }
+    warung(-4.4,1.8,0xd78958,'WARUNG BU SRI');
+    warung(-1.8,1.8,0x5a9f82,'KOPI TETANGGA');
+    warung(4.8,1.5,0xdc986a,'LAPAK RATNA');
+    // Civic courtyard, flagpole, community sign and a small shaded park.
+    box(0xc1cdb1,-.1,.14,-2.9,5,.06,2.45);
+    box(0xf7e7c3,-.1,.9,-3.05,2.5,1.5,1.6);
+    part(roofGeo,emerald,-.1,1.65,-3.05,2.9,1.1,2.02);
+    box(0x467d72,-.1,.74,-2.23,.62,1.2,.045);
+    sign('BALAI RT 05',-.1,1.45,-2.205,1.86);
+    pole(0xd9ded2,1.5,1.7,-2.8,.035,3.15);
+    box(0xe94a42,1.88,3.01,-2.8,.75,.25,.026);box(0xffffff,1.88,2.76,-2.8,.75,.25,.026);
+    function tree(x,z,s=1) {
+      pole(0x96775b,x,.72*s,z,.13*s,1.2*s);
+      ball(0x648b57,x,1.66*s,z,.71*s,.86*s,.66*s);
+      ball(0x91af70,x-.33*s,1.42*s,z+.17*s,.43*s,.53*s,.46*s);
+    }
+    [[-8.6,-3.9,1],[-5.3,-6.3,.8],[-1.8,-6.1,.78],[4.8,-6.15,.9],[8.6,-4.9,1],[-8.5,4,1],[-5.4,4.9,.72],
+      [8.5,2.7,.85],[6.8,2.25,.82],[3,2.6,.86],[4.5,3.5,.7],[-6,2.5,.65],[-2.4,-2.6,.7],[8.5,5.7,.85]].forEach(v=>tree(...v));
+    box(0x91b47a,3.9,.2,3.05,2.5,.15,1.7);
+    box(0xe1d4b9,3.8,.29,2.97,1.2,.025,.4);
+    for(const x of [3.15,4.3]) {box(0xaa8156,x,.52,3.35,.7,.12,.32);box(0xaa8156,x,.73,3.5,.7,.33,.08);for(const dx of [-.24,.24])box(0x365c4e,x+dx,.35,3.35,.06,.35,.18);}
+    for(let i=0;i<24;i++){const x=-8.4+i*.72;ball(0x648b57,x,.28,6.87,.25,.21,.2);}
+    // Small ordinary details make this a lived-in kampung, rather than a tech model.
+    for(let i=0;i<12;i++){const a=i*.53;ball(i%2?0xe5bd80:0xd58c70,3.05+Math.cos(a)*.31,.38,2.45+Math.sin(a)*.24,.065,.055,.065);}
+    for(const x of [-5.91,-4.71])pole(0xb69b71,x,.68,-4.82,.023,1.16);
+    box(0xb69b71,-5.31,1.23,-4.82,1.22,.018,.018);
+    [-5.65,-5.31,-4.98].forEach((x,i)=>{box([0xe4b497,0xf5e9cb,0xb5cfce][i],x,1.035,-4.82,.23,.34,.025);box(0x886c47,x,1.2,-4.81,.035,.06,.035);});
+    const wheelGeo=new THREE.TorusGeometry(.22,.023,6,20);
+    function bicycle(x,z,color){
+      for(const dx of [-.34,.34])part(wheelGeo,0x496153,x+dx,.38,z,1,1,1);
+      const links=[[-.34,.38,0,.41],[0,.41,-.12,.73],[-.12,.73,-.34,.38],[-.12,.73,.22,.73],[0,.41,.22,.73],[.22,.73,.34,.38]];
+      links.forEach(([ax,ay,bx,by])=>part(cylinderGeo,color,x+(ax+bx)/2,(ay+by)/2,z,.019,Math.hypot(bx-ax,by-ay),.019,0,0,-Math.atan2(bx-ax,by-ay)));
+      box(0x496153,x-.13,.77,z,.18,.045,.09);box(0x496153,x+.23,.8,z,.12,.035,.15);
+    }
+    bicycle(-6.7,3.3,0xb7775b);bicycle(2.35,-2.6,0x648876);
+    function resident(x,z,shirt,scale=1){
+      pole(shirt,x,.51*scale+.13,z,.105*scale,.29*scale);
+      ball(0xd9ad85,x,.78*scale+.13,z,.11*scale,.13*scale,.105*scale);
+      ball(0x584c38,x,.855*scale+.13,z-.015,.105*scale,.055*scale,.095*scale);
+      for(const dx of [-.055,.055])box(0x56675d,x+dx*scale,.26*scale+.13,z,.07*scale,.24*scale,.09*scale);
+      for(const dx of [-.15,.15])pole(0xd9ad85,x+dx*scale,.52*scale+.13,z,.035*scale,.24*scale);
+    }
+    resident(-3.6,3.05,0xd69862);resident(-1.25,3.12,0x648876,.88);resident(3.4,2.8,0xe6c77d,.85);resident(4.2,2.6,0xb5cfce);resident(-1.6,-1.7,0xb7775b);
+    // Lamps and CCTV scanning heads. The camera, LED and view cone share a swivel.
+    const cameras=[];
+    const glowMat=new THREE.MeshBasicMaterial({color:0xffd889});
+    const redMat=new THREE.MeshBasicMaterial({color:0xff514d});
+    const coneMat=new THREE.MeshBasicMaterial({color:0x81b6ba,transparent:true,opacity:.07,depthWrite:false,side:THREE.DoubleSide});
+    const coneGeo=new THREE.ConeGeometry(1.27,3.45,20,1,true);
+    const glowCanvas=document.createElement('canvas');glowCanvas.width=glowCanvas.height=64;
+    const glowContext=glowCanvas.getContext('2d'),gradient=glowContext.createRadialGradient(32,32,1,32,32,32);
+    gradient.addColorStop(0,'rgba(255,205,112,.6)');gradient.addColorStop(1,'rgba(255,205,112,0)');glowContext.fillStyle=gradient;glowContext.fillRect(0,0,64,64);
+    const poolMat=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(glowCanvas),transparent:true,opacity:.4,depthWrite:false,blending:THREE.AdditiveBlending});
+    const poolGeo=new THREE.PlaneGeometry(2.2,2.2);
+    [[-5.5,-2.5],[3.7,-1.9],[5.85,3.1],[-5.8,3.5]].forEach(([x,z],i)=>{
+      pole(0x375f59,x,1.6,z,.048,3.05);box(0x375f59,x+.23,3.12,z,.53,.065,.065);
+      const glow=new THREE.Mesh(new THREE.SphereGeometry(.12,8,6),glowMat);glow.position.set(x+.45,3.02,z);world.add(glow);
+      const pool=new THREE.Mesh(poolGeo,poolMat);pool.rotation.x=-Math.PI/2;pool.position.set(x+.45,.19,z);world.add(pool);
+      box(0x355851,x+.45,3.13,z,.35,.085,.29);
+      const swivel=new THREE.Group();swivel.position.set(x,2.77,z);world.add(swivel);
+      const body=new THREE.Mesh(new THREE.BoxGeometry(.22,.17,.4),mat(0xe4ecdf));body.position.z=.15;swivel.add(body);
+      const lens=new THREE.Mesh(new THREE.BoxGeometry(.135,.105,.03),mat(0x183c45));lens.position.set(0,0,.363);swivel.add(lens);
+      const led=new THREE.Mesh(new THREE.SphereGeometry(.027,6,4),redMat);led.position.set(.085,.055,.37);swivel.add(led);
+      const cone=new THREE.Mesh(coneGeo,coneMat);cone.rotation.x=-.8;cone.position.set(0,-1.202,1.237);swivel.add(cone);
+      cameras.push({swivel,led,phase:i*1.8});
+    });
+    // Deliver all repeated static objects as instanced batches.
+    for(const batch of batches.values()) {
+      const mesh=new THREE.InstancedMesh(batch.geo,batch.material,batch.matrices.length);
+      batch.matrices.forEach((matrix,i)=>mesh.setMatrixAt(i,matrix));mesh.castShadow=!mobile;mesh.receiveShadow=true;world.add(mesh);
+    }
+    const clouds=[];
+    const cloudMat=new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.85,roughness:1});
+    [[-6,5,-4,1],[6,5.8,-4,.8],[-5,4,5,.55]].forEach(([x,y,z,s],i)=>{
+      const group=new THREE.Group();group.position.set(x,y,z);group.scale.setScalar(s);
+      [[-.7,0,0,.66],[0,.2,0,.8],[.85,0,0,.6],[.15,-.1,.2,.7]].forEach(([a,b,c,r])=>{const puff=new THREE.Mesh(sphereGeo,cloudMat);puff.position.set(a,b,c);puff.scale.set(r,r*.55,r*.64);group.add(puff);});
+      world.add(group);clouds.push({group,x,y,phase:i*2});
+    });
+    const particleCount=mobile?16:38,particlePositions=new Float32Array(particleCount*3);
+    for(let i=0;i<particleCount;i++){particlePositions[i*3]=(Math.random()-.5)*21;particlePositions[i*3+1]=.5+Math.random()*6;particlePositions[i*3+2]=(Math.random()-.5)*17;}
+    const particleGeo=new THREE.BufferGeometry();particleGeo.setAttribute('position',new THREE.BufferAttribute(particlePositions,3));
+    const particles=new THREE.Points(particleGeo,new THREE.PointsMaterial({color:0xbc9653,size:.043,transparent:true,opacity:.38,depthWrite:false}));scene.add(particles);
+    // Footer miniature: three homes move into a shared community when it comes into view.
+    let footerRenderer,footerScene,footerCamera,footerHomes=[],confetti,confettiTime=-99;
+    const footerCanvas=document.getElementById('community-canvas');
+    const confettiCount=mobile?35:75,confettiVel=[];
+    if(footerCanvas) {
+      try {
+      footerRenderer=new THREE.WebGLRenderer({canvas:footerCanvas,antialias:true,alpha:true});footerRenderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+      footerRenderer.outputColorSpace=THREE.SRGBColorSpace;footerRenderer.toneMapping=THREE.ACESFilmicToneMapping;footerRenderer.toneMappingExposure=1.1;
+      footerScene=new THREE.Scene();footerCamera=new THREE.PerspectiveCamera(33,1,.1,50);footerCamera.position.set(9,8,12);footerCamera.lookAt(0,.5,0);
+      footerScene.add(new THREE.HemisphereLight(0xf3f5ec,0xb0a17d,1.8));const light=new THREE.DirectionalLight(0xffeed6,2.6);light.position.set(-3,7,5);footerScene.add(light);
+      const base=new THREE.Mesh(new THREE.CylinderGeometry(4.3,4.1,.38,10),mat(0xd6c4a8));base.position.y=-.3;footerScene.add(base);
+      const lawn=new THREE.Mesh(new THREE.CylinderGeometry(4.26,4.27,.085,10),mat(0xb5c797));lawn.position.y=-.07;footerScene.add(lawn);
+      function miniature(geo,color,x,y,z,sx,sy,sz){const mesh=new THREE.Mesh(geo,mat(color));mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);footerScene.add(mesh);return mesh;}
+      miniature(boxGeo,0xe7dac0,0,-.012,1.45,6.7,.035,.52);
+      for(const x of [-2,0,2])miniature(boxGeo,0xe7dac0,x,-.005,.65,.52,.04,1.6);
+      [[-3.1,-.8,.85],[3.15,-1.15,1],[1.05,2.75,.8]].forEach(([x,z,s])=>{
+        miniature(cylinderGeo,0x96775b,x,.46*s,z,.09*s,1*s,.09*s);
+        miniature(sphereGeo,0x648b57,x,1.2*s,z,.53*s,.67*s,.5*s);
+        miniature(sphereGeo,0x91af70,x-.25*s,1.12*s,z+.17*s,.36*s,.43*s,.34*s);
+      });
+      miniature(boxGeo,0xaa8156,-1.4,.3,2.4,1,.12,.34);miniature(boxGeo,0xaa8156,-1.4,.51,2.57,1,.34,.07);
+      [-1.74,-1.06].forEach(x=>miniature(boxGeo,0x56675d,x,.16,2.4,.065,.29,.26));
+      [[-2,-.1,cream,terracotta],[0,-1.3,sage,emerald],[2,.2,peach,terracotta]].forEach(([x,z,color,roof],i)=>{
+        const group=new THREE.Group();const walls=new THREE.Mesh(boxGeo,mat(color));walls.scale.set(1.65,1.4,1.5);walls.position.y=.7;group.add(walls);
+        const top=new THREE.Mesh(roofGeo,mat(roof));top.scale.set(1.95,1.45,1.8);top.position.y=1.4;group.add(top);
+        const ridge=new THREE.Mesh(boxGeo,mat(roof));ridge.scale.set(.085,.075,1.83);ridge.position.y=2.18;group.add(ridge);
+        const door=new THREE.Mesh(boxGeo,mat(0x315c52));door.scale.set(.35,.8,.04);door.position.set(0,.4,.77);group.add(door);
+        [-.52,.52].forEach(dx=>{const frame=new THREE.Mesh(boxGeo,mat(0xf8edcf));frame.scale.set(.39,.45,.05);frame.position.set(dx,.87,.77);group.add(frame);const window=new THREE.Mesh(boxGeo,mat(0x76968d));window.scale.set(.27,.31,.06);window.position.set(dx,.87,.8);group.add(window);});
+        group.position.set(x,0,z);footerScene.add(group);footerHomes.push({group,x,z,i});
+      });
+      const positions=new Float32Array(confettiCount*3),colors=new Float32Array(confettiCount*3);
+      for(let i=0;i<confettiCount;i++){const color=new THREE.Color([0x73efbd,0xffd181,0x80d9fa,0xffffff][i%4]);color.toArray(colors,i*3);confettiVel.push({x:(Math.random()-.5)*5,y:3+Math.random()*4,z:(Math.random()-.5)*4});}
+      const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+      confetti=new THREE.Points(geo,new THREE.PointsMaterial({size:.1,vertexColors:true,transparent:true,opacity:0}));footerScene.add(confetti);
+      } catch(error) {
+        // A second WebGL context is optional; the main village remains available.
+        console.warn('RT Hub community miniature unavailable:',error);
+        footerRenderer?.dispose();footerRenderer=undefined;
+      }
+    }
+    let assemblyStart=-99,elapsed=0,last=performance.now();
+    const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{
+      if(entry.target===stage)heroVisible=entry.isIntersecting;
+      else {footerVisible=entry.isIntersecting;if(footerVisible&&assemblyStart===-99)assemblyStart=elapsed;}
+    }),{rootMargin:'80px'});
+    observer.observe(stage);if(footerCanvas)observer.observe(footerCanvas);
+    function resize(){
+      const width=stage.clientWidth,height=stage.clientHeight;
+      if(!width||!height)return;
+      const nowMobile=matchMedia('(max-width: 767px)').matches;
+      if(nowMobile!==mobile){
+        mobile=nowMobile;
+        renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.4:2));
+        renderer.shadowMap.enabled=!mobile;sun.castShadow=!mobile;
+        world.traverse(object=>{if(object.isInstancedMesh)object.castShadow=!mobile;});
+        renderer.shadowMap.needsUpdate=true;
+      }
+      renderer.setSize(width,height,false);
+      const aspect=width/height,half=Math.max(9.2,12.9/aspect);
+      camera.left=-half*aspect;camera.right=half*aspect;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();
+      if(footerRenderer){const w=footerCanvas.clientWidth,h=footerCanvas.clientHeight;if(w&&h){footerRenderer.setSize(w,h,false);footerCamera.aspect=w/h;footerCamera.updateProjectionMatrix();}}
+    }
+    const resizeObserver=new ResizeObserver(resize);resizeObserver.observe(stage);if(footerCanvas)resizeObserver.observe(footerCanvas);resize();
+    addEventListener('rt-earthquake',()=>{if(!paused)shakeUntil=elapsed+.5;});
+    addEventListener('rt-confetti',()=>{if(!paused)confettiTime=elapsed;});
+    addEventListener('rt-motion',event=>{paused=!!event.detail?.paused;controls.autoRotate=!paused;});
+    // Host scroll choreography can nudge the whole miniature without taking over dragging.
+    addEventListener('rt-scene-focus',event=>{const value=Number(event.detail?.progress);if(Number.isFinite(value))focusTarget=Math.max(0,Math.min(1,value));});
+    canvas.addEventListener('webglcontextlost',()=>{if(fallback){fallback.hidden=false;fallback.style.display='';}},{once:true});
+    function frame(now){
+      requestAnimationFrame(frame);
+      const dt=Math.min((now-last)/1000,.05);last=now;
+      if(document.hidden||(!heroVisible&&!footerVisible))return;
+      if(!paused)elapsed+=dt;
+      if(heroVisible){
+        if(!paused){
+          controls.update(dt);
+          cameras.forEach(({swivel,led,phase})=>{swivel.rotation.y=Math.sin(elapsed*.38+phase)*.8+phase;led.visible=Math.sin(elapsed*3.5+phase)>.05;});
+          clouds.forEach(({group,x,y,phase})=>{group.position.x=x+Math.sin(elapsed*.2+phase)*.4;group.position.y=y+Math.sin(elapsed*.45+phase)*.13;});
+          particles.rotation.y=elapsed*.016;
+          focusProgress+=(focusTarget-focusProgress)*(1-Math.exp(-dt*4));
+          world.rotation.x=focusProgress*.045;world.rotation.z=-focusProgress*.028;
+          world.position.y=Math.sin(elapsed*.45)*.04+focusProgress*.32;
+          world.scale.setScalar(1+focusProgress*.018);
+          world.position.x=elapsed<shakeUntil?Math.sin(elapsed*86)*.06:0;
+          world.position.z=elapsed<shakeUntil?Math.cos(elapsed*72)*.045:0;
+        }else controls.update(0);
+        renderer.render(scene,camera);
+      }
+      if(footerVisible&&footerRenderer){
+        const p=paused?1:Math.min(1,Math.max(0,(elapsed-assemblyStart)/1.6)),ease=1-Math.pow(1-p,3);
+        footerHomes.forEach(({group,x,z,i})=>{group.position.x=x+(1-ease)*(i-1)*4;group.position.z=z+(1-ease)*3;group.position.y=(1-ease)*2;group.rotation.y=(1-ease)*.25;});
+        const t=elapsed-confettiTime;
+        if(confetti&&t<2.5){const a=confetti.geometry.attributes.position;confettiVel.forEach((v,i)=>a.setXYZ(i,v.x*t,1+v.y*t-2*t*t,v.z*t));a.needsUpdate=true;confetti.material.opacity=Math.max(0,1-t/2.5);}else if(confetti)confetti.material.opacity=0;
+        footerRenderer.render(footerScene,footerCamera);
+      }
+    }
+    controls.update();renderer.render(scene,camera);requestAnimationFrame(frame);
+    if(fallback){fallback.hidden=true;fallback.style.display='none';}
+    stage.classList.add('scene-ready');
+  } catch(error) {
+    console.warn('RT Hub 3D unavailable:',error);
+    if(fallback){fallback.hidden=false;fallback.style.display='';fallback.setAttribute('aria-label','Ilustrasi kampung. Mode 3D tidak tersedia pada perangkat ini.');}
+  } finally {window.rtSceneReady=true;window.dispatchEvent(new Event('rt-scene-ready'));}
+})();
+
+</script>
+<!-- END_SCENE_INLINE -->
+</body>
+</html>

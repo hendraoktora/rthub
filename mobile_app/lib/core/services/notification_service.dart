@@ -9,15 +9,41 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   developer.log('Handling background message: ${message.messageId} - Type: ${message.data['type']}', name: 'FCM');
   if (message.data['type'] == 'PANIC') {
-    try {
-      const MethodChannel('com.rthub.rthub_mobile/widget').invokeMethod('playPanicAlarm');
-    } catch (_) {}
+    if (!NotificationService.isSelfTriggered(message.data)) {
+      try {
+        const MethodChannel('com.rthub.rthub_mobile/widget').invokeMethod('playPanicAlarm');
+      } catch (_) {}
+    }
   }
 }
 
 class NotificationService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   static String? cachedToken;
+
+  static DateTime? lastSelfTriggeredAlertTime;
+  static String? lastSelfTriggeredAlertId;
+  static String? currentUserId;
+  static String? currentUserPhone;
+
+  static bool isSelfTriggered(Map<String, dynamic> data) {
+    if (lastSelfTriggeredAlertTime != null) {
+      final diff = DateTime.now().difference(lastSelfTriggeredAlertTime!).inSeconds;
+      if (diff < 120) {
+        return true;
+      }
+    }
+    if (lastSelfTriggeredAlertId != null && data['alertId'] == lastSelfTriggeredAlertId) {
+      return true;
+    }
+    if (currentUserId != null && data['senderUserId'] == currentUserId) {
+      return true;
+    }
+    if (currentUserPhone != null && data['senderPhone'] == currentUserPhone) {
+      return true;
+    }
+    return false;
+  }
 
   /// Callbacks for Emergency Panic Alert
   static Function(Map<String, dynamic> data)? onPanicAlertReceived;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
+import '../../core/services/notification_service.dart';
 
 class PanicScreen extends StatefulWidget {
   final String? defaultCategory;
@@ -11,10 +13,8 @@ class PanicScreen extends StatefulWidget {
 }
 
 class _PanicScreenState extends State<PanicScreen> {
-  bool _isTriggered = false;
   bool _isLoading = false;
   String? _selectedCategory;
-  String _alertMessage = 'Pos Keamanan RT dan Pengurus telah menerima sinyal darurat dari lokasi rumah Anda.';
 
   @override
   void initState() {
@@ -24,24 +24,69 @@ class _PanicScreenState extends State<PanicScreen> {
 
   Future<void> _sendPanicAlert() async {
     setState(() => _isLoading = true);
+    double? latitude;
+    double? longitude;
+
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 4),
+          ),
+        );
+        latitude = position.latitude;
+        longitude = position.longitude;
+      }
+    } catch (_) {}
+
+    // Catat waktu trigger lokal agar perangkat sendiri tidak memutar sirine / memunculkan popup responder
+    NotificationService.lastSelfTriggeredAlertTime = DateTime.now();
+
     try {
       final res = await ApiService.triggerPanicAlert(
         catatan: 'Darurat: ${_getCategoryLabel(_selectedCategory)} - Mohon segera bantuan!',
+        latitude: latitude,
+        longitude: longitude,
       );
+      if (res['alert']?['id'] != null) {
+        NotificationService.lastSelfTriggeredAlertId = res['alert']['id'].toString();
+      }
       if (mounted) {
-        setState(() {
-          _isTriggered = true;
-          _isLoading = false;
-          _alertMessage = res['message'] ?? _alertMessage;
-        });
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.white),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '🚨 Sinyal darurat & koordinat GPS berhasil dikirim ke Pengurus RT & Pos Satpam!',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppTheme.alertRed,
+            duration: Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isTriggered = true;
-          _isLoading = false;
-          _alertMessage = 'Sinyal darurat disiarkan secara lokal ke pos satpam RT & pengurus!';
-        });
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🚨 Sinyal darurat disiarkan secara lokal ke pos satpam RT & pengurus!'),
+            backgroundColor: AppTheme.alertRed,
+          ),
+        );
       }
     }
   }
@@ -79,15 +124,14 @@ class _PanicScreenState extends State<PanicScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            if (!_isTriggered) ...[
-              const Text(
-                '🚨 PANIC BUTTON DARURAT RT',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.alertRed,
-                ),
+            const Text(
+              '🚨 PANIC BUTTON DARURAT RT',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.alertRed,
               ),
+            ),
               const SizedBox(height: 8),
               const Text(
                 'Tekan tombol SOS di bawah untuk menyalakan alarm darurat & mengirimkan notifikasi prioritas tinggi ke Satpam & Pengurus RT.',
@@ -150,57 +194,10 @@ class _PanicScreenState extends State<PanicScreen> {
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Batal / Tutup', style: TextStyle(color: AppTheme.textSecondary)),
               ),
-            ] else ...[
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: AppTheme.alertRed.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.warning_amber_rounded, color: AppTheme.alertRed, size: 50),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                '🚨 ALARM DARURAT AKTIF!',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.alertRed),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _getCategoryLabel(_selectedCategory),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.primaryNavy),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                _alertMessage,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary, height: 1.4),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryNavy,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Tutup Notifikasi Darurat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              ),
             ],
-          ],
+          ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildCategoryChip(String id, String label) {

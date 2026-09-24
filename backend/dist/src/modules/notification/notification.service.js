@@ -109,6 +109,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
         }
         try {
             const cleanTopic = topic.replace(/[^a-zA-Z0-9-_.~%]/g, '_');
+            const isPanic = data?.type === 'PANIC';
             const payload = {
                 topic: cleanTopic,
                 notification: {
@@ -122,16 +123,17 @@ let NotificationService = NotificationService_1 = class NotificationService {
                 android: {
                     priority: 'high',
                     notification: {
-                        channelId: 'rthub_high_importance_channel',
-                        sound: 'default',
-                        priority: 'high',
-                        defaultSound: true,
+                        channelId: isPanic ? 'rthub_panic_channel' : 'rthub_high_importance_channel',
+                        sound: isPanic ? 'siren' : 'default',
+                        priority: isPanic ? 'max' : 'high',
+                        visibility: 'public',
+                        defaultSound: !isPanic,
                         defaultVibrateTimings: true,
                     },
                 },
             };
             const response = await admin.messaging().send(payload);
-            this.logger.log(`[FCM] Push notification sent to topic [${cleanTopic}]: ${response}`);
+            this.logger.log(`[FCM] Push notification sent to topic [${cleanTopic}] (isPanic: ${isPanic}): ${response}`);
             return response;
         }
         catch (error) {

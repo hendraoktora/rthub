@@ -35,13 +35,30 @@ let AlertService = class AlertService {
         });
         try {
             const nama = alert.user?.profile?.namaLengkap || 'Warga';
-            const noRumah = alert.user?.profile?.noRumah ? ` (Rumah: ${alert.user.profile.noRumah})` : '';
+            const noRumah = alert.user?.profile?.noRumah ? `Rumah ${alert.user.profile.noRumah}` : 'Lingkungan RT';
+            const phone = alert.user?.phone || '-';
             const topic = user.rtId ? `rt_${user.rtId}` : 'rthub_broadcast';
-            await this.notificationService.sendToTopic(topic, '🚨 PERINGATAN DARURAT (SOS)!', `${nama}${noRumah} menekan tombol darurat: "${alert.catatan}". Harap segera merapat/bantu!`, {
+            const catatan = alert.catatan || 'Tombol Panik Ditekan oleh Warga!';
+            const lokasi = alert.latitude && alert.longitude
+                ? `${alert.latitude},${alert.longitude}`
+                : noRumah;
+            const payloadData = {
                 type: 'PANIC',
                 alertId: alert.id,
                 rtId: user.rtId || '',
-            });
+                namaPelapor: nama,
+                noRumah: alert.user?.profile?.noRumah || '-',
+                lokasi: lokasi,
+                catatan: catatan,
+                phone: phone,
+                latitude: alert.latitude ? alert.latitude.toString() : '',
+                longitude: alert.longitude ? alert.longitude.toString() : '',
+                timestamp: new Date().toISOString(),
+            };
+            await this.notificationService.sendToTopic(topic, '🚨 PERINGATAN DARURAT (SOS)!', `${nama} (${noRumah}) butuh bantuan: "${catatan}"`, payloadData);
+            if (topic !== 'rthub_broadcast') {
+                await this.notificationService.sendToTopic('rthub_broadcast', '🚨 PERINGATAN DARURAT (SOS)!', `${nama} (${noRumah}) butuh bantuan: "${catatan}"`, payloadData);
+            }
         }
         catch (_) { }
         return {

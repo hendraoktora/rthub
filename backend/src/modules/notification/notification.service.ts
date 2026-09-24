@@ -78,6 +78,7 @@ export class NotificationService implements OnModuleInit {
     try {
       // Normalisasi nama topic FCM: hanya izinkan [a-zA-Z0-9-_.~%]
       const cleanTopic = topic.replace(/[^a-zA-Z0-9-_.~%]/g, '_');
+      const isPanic = data?.type === 'PANIC';
       
       const payload: admin.messaging.Message = {
         topic: cleanTopic,
@@ -92,17 +93,18 @@ export class NotificationService implements OnModuleInit {
         android: {
           priority: 'high',
           notification: {
-            channelId: 'rthub_high_importance_channel',
-            sound: 'default',
-            priority: 'high',
-            defaultSound: true,
+            channelId: isPanic ? 'rthub_panic_channel' : 'rthub_high_importance_channel',
+            sound: isPanic ? 'siren' : 'default',
+            priority: isPanic ? 'max' : 'high',
+            visibility: 'public',
+            defaultSound: !isPanic,
             defaultVibrateTimings: true,
           },
         },
       };
 
       const response = await admin.messaging().send(payload);
-      this.logger.log(`[FCM] Push notification sent to topic [${cleanTopic}]: ${response}`);
+      this.logger.log(`[FCM] Push notification sent to topic [${cleanTopic}] (isPanic: ${isPanic}): ${response}`);
       return response;
     } catch (error) {
       this.logger.error(`[FCM] Error sending push to topic [${topic}]:`, error);

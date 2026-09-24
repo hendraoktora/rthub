@@ -45,13 +45,266 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadInitialDataParallel();
     _checkWidgetLaunch();
+    _setupPanicNotificationListeners();
   }
 
   @override
   void dispose() {
+    _widgetChannel.invokeMethod('stopPanicAlarm');
     _cardPageController.dispose();
     _lapakAdsController.dispose();
     super.dispose();
+  }
+
+  void _setupPanicNotificationListeners() {
+    NotificationService.onPanicAlertReceived = (data) {
+      if (!mounted) return;
+      _handleEmergencyAlert(data);
+    };
+
+    NotificationService.onPanicAlertOpened = (data) {
+      if (!mounted) return;
+      _handleEmergencyAlert(data);
+    };
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final initialMsg = await NotificationService.getInitialMessage();
+      if (initialMsg != null && initialMsg.data['type'] == 'PANIC') {
+        if (!mounted) return;
+        _handleEmergencyAlert(initialMsg.data);
+      }
+    });
+  }
+
+  void _handleEmergencyAlert(Map<String, dynamic> data) {
+    // 1. Play siren alarm through native USAGE_ALARM stream (sounds even when silent)
+    _widgetChannel.invokeMethod('playPanicAlarm');
+
+    // 2. Auto-refresh page data
+    _loadInitialDataParallel();
+
+    // 3. Show emergency popup dialog (Siapa, Di Mana, Kenapa)
+    _showEmergencyAlertPopup(data);
+  }
+
+  void _showEmergencyAlertPopup(Map<String, dynamic> data) {
+    if (!mounted) return;
+
+    final nama = data['namaPelapor']?.toString() ?? 'Warga Lingkungan';
+    final noRumah = data['noRumah']?.toString() ?? '-';
+    final lokasi = data['lokasi']?.toString() ?? (noRumah != '-' ? 'Rumah No. $noRumah' : 'Area Lingkungan RT');
+    final catatan = data['catatan']?.toString() ?? 'Tombol Panik Ditekan!';
+    final phone = data['phone']?.toString() ?? '';
+    final lat = data['latitude']?.toString();
+    final lng = data['longitude']?.toString();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) {
+              _widgetChannel.invokeMethod('stopPanicAlarm');
+              Navigator.of(ctx).pop();
+            }
+          },
+          child: Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            backgroundColor: Colors.white,
+            elevation: 16,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Animated Emergency Icon Header
+                  Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      color: AppTheme.alertRed.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppTheme.alertRed.withValues(alpha: 0.4), width: 3),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppTheme.alertRed,
+                        size: 46,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    '🚨 ALARM DARURAT (SOS)!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.alertRed,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Perhatian: Warga membutuhkan bantuan darurat segera!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                  ),
+                  const SizedBox(height: 18),
+                  
+                  // DETAIL CARD: SIAPA, DI MANA, KENAPA
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF5F5),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFFFD1D1)),
+                    ),
+                    child: Column(
+                      children: [
+                        // SIAPA
+                        _buildPanicInfoRow(
+                          icon: Icons.person_rounded,
+                          title: 'SIAPA (Pelapor)',
+                          value: nama,
+                          highlight: true,
+                        ),
+                        const Divider(height: 16, color: Color(0xFFFFE0E0)),
+                        // DI MANA
+                        _buildPanicInfoRow(
+                          icon: Icons.location_on_rounded,
+                          title: 'DI MANA (Lokasi)',
+                          value: lokasi,
+                          highlight: false,
+                        ),
+                        const Divider(height: 16, color: Color(0xFFFFE0E0)),
+                        // KENAPA
+                        _buildPanicInfoRow(
+                          icon: Icons.report_problem_rounded,
+                          title: 'KENAPA (Keterangan)',
+                          value: catatan,
+                          highlight: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // ACTION BUTTONS
+                  if (phone.isNotEmpty && phone != '-') ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+                          final uri = Uri.parse('tel:$cleanPhone');
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri);
+                          }
+                        },
+                        icon: const Icon(Icons.phone_in_talk, color: Colors.white, size: 18),
+                        label: Text('Hubungi $nama ($phone)', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+
+                  if (lat != null && lat.isNotEmpty && lng != null && lng.isNotEmpty) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final mapUri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                          if (await canLaunchUrl(mapUri)) {
+                            await launchUrl(mapUri, mode: LaunchMode.externalApplication);
+                          }
+                        },
+                        icon: const Icon(Icons.map_rounded, size: 18, color: AppTheme.electricBlue),
+                        label: const Text('Buka Titik GPS di Google Maps', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.electricBlue)),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppTheme.electricBlue),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // STOP SIREN / CLOSE BUTTON
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _widgetChannel.invokeMethod('stopPanicAlarm');
+                        Navigator.of(ctx).pop();
+                      },
+                      icon: const Icon(Icons.volume_off_rounded, color: Colors.white, size: 18),
+                      label: const Text('Hentikan Sirine & Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.alertRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPanicInfoRow({
+    required IconData icon,
+    required String title,
+    required String value,
+    required bool highlight,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: highlight ? AppTheme.alertRed : const Color(0xFFC0392B)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF962D24),
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: highlight ? FontWeight.bold : FontWeight.w600,
+                  color: highlight ? Colors.black87 : const Color(0xFF4A1813),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   void _checkWidgetLaunch() async {

@@ -6,12 +6,16 @@ import 'package:flutter/foundation.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  developer.log('Handling background message: ${message.messageId}', name: 'FCM');
+  developer.log('Handling background message: ${message.messageId} - Type: ${message.data['type']}', name: 'FCM');
 }
 
 class NotificationService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   static String? cachedToken;
+
+  /// Callbacks for Emergency Panic Alert
+  static Function(Map<String, dynamic> data)? onPanicAlertReceived;
+  static Function(Map<String, dynamic> data)? onPanicAlertOpened;
 
   static Future<void> initialize({
     Function(RemoteMessage message)? onMessageReceived,
@@ -23,7 +27,7 @@ class NotificationService {
       // Request permissions (especially for Android 13+ and iOS)
       NotificationSettings settings = await _messaging.requestPermission(
         alert: true,
-        announcement: false,
+        announcement: true,
         badge: true,
         carPlay: false,
         criticalAlert: true,
@@ -51,6 +55,11 @@ class NotificationService {
       // Foreground message stream
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         developer.log('Foreground message received: ${message.notification?.title}', name: 'FCM');
+        
+        if (message.data['type'] == 'PANIC') {
+          onPanicAlertReceived?.call(message.data);
+        }
+
         if (onMessageReceived != null) {
           onMessageReceived(message);
         }
@@ -59,6 +68,11 @@ class NotificationService {
       // App opened from background message
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         developer.log('App opened from notification: ${message.notification?.title}', name: 'FCM');
+        
+        if (message.data['type'] == 'PANIC') {
+          onPanicAlertOpened?.call(message.data);
+        }
+
         if (onMessageOpenedApp != null) {
           onMessageOpenedApp(message);
         }
@@ -68,6 +82,15 @@ class NotificationService {
       await _messaging.subscribeToTopic('rthub_broadcast');
     } catch (e) {
       developer.log('NotificationService initialization error: $e', name: 'FCM');
+    }
+  }
+
+  static Future<RemoteMessage?> getInitialMessage() async {
+    try {
+      return await _messaging.getInitialMessage();
+    } catch (e) {
+      developer.log('Error getting initial FCM message: $e', name: 'FCM');
+      return null;
     }
   }
 

@@ -17,6 +17,10 @@ class NotificationService {
   static Function(Map<String, dynamic> data)? onPanicAlertReceived;
   static Function(Map<String, dynamic> data)? onPanicAlertOpened;
 
+  /// Callbacks for Earthquake Alert
+  static Function(Map<String, dynamic> data)? onGempaAlertReceived;
+  static Function(Map<String, dynamic> data)? onGempaAlertOpened;
+
   static Future<void> initialize({
     Function(RemoteMessage message)? onMessageReceived,
     Function(RemoteMessage message)? onMessageOpenedApp,
@@ -58,6 +62,8 @@ class NotificationService {
         
         if (message.data['type'] == 'PANIC') {
           onPanicAlertReceived?.call(message.data);
+        } else if (message.data['type'] == 'GEMPA') {
+          onGempaAlertReceived?.call(message.data);
         }
 
         if (onMessageReceived != null) {
@@ -71,6 +77,8 @@ class NotificationService {
         
         if (message.data['type'] == 'PANIC') {
           onPanicAlertOpened?.call(message.data);
+        } else if (message.data['type'] == 'GEMPA') {
+          onGempaAlertOpened?.call(message.data);
         }
 
         if (onMessageOpenedApp != null) {

@@ -13,12 +13,14 @@ import { AlertModule } from './modules/alert/alert.module';
 import { CctvModule } from './modules/cctv/cctv.module';
 import { LaporanModule } from './modules/laporan/laporan.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { GempaModule } from './modules/gempa/gempa.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     NotificationModule,
+    GempaModule,
     AuthModule,
     WilayahModule,
     KasModule,

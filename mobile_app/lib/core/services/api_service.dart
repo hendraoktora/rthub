@@ -1639,5 +1639,52 @@ class ApiService {
       throw Exception('Gagal menghapus CCTV');
     }
   }
+
+  static Future<Map<String, dynamic>?> getGempaTerkini() async {
+    try {
+      final res = await _getWithFallback('/gempa/terkini');
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body['data'] != null) {
+          return body['data'];
+        }
+      }
+    } catch (_) {}
+
+    // Fallback langsung ke Open Data resmi BMKG
+    try {
+      final directRes = await http
+          .get(Uri.parse('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json'))
+          .timeout(const Duration(seconds: 5));
+      if (directRes.statusCode == 200) {
+        final json = jsonDecode(directRes.body);
+        final gempa = json['Infogempa']?['gempa'];
+        if (gempa != null && gempa['Shakemap'] != null) {
+          gempa['ShakemapUrl'] = 'https://data.bmkg.go.id/DataMKG/TEWS/${gempa['Shakemap']}';
+        }
+        return gempa;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  static Future<bool> broadcastGempa(Map<String, dynamic> data) async {
+    try {
+      final token = await getToken();
+      final configuredUrl = await getBaseUrl();
+      final res = await http.post(
+        Uri.parse('$configuredUrl/gempa/broadcast'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(data),
+      ).timeout(const Duration(seconds: 8));
+      return res.statusCode == 200 || res.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
 }
+
 

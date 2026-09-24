@@ -13,6 +13,7 @@ import '../lapor/lapor_screen.dart';
 import '../lapak/lapak_screen.dart';
 import '../agenda/agenda_screen.dart';
 import '../cctv/cctv_screen.dart';
+import '../gempa/gempa_screen.dart';
 import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -36,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> _beritaDbList = [];
   List<dynamic> _lapakDbList = [];
   List<dynamic> _tagihanDbList = [];
+  Map<String, dynamic>? _gempaTerkini;
   final PageController _cardPageController = PageController();
   int _activeCardSlide = 0;
   final PageController _lapakAdsController = PageController();
@@ -67,13 +69,36 @@ class _HomeScreenState extends State<HomeScreen> {
       _handleEmergencyAlert(data);
     };
 
+    NotificationService.onGempaAlertReceived = (data) {
+      if (!mounted) return;
+      _openGempaScreen(data);
+    };
+
+    NotificationService.onGempaAlertOpened = (data) {
+      if (!mounted) return;
+      _openGempaScreen(data);
+    };
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final initialMsg = await NotificationService.getInitialMessage();
-      if (initialMsg != null && initialMsg.data['type'] == 'PANIC') {
+      if (initialMsg != null) {
         if (!mounted) return;
-        _handleEmergencyAlert(initialMsg.data);
+        if (initialMsg.data['type'] == 'PANIC') {
+          _handleEmergencyAlert(initialMsg.data);
+        } else if (initialMsg.data['type'] == 'GEMPA') {
+          _openGempaScreen(initialMsg.data);
+        }
       }
     });
+  }
+
+  void _openGempaScreen(Map<String, dynamic> data) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GempaScreen(initialData: data),
+      ),
+    );
   }
 
   void _handleEmergencyAlert(Map<String, dynamic> data) {
@@ -343,6 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ApiService.getBeritaFeed(),
         ApiService.getLapakList(),
         ApiService.getTagihanSaya(),
+        ApiService.getGempaTerkini(),
       ]);
 
       if (!mounted) return;
@@ -372,6 +398,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
         final tagihanList = results[5] as List<dynamic>?;
         _tagihanDbList = tagihanList ?? [];
+
+        final gempa = results[6] as Map<String, dynamic>?;
+        if (gempa != null) {
+          _gempaTerkini = gempa;
+        }
       });
     } catch (_) {}
   }
@@ -1017,10 +1048,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 24),
 
-              // Quick Action Row (6 Layanan Termasuk CCTV Lingkungan)
+              // Quick Action Row (Termasuk Info Gempa BMKG & CCTV)
               _buildQuickActionsRow(),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+
+              // Earthquake Alert Banner (BMKG Live)
+              _buildGempaBannerCard(),
 
               // Calendar & Agenda Section
               _buildCalendarAgendaSection(),
@@ -1953,51 +1987,67 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickActionsRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildActionItem(
-          icon: Icons.receipt_long_rounded,
-          label: 'Bayar IPL',
-          color: AppTheme.electricBlue,
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const InvoiceScreen()))
-                .then((_) => _loadTagihanData());
-          },
-        ),
-        _buildActionItem(
-          icon: Icons.campaign_rounded,
-          label: 'Lapor RT',
-          color: AppTheme.warningAmber,
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const LaporScreen()));
-          },
-        ),
-        _buildActionItem(
-          icon: Icons.storefront_rounded,
-          label: 'Lapak RT',
-          color: AppTheme.successGreen,
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
-          },
-        ),
-        _buildActionItem(
-          icon: Icons.calendar_month_rounded,
-          label: 'Agenda RT',
-          color: AppTheme.purpleIndigo,
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const AgendaScreen()));
-          },
-        ),
-        _buildActionItem(
-          icon: Icons.videocam_rounded,
-          label: 'CCTV Live',
-          color: Colors.teal,
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const CctvScreen()));
-          },
-        ),
-      ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          _buildActionItem(
+            icon: Icons.receipt_long_rounded,
+            label: 'Bayar IPL',
+            color: AppTheme.electricBlue,
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const InvoiceScreen()))
+                  .then((_) => _loadTagihanData());
+            },
+          ),
+          const SizedBox(width: 14),
+          _buildActionItem(
+            icon: Icons.campaign_rounded,
+            label: 'Lapor RT',
+            color: AppTheme.warningAmber,
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const LaporScreen()));
+            },
+          ),
+          const SizedBox(width: 14),
+          _buildActionItem(
+            icon: Icons.storefront_rounded,
+            label: 'Lapak RT',
+            color: AppTheme.successGreen,
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const LapakScreen()));
+            },
+          ),
+          const SizedBox(width: 14),
+          _buildActionItem(
+            icon: Icons.calendar_month_rounded,
+            label: 'Agenda RT',
+            color: AppTheme.purpleIndigo,
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const AgendaScreen()));
+            },
+          ),
+          const SizedBox(width: 14),
+          _buildActionItem(
+            icon: Icons.videocam_rounded,
+            label: 'CCTV Live',
+            color: Colors.teal,
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const CctvScreen()));
+            },
+          ),
+          const SizedBox(width: 14),
+          _buildActionItem(
+            icon: Icons.public_rounded,
+            label: 'Info Gempa',
+            color: const Color(0xFFE11D48),
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const GempaScreen()));
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -2026,6 +2076,143 @@ class _HomeScreenState extends State<HomeScreen> {
             style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGempaBannerCard() {
+    if (_gempaTerkini == null) return const SizedBox.shrink();
+
+    final magStr = _gempaTerkini!['Magnitude']?.toString() ?? '-';
+    final magVal = double.tryParse(magStr) ?? 0.0;
+    final wilayah = _gempaTerkini!['Wilayah']?.toString() ?? '-';
+    final waktu = '${_gempaTerkini!['Tanggal'] ?? ''} ${_gempaTerkini!['Jam'] ?? ''}'.trim();
+    final kedalaman = _gempaTerkini!['Kedalaman']?.toString() ?? '-';
+    final potensi = _gempaTerkini!['Potensi']?.toString() ?? '-';
+
+    Color magColor = const Color(0xFF059669);
+    if (magVal >= 6.0) {
+      magColor = const Color(0xFFDC2626);
+    } else if (magVal >= 5.0) {
+      magColor = const Color(0xFFEA580C);
+    } else if (magVal >= 4.0) {
+      magColor = const Color(0xFFD97706);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFEE2E2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => GempaScreen(initialData: _gempaTerkini)),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.public_rounded, size: 13, color: AppTheme.alertRed),
+                          SizedBox(width: 4),
+                          Text(
+                            'INFO GEMPA BMKG',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.alertRed,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      waktu,
+                      style: const TextStyle(fontSize: 10, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppTheme.textMuted),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: magColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: magColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        'M $magStr',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: magColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            wilayah,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                              height: 1.25,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Kedalaman: $kedalaman • $potensi',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -506,15 +506,6 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadInitialDataParallel();
   }
 
-  String _getInitials(String name) {
-    if (name.isEmpty) return 'U';
-    final parts = name.replaceAll(RegExp(r'Bpk\.|Ibu|Hj\.|H\.'), '').trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
-  }
-
   void _showTransparansiKasModal(String rtNomor) {
     final recent = _kasSummary['recentTransactions'] as List<dynamic>? ?? [];
     final saldo = _kasSummary['saldoKas'] ?? 18450000;
@@ -860,7 +851,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final rtNomor = _user?['rt']?['nomor'] ?? '03';
     final rwNomor = _user?['rw']?['nomor'] ?? '05';
     final kelurahanNama = _user?['kelurahan']?['nama'] ?? 'Sukamaju';
-    final initials = _getInitials(namaLengkap);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -875,7 +865,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Header with Tapable Profile
+              // Top Header with Tapable Profile Photo on the Left
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -889,12 +879,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 22,
-                          backgroundColor: isPengurus ? AppTheme.primaryNavy : AppTheme.electricBlue,
-                          child: Text(
-                            initials,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isPengurus ? AppTheme.primaryNavy : AppTheme.electricBlue,
+                              width: 2.0,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isPengurus ? AppTheme.primaryNavy : AppTheme.electricBlue).withValues(alpha: 0.15),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: _buildUserAvatar(size: 44),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -953,34 +956,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                  ),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                          );
-                          _loadUserData();
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppTheme.electricBlue, width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.electricBlue.withValues(alpha: 0.15),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: _buildUserAvatar(),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -1099,6 +1074,11 @@ class _HomeScreenState extends State<HomeScreen> {
               // Sliding Cards Carousel (Kas RT & Agenda RT)
               _buildSlidingCardsCarousel(rtNomor),
 
+              const SizedBox(height: 16),
+
+              // Earthquake Alert Banner (BMKG Live)
+              _buildGempaBannerCard(),
+
               // Separated Promoted Product Card (Kecil tapi Informative)
               _buildPromotedProductSection(rtNomor),
 
@@ -1106,11 +1086,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Quick Action Row (Termasuk Info Gempa BMKG & CCTV)
               _buildQuickActionsRow(),
-
-              const SizedBox(height: 20),
-
-              // Earthquake Alert Banner (BMKG Live)
-              _buildGempaBannerCard(),
 
               // Calendar & Agenda Section
               _buildCalendarAgendaSection(),
@@ -1341,17 +1316,54 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Card Produk Warga Terpisah: Kecil tapi Informatif
   Widget _buildPromotedProductSection(String rtNomor) {
-    final promotedItems = _lapakDbList
-        .where((it) => it['isPromoted'] == true || it['promotedBadge'] == 'SPONSORED')
-        .toList();
+    final userRtId = _user?['rtId']?.toString();
+    final userRwId = _user?['rwId']?.toString();
+    final userKelId = _user?['kelurahanId']?.toString();
 
-    final displayList = promotedItems.isNotEmpty
-        ? promotedItems
-        : (_lapakDbList.isNotEmpty ? _lapakDbList.take(5).toList() : []);
+    // HANYA tampilkan produk yang aktif pasang iklan (isPromoted / PROMOTED / ada paketIklan)
+    final promotedItems = _lapakDbList.where((it) {
+      final isPromoted = it['isPromoted'] == true ||
+          it['promotedBadge'] == 'SPONSORED' ||
+          it['status'] == 'PROMOTED' ||
+          it['paketIklan'] != null;
+      if (!isPromoted) return false;
 
-    if (displayList.isEmpty) {
+      // Filter jangkauan berdasarkan paket iklan:
+      // RT (hanya RT yang sama) | RW (satu RW) | KELURAHAN (satu kelurahan) | SEMUA / NASIONAL (seluruh pengguna)
+      final paket = (it['paketIklan'] ?? 'RT').toString().toUpperCase();
+      if (paket == 'SEMUA' || paket == 'NASIONAL') {
+        return true;
+      } else if (paket == 'KELURAHAN') {
+        final itemKelId = it['kelurahanId'] ?? it['seller']?['kelurahanId'];
+        if (itemKelId != null && userKelId != null) {
+          return itemKelId.toString() == userKelId;
+        }
+        return true;
+      } else if (paket == 'RW') {
+        final itemRwId = it['rwId'] ?? it['seller']?['rwId'];
+        if (itemRwId != null && userRwId != null) {
+          return itemRwId.toString() == userRwId;
+        }
+        return true;
+      } else {
+        // Default scope: RT
+        final itemRtId = it['rtId'] ?? it['seller']?['rtId'];
+        final itemRtNomor = it['rtNomor'] ?? it['rt']?['nomor'] ?? it['seller']?['rt']?['nomor'];
+        if (itemRtId != null && userRtId != null) {
+          return itemRtId.toString() == userRtId;
+        }
+        if (itemRtNomor != null) {
+          return itemRtNomor.toString() == rtNomor;
+        }
+        return true;
+      }
+    }).toList();
+
+    if (promotedItems.isEmpty) {
       return const SizedBox.shrink();
     }
+
+    final displayList = promotedItems;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1367,9 +1379,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const Icon(Icons.stars_rounded, color: Color(0xFFD97706), size: 16),
                   const SizedBox(width: 6),
-                  Text(
-                    promotedItems.isNotEmpty ? 'Iklan Produk Warga' : 'Lapak Warga RT $rtNomor',
-                    style: const TextStyle(
+                  const Text(
+                    'Iklan Produk Warga',
+                    style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w800,
                       color: AppTheme.textPrimary,
@@ -1440,6 +1452,27 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
+
+        // Pagination Dots Indicator
+        if (displayList.length > 1) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(displayList.length, (dotIdx) {
+              final isDotActive = _activePromotedIndex == dotIdx;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: isDotActive ? 16 : 5,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: isDotActive ? const Color(0xFFD97706) : Colors.black.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          ),
+        ],
       ],
     );
   }
@@ -1605,7 +1638,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Slide 3: Agenda & Kegiatan Terdekat (7 Hari Ke Depan)
   Widget _buildAgendaCard(String rtNomor) {
-    final event = _agendaDbList.isNotEmpty ? _agendaDbList.first : null;
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final upcomingAgendas = _agendaDbList.where((it) {
+      final startStr = it['tanggalMulai'] ?? it['tanggal'] ?? it['startDate'];
+      if (startStr == null) return true;
+      final startDt = DateTime.tryParse(startStr.toString());
+      final endStr = it['tanggalSelesai'] ?? it['endDate'];
+      if (endStr != null) {
+        final endDt = DateTime.tryParse(endStr.toString());
+        if (endDt != null) return !endDt.isBefore(todayStart);
+      }
+      if (startDt != null) return !startDt.isBefore(todayStart);
+      return true;
+    }).toList();
+    final event = upcomingAgendas.isNotEmpty ? upcomingAgendas.first : null;
 
     if (event == null) {
       return GestureDetector(
@@ -2005,16 +2052,23 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFF7ED),
+            Color(0xFFFEF2F2),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFEE2E2)),
+        border: Border.all(color: const Color(0xFFFED7AA), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: const Color(0xFFEA580C).withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -2129,7 +2183,21 @@ class _HomeScreenState extends State<HomeScreen> {
     final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
     final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
-    final displayAgendas = _agendaDbList.take(2).toList();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final upcomingAgendas = _agendaDbList.where((it) {
+      final startStr = it['tanggalMulai'] ?? it['tanggal'] ?? it['startDate'];
+      if (startStr == null) return true;
+      final startDt = DateTime.tryParse(startStr.toString());
+      final endStr = it['tanggalSelesai'] ?? it['endDate'];
+      if (endStr != null) {
+        final endDt = DateTime.tryParse(endStr.toString());
+        if (endDt != null) return !endDt.isBefore(todayStart);
+      }
+      if (startDt != null) return !startDt.isBefore(todayStart);
+      return true;
+    }).toList();
+
+    final displayAgendas = upcomingAgendas.take(2).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2359,8 +2427,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRecentNewsFeed() {
-    final displayBerita = _beritaDbList.isNotEmpty
-        ? _beritaDbList.take(2).toList()
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final activeBerita = _beritaDbList.where((item) {
+      final expStr = item['expiresAt'] ?? item['tanggalBerakhir'] ?? item['expiredAt'];
+      if (expStr != null) {
+        final expDt = DateTime.tryParse(expStr.toString());
+        if (expDt != null && expDt.isBefore(todayStart)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
+    final displayBerita = activeBerita.isNotEmpty
+        ? activeBerita.take(2).toList()
         : [
             {
               'judul': 'Laporan Pertanggungjawaban Kas RT Terbuka & Real-Time',
@@ -2373,25 +2454,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Pengumuman Lingkungan',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppTheme.electricBlue.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                'Live DB',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
-              ),
-            ),
-          ],
+        const Text(
+          'Pengumuman Lingkungan',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         ...displayBerita.map((item) {
@@ -2482,28 +2547,32 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildUserAvatar() {
+  Widget _buildUserAvatar({double size = 44}) {
     final avatarUrl = _user?['profile']?['avatarUrl'] as String?;
     final nama = _user?['profile']?['namaLengkap'] ?? _user?['phone'] ?? 'User';
 
     if (avatarUrl != null && avatarUrl.isNotEmpty) {
       return ImageCacheHelper.buildImage(
         avatarUrl,
-        width: 36,
-        height: 36,
-        borderRadius: BorderRadius.circular(18),
-        placeholder: _buildFallbackAvatarIcon(nama),
+        width: size,
+        height: size,
+        borderRadius: BorderRadius.circular(size / 2),
+        placeholder: _buildFallbackAvatarIcon(nama, size: size),
       );
     }
-    return _buildFallbackAvatarIcon(nama);
+    return _buildFallbackAvatarIcon(nama, size: size);
   }
 
-  Widget _buildFallbackAvatarIcon(String nama) {
+  Widget _buildFallbackAvatarIcon(String nama, {double size = 44}) {
     return Container(
-      width: 36,
-      height: 36,
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppTheme.electricBlue.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+      ),
       alignment: Alignment.center,
-      child: const Icon(Icons.person_outline_rounded, color: AppTheme.electricBlue, size: 20),
+      child: Icon(Icons.person_outline_rounded, color: AppTheme.electricBlue, size: size * 0.55),
     );
   }
 

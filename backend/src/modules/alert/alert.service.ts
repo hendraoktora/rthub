@@ -52,23 +52,13 @@ export class AlertService {
         timestamp: new Date().toISOString(),
       };
 
-      // Kirim ke channel RT
+      // Kirim hanya ke channel RT pelapor
       await this.notificationService.sendToTopic(
         topic,
         '🚨 PERINGATAN DARURAT (SOS)!',
         `${nama} (${noRumah}) butuh bantuan: "${catatan}"`,
         payloadData,
       );
-
-      // Kirim juga ke rthub_broadcast agar seluruh warga yang terinstall langsung berbunyi sirinenya
-      if (topic !== 'rthub_broadcast') {
-        await this.notificationService.sendToTopic(
-          'rthub_broadcast',
-          '🚨 PERINGATAN DARURAT (SOS)!',
-          `${nama} (${noRumah}) butuh bantuan: "${catatan}"`,
-          payloadData,
-        );
-      }
     } catch (_) {}
 
     return {

@@ -88,13 +88,15 @@ function handleGoToLogin() {
   </defs></svg>
   <a class="skip-link" href="#main">Lewati ke konten</a>
   <!-- PRELOADER -->
-  <div id="preloader" aria-label="Memuat RT Hub" role="status"><div class="loader-inner"><div class="logo"><span class="logo-mark"><svg class="icon"><use href="#i-home"/></svg></span>RT <span class="hub">Hub</span></div><div class="load-track"><div class="load-bar-fill"></div></div><div class="load-caption"><span>MENYIAPKAN KAMPUNG ANDA</span><span id="load-percent">0%</span></div></div></div>
+  <div id="preloader" aria-label="Memuat RT Hub" role="status"><div class="loader-inner"><div class="logo" style="display:inline-flex;align-items:center;justify-content:center;margin-bottom:18px;">
+          <img src="/rthub_logo.png" alt="RtHub" style="height:46px;width:auto;object-fit:contain;" onerror="this.onerror=null;this.src='rthub_logo.png';" />
+        </div><div class="load-track"><div class="load-bar-fill"></div></div><div class="load-caption"><span>MENYIAPKAN KAMPUNG ANDA</span><span id="load-percent">0%</span></div></div></div>
   <!-- Bounded loading fallback also works when a CDN request stalls. -->
   <script>setTimeout(()=>{const loader=document.getElementById('preloader');if(loader&&!loader.hidden){document.getElementById('load-percent').textContent='100%';loader.hidden=true;loader.style.display='none';}},8000);</script>
   <!-- NAVBAR -->
   <header id="navbar"><div class="container nav-inner"><a class="logo" href="#beranda" aria-label="RtHub" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
       <img src="/rthub_logo.png" alt="RtHub" style="height:36px;width:auto;object-fit:contain;" onerror="this.onerror=null;this.src='rthub_logo.png';" />
-    </a><nav id="nav-menu" aria-label="Navigasi utama"><a href="#beranda">Beranda</a><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a><a href="#cerita-warga">Cerita Warga</a></nav><div class="nav-actions"><a class="nav-login" href="javascript:void(0)" onclick="handleGoToLogin()">Portal Pengurus ↗</a><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><button id="menu-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Buka menu"><svg class="icon"><use href="#i-menu"/></svg></button></div></div></header>
+    </a><nav id="nav-menu" aria-label="Navigasi utama"><a href="#beranda">Beranda</a><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a><a href="#cerita-warga">Cerita Warga</a><a href="#harga">Harga</a></nav><div class="nav-actions"><a class="nav-login" href="javascript:void(0)" onclick="handleGoToLogin()">Portal Pengurus ↗</a><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><button id="menu-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Buka menu"><svg class="icon"><use href="#i-menu"/></svg></button></div></div></header>
   <main id="main">
     <!-- HERO -->
     <section class="hero" id="beranda"><div class="container hero-inner"><div class="hero-copy"><div class="pill hero-tag"><span class="dot"></span> RUANG DIGITAL UNTUK HIDUP BERTETANGGA <span>RT Hub</span></div><h1 data-split>Satu kampung.<br><span class="green">Banyak cerita.</span></h1><p class="hero-description">Urusan RT, sekarang lebih sederhana. Dari kas warga sampai lapak tetangga, semuanya terhubung. Jadi, ada lebih banyak waktu untuk saling sapa.</p><div class="hero-buttons"><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><a class="btn btn-secondary magnetic" href="/rthub-mobile.apk" target="_blank" rel="noopener noreferrer"><svg class="icon"><use href="#i-download"/></svg> Unduh Android</a></div><div class="hero-proof"><div class="avatar-stack" aria-hidden="true"><span class="avatar">BS</span><span class="avatar">SR</span><span class="avatar">DP</span><span class="avatar">+</span></div><div><strong>Untuk setiap peran di kampung.</strong><br>Ketua RT, pengurus, warga, dan pemilik usaha.</div></div></div>
@@ -128,7 +130,76 @@ function handleGoToLogin() {
     <section class="cta-section"><div class="container"><div class="cta-panel" data-reveal><div class="cta-grid"></div><div class="cta-copy"><div class="eyebrow">Kampung baik dimulai dari kita</div><h2 data-split>Waktunya RT Anda<br><span class="green">Naik Kelas.</span></h2><p>Lebih rapi administrasinya. Lebih hidup usahanya.<br>Lebih akrab warganya. Yuk, mulai dari RT Anda.</p><div class="cta-buttons"><button class="btn btn-primary magnetic" id="final-cta" onclick="handleGoToLogin()">Coba Gratis Sekarang <svg class="icon"><use href="#i-arrow"/></svg></button><a class="btn btn-secondary magnetic"  href="https://wa.me/6285280039433?text=Halo%20tim%20RT%20Hub%2C%20saya%20ingin%20tahu%20lebih%20lanjut%20tentang%20RT%20Hub%20untuk%20lingkungan%20saya." target="_blank" rel="noopener noreferrer">Hubungi Kami</a></div></div><div class="community-scene"><canvas id="community-canvas" aria-label="Rumah-rumah berkumpul menjadi satu komunitas"></canvas></div></div></div></section>
   </main>
   <!-- FOOTER -->
-  <footer><div class="container"><div class="footer-top"><div class="footer-brand"><a class="logo" href="#beranda" aria-label="RtHub" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
+  
+    <section class="section" id="harga">
+      <div class="container">
+        <div class="center-head" data-reveal>
+          <div class="eyebrow">Investasi kecil, manfaat sekampung</div>
+          <h2 data-split>Mulai dari yang perlu.<br>Tumbuh kalau sudah siap.</h2>
+          <p>Mulai dari kebutuhan hari ini. Naik kelas kapan pun siap.</p>
+        </div>
+        <div class="pricing-grid">
+          <!-- Card 1: Gratis -->
+          <article class="price-card" data-reveal>
+            <h3 class="plan-name">Gratis</h3>
+            <p class="plan-description">Cocok untuk RT yang ingin memulai tata kelola warga secara digital tanpa biaya.</p>
+            <div class="price">Rp 0 <small>/ bulan</small></div>
+            <div class="price-period">Selamanya gratis</div>
+            <ul class="plan-features">
+              <li>Warga terdaftar hingga 50 KK</li>
+              <li>Pengumuman & Surat Digital RT</li>
+              <li>Pencatatan Kas Manual</li>
+              <li>Tombol Darurat SOS Komunitas</li>
+              <li class="unavailable">Broadcast WhatsApp Otomatis</li>
+              <li class="unavailable">Integrasi CCTV & BMKG</li>
+            </ul>
+            <button class="btn btn-secondary" onclick="handleGoToLogin()">Mulai Sekarang</button>
+          </article>
+
+          <!-- Card 2: Pro -->
+          <article class="price-card pro" data-reveal>
+            <span class="popular">Paling Populer</span>
+            <h3 class="plan-name">Pro ↗</h3>
+            <p class="plan-description">Solusi terlengkap & otomatis untuk pengurus dan seluruh warga lingkungan RT.</p>
+            <div class="price">Rp 99.000 <small>/ bulan</small></div>
+            <div class="price-period">per lingkungan RT (bebas KK)</div>
+            <ul class="plan-features">
+              <li>Kapasitas Warga Tanpa Batas (Unlimited)</li>
+              <li>Tagihan Iuran Otomatis & Kuitansi Digital</li>
+              <li>Lapak Warga & Agenda Kegiatan RT</li>
+              <li>Sirine Darurat SOS Alarm Bypass Silent & GPS</li>
+              <li>Pantauan Gempa BMKG Real-time Terkini</li>
+              <li>Broadcast Berita & WhatsApp Direct</li>
+            </ul>
+            <button class="btn btn-primary" onclick="handleGoToLogin()">Pilih Paket Pro</button>
+          </article>
+
+          <!-- Card 3: Enterprise / RW -->
+          <article class="price-card" data-reveal>
+            <h3 class="plan-name">Enterprise / RW</h3>
+            <p class="plan-description">Integrasi menyeluruh multi-RT dalam satu RW atau kawasan perumahan mandiri.</p>
+            <div class="price custom">Hubungi Kami</div>
+            <div class="price-period">Kustomisasi sesuai kebutuhan wilayah</div>
+            <ul class="plan-features">
+              <li>Integrasi Multi-RT dalam 1 RW Terpadu</li>
+              <li>Superadmin Monitoring Wilayah Terpusat</li>
+              <li>Streaming CCTV Pos Keamanan RT/RW</li>
+              <li>Kustom Domain & Branding Lingkungan</li>
+              <li>Bantuan Setup & Onboarding Khusus</li>
+              <li>Dukungan Teknis Prioritas 24/7</li>
+            </ul>
+            <button class="btn btn-secondary" onclick="handleGoToLogin()">Konsultasi Wilayah</button>
+          </article>
+        </div>
+        <div class="pricing-note">
+          <span><svg class="icon"><use href="#i-check"/></svg> Tanpa biaya tersembunyi</span>
+          <span><svg class="icon"><use href="#i-check"/></svg> Bebas upgrade kapan saja</span>
+          <span><svg class="icon"><use href="#i-check"/></svg> Setup awal dibantu tim ahli</span>
+        </div>
+      </div>
+    </section>
+
+    <footer><div class="container"><div class="footer-top"><div class="footer-brand"><a class="logo" href="#beranda" aria-label="RtHub" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
       <img src="/rthub_logo.png" alt="RtHub" style="height:36px;width:auto;object-fit:contain;" onerror="this.onerror=null;this.src='rthub_logo.png';" />
     </a><p>Teknologi yang mendekatkan.<br>Untuk kampung yang lebih hidup.</p></div><div class="footer-column"><h3>Jelajahi RT Hub</h3><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a></div><div class="footer-column"><h3>Mari terhubung</h3><a href="#cerita-warga">Cerita Warga</a><a  href="https://wa.me/6285280039433?text=Halo%20tim%20RT%20Hub%2C%20saya%20ingin%20tahu%20lebih%20lanjut%20tentang%20RT%20Hub%20untuk%20lingkungan%20saya." target="_blank" rel="noopener noreferrer">WhatsApp RT Hub</a><button data-open-signup="Enterprise">Untuk Kelurahan</button></div><div class="footer-column"><h3>Kabarkan ke tetangga</h3><div class="socials"><a href="https://wa.me/?text=Kenalan%20dengan%20RT%20Hub%3A%20https%3A%2F%2Frthub-dash.hendraoktora.com" target="_blank" rel="noopener noreferrer" aria-label="Bagikan cerita RT Hub melalui WhatsApp"><svg class="icon"><use href="#i-chat"/></svg></a><a href="mailto:?subject=Kenalan%20dengan%20RT%20Hub&body=RT%20Hub%20menyatukan%20urusan%20RT%2C%20lapak%20warga%2C%20dan%20keamanan%20lingkungan%20dalam%20satu%20tempat." aria-label="Bagikan cerita RT Hub melalui email"><svg class="icon"><use href="#i-mail"/></svg></a></div></div></div><div class="footer-big-word" aria-hidden="true">hidup bertetangga.</div><div class="footer-bottom"><span>© 2026 RT Hub. Bertumbuh bersama, bertetangga selamanya.</span><span>Dibuat dengan <svg class="icon"><use href="#i-heart"/></svg> untuk lingkungan kita.</span></div></div></footer>
   <!-- START: VERIFIED LINKS TO THE EXISTING RT HUB APPLICATION -->
@@ -1019,6 +1090,14 @@ function handleGoToLogin() {
     // Host scroll choreography can nudge the whole miniature without taking over dragging.
     addEventListener('rt-scene-focus',event=>{const value=Number(event.detail?.progress);if(Number.isFinite(value))focusTarget=Math.max(0,Math.min(1,value));});
     canvas.addEventListener('webglcontextlost',()=>{if(fallback){fallback.hidden=false;fallback.style.display='';}},{once:true});
+    
+    let targetMouseX = 0, targetMouseY = 0;
+    let smoothMouseX = 0, smoothMouseY = 0;
+    window.addEventListener('mousemove', (e) => {
+      targetMouseX = (e.clientX / window.innerWidth) * 2 - 1;
+      targetMouseY = (e.clientY / window.innerHeight) * 2 - 1;
+    }, { passive: true });
+
     function frame(now){
       requestAnimationFrame(frame);
       const dt=Math.min((now-last)/1000,.05);last=now;
@@ -1031,7 +1110,14 @@ function handleGoToLogin() {
           clouds.forEach(({group,x,y,phase})=>{group.position.x=x+Math.sin(elapsed*.2+phase)*.4;group.position.y=y+Math.sin(elapsed*.45+phase)*.13;});
           particles.rotation.y=elapsed*.016;
           focusProgress+=(focusTarget-focusProgress)*(1-Math.exp(-dt*4));
-          world.rotation.x=focusProgress*.045;world.rotation.z=-focusProgress*.028;
+          
+          // Smooth Mouse Parallax tracking for 3D houses
+          smoothMouseX += (targetMouseX - smoothMouseX) * 0.06;
+          smoothMouseY += (targetMouseY - smoothMouseY) * 0.06;
+          world.rotation.y = (focusProgress * 0.05) + (smoothMouseX * 0.45);
+          world.rotation.x = (focusProgress * 0.045) + (smoothMouseY * 0.22);
+          world.rotation.z = (-focusProgress * 0.028) - (smoothMouseX * 0.12);
+
           world.position.y=Math.sin(elapsed*.45)*.04+focusProgress*.32;
           world.scale.setScalar(1+focusProgress*.018);
           world.position.x=elapsed<shakeUntil?Math.sin(elapsed*86)*.06:0;

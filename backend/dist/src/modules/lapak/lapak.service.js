@@ -133,7 +133,101 @@ let LapakService = class LapakService {
                 return items.map(sanitizePromotion);
             }
             catch (innerErr) {
-                return [];
+                console.warn('Prisma findMany failed, using raw SQL fallback for lapak feed:', innerErr);
+                try {
+                    const sql = `
+            SELECT 
+              lp.id,
+              lp.sellerId,
+              lp.rtId,
+              lp.rwId,
+              lp.kelurahanId,
+              lp.judul,
+              lp.deskripsi,
+              CAST(lp.harga AS DOUBLE) as harga,
+              lp.kategori,
+              lp.fotoUrl,
+              lp.kontakWa,
+              lp.isActive,
+              lp.isPromoted,
+              lp.paketIklan,
+              lp.promotedBadge,
+              lp.promotedUntil,
+              lp.promotedAt,
+              lp.createdAt,
+              lp.updatedAt,
+              u.phone as sellerPhone,
+              p.namaLengkap as sellerNama,
+              p.noRumah as sellerRumah,
+              rt.nomor as rtNomor
+            FROM LapakProduk lp
+            LEFT JOIN User u ON u.id = lp.sellerId
+            LEFT JOIN Profile p ON p.userId = u.id
+            LEFT JOIN RT rt ON rt.id = lp.rtId
+            WHERE lp.isActive = 1
+              AND (
+                (lp.sellerId = ?)
+                OR (lp.isPromoted = 1 AND (lp.promotedUntil IS NULL OR lp.promotedUntil > NOW()) AND lp.paketIklan IN ('SEMUA', 'GLOBAL', 'NASIONAL', 'IKLAN_GLOBAL'))
+                OR (lp.isPromoted = 1 AND (lp.promotedUntil IS NULL OR lp.promotedUntil > NOW()) AND lp.paketIklan IN ('KELURAHAN', 'LURAH', 'IKLAN_KELURAHAN') AND lp.kelurahanId = ?)
+                OR (lp.isPromoted = 1 AND (lp.promotedUntil IS NULL OR lp.promotedUntil > NOW()) AND lp.paketIklan IN ('RW', 'IKLAN_RW') AND lp.rwId = ?)
+                OR (lp.isPromoted = 1 AND (lp.promotedUntil IS NULL OR lp.promotedUntil > NOW()) AND lp.paketIklan IN ('RT', 'IKLAN_RT') AND lp.rtId = ?)
+                OR (lp.isPromoted = 0 AND (lp.rtId = ? OR lp.rwId = ?))
+              )
+            ORDER BY lp.isPromoted DESC, lp.createdAt DESC
+            LIMIT 50
+          `;
+                    const rows = await this.prisma.$queryRawUnsafe(sql, user?.id || '', kelurahanId || '', rwId || '', rtId || '', rtId || '', rwId || '');
+                    const now = new Date();
+                    return rows.map((r) => {
+                        const expired = r.promotedUntil ? new Date(r.promotedUntil) <= now : false;
+                        const isPromoted = Boolean((r.isPromoted === 1 || r.isPromoted === true || r.isPromoted === '1') && !expired);
+                        let sisaDurasiHari = null;
+                        let sisaDurasiJam = null;
+                        if (isPromoted && r.promotedUntil) {
+                            const diffMs = Math.max(0, new Date(r.promotedUntil).getTime() - now.getTime());
+                            sisaDurasiHari = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                            sisaDurasiJam = Math.ceil(diffMs / (1000 * 60 * 60));
+                        }
+                        return {
+                            id: r.id,
+                            sellerId: r.sellerId,
+                            rtId: r.rtId,
+                            rwId: r.rwId,
+                            kelurahanId: r.kelurahanId,
+                            judul: r.judul,
+                            deskripsi: r.deskripsi,
+                            harga: Number(r.harga) || 0,
+                            kategori: r.kategori,
+                            fotoUrl: r.fotoUrl,
+                            kontakWa: r.kontakWa,
+                            isActive: Boolean(r.isActive),
+                            isPromoted,
+                            promotedBadge: isPromoted ? (r.promotedBadge || 'SPONSORED') : null,
+                            paketIklan: isPromoted ? r.paketIklan : null,
+                            promotedAt: isPromoted ? r.promotedAt : null,
+                            promotedUntil: isPromoted ? r.promotedUntil : null,
+                            sisaDurasiHari,
+                            sisaDurasiJam,
+                            createdAt: r.createdAt,
+                            updatedAt: r.updatedAt,
+                            seller: {
+                                id: r.sellerId,
+                                phone: r.sellerPhone,
+                                profile: {
+                                    namaLengkap: r.sellerNama,
+                                    noRumah: r.sellerRumah,
+                                },
+                            },
+                            rt: {
+                                nomor: r.rtNomor,
+                            },
+                        };
+                    });
+                }
+                catch (rawErr) {
+                    console.error('Raw SQL fallback also failed:', rawErr);
+                    return [];
+                }
             }
         }
         catch (outerErr) {
@@ -193,24 +287,51 @@ let LapakService = class LapakService {
         if (!rtId || !rwId || !kelurahanId) {
             throw new common_1.BadRequestException('Data wilayah (RT/RW/Kelurahan) Anda belum lengkap.');
         }
-        return this.prisma.lapakProduk.create({
-            data: {
+        try {
+            return await this.prisma.lapakProduk.create({
+                data: {
+                    sellerId: user.id,
+                    rtId: rtId,
+                    rwId: rwId,
+                    kelurahanId: kelurahanId,
+                    judul: data.judul,
+                    deskripsi: data.deskripsi || '',
+                    harga: Number(data.harga) || 0,
+                    kategori: data.kategori || 'PRODUK',
+                    kontakWa: data.kontakWa || user.phone,
+                    fotoUrl: data.fotoUrl || null,
+                    isPromoted: false,
+                    promotedBadge: null,
+                    paketIklan: null,
+                    promotedUntil: null,
+                },
+            });
+        }
+        catch (err) {
+            console.warn('Prisma create failed, using raw SQL insert fallback:', err);
+            const crypto = require('crypto');
+            const id = crypto.randomUUID();
+            await this.prisma.$executeRawUnsafe(`INSERT INTO LapakProduk (id, sellerId, rtId, rwId, kelurahanId, judul, deskripsi, harga, kategori, kontakWa, fotoUrl, isActive, isPromoted, createdAt, updatedAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, NOW(), NOW())`, id, user.id, rtId, rwId, kelurahanId, data.judul, data.deskripsi || '', Number(data.harga) || 0, data.kategori || 'PRODUK', data.kontakWa || user.phone, data.fotoUrl || null);
+            return {
+                id,
                 sellerId: user.id,
-                rtId: rtId,
-                rwId: rwId,
-                kelurahanId: kelurahanId,
+                rtId,
+                rwId,
+                kelurahanId,
                 judul: data.judul,
                 deskripsi: data.deskripsi || '',
                 harga: Number(data.harga) || 0,
                 kategori: data.kategori || 'PRODUK',
                 kontakWa: data.kontakWa || user.phone,
                 fotoUrl: data.fotoUrl || null,
+                isActive: true,
                 isPromoted: false,
                 promotedBadge: null,
                 paketIklan: null,
                 promotedUntil: null,
-            },
-        });
+            };
+        }
     }
     async boostProduk(id, user, data) {
         const scope = (data.scope || 'RT').toUpperCase();

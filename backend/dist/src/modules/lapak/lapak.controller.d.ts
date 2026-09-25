@@ -53,6 +53,23 @@ export declare class LapakController {
         paketIklan: string | null;
         promotedAt: Date | null;
         promotedUntil: Date | null;
+    } | {
+        id: any;
+        sellerId: any;
+        rtId: any;
+        rwId: any;
+        kelurahanId: any;
+        judul: string;
+        deskripsi: string;
+        harga: number;
+        kategori: string;
+        kontakWa: any;
+        fotoUrl: string;
+        isActive: boolean;
+        isPromoted: boolean;
+        promotedBadge: any;
+        paketIklan: any;
+        promotedUntil: any;
     }>;
     createProduk(user: any, body: {
         judul: string;
@@ -81,6 +98,23 @@ export declare class LapakController {
         paketIklan: string | null;
         promotedAt: Date | null;
         promotedUntil: Date | null;
+    } | {
+        id: any;
+        sellerId: any;
+        rtId: any;
+        rwId: any;
+        kelurahanId: any;
+        judul: string;
+        deskripsi: string;
+        harga: number;
+        kategori: string;
+        kontakWa: any;
+        fotoUrl: string;
+        isActive: boolean;
+        isPromoted: boolean;
+        promotedBadge: any;
+        paketIklan: any;
+        promotedUntil: any;
     }>;
     boostProduk(id: string, user: any, body: {
         packageType?: string;

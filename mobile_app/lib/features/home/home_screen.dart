@@ -714,6 +714,7 @@ class _HomeScreenState extends State<HomeScreen> {
               item['isPromoted'] == 1 ||
               item['isPromoted'] == '1';
           if (!isPromoted) return false;
+
           final expiry = DateTime.tryParse(
             (item['promotedUntil'] ??
                     item['iklanExpiredAt'] ??
@@ -722,26 +723,66 @@ class _HomeScreenState extends State<HomeScreen> {
                 .toString(),
           );
           if (expiry != null && expiry.isBefore(now)) return false;
+
           final sellerId =
               (item['userId'] ?? item['sellerId'] ?? item['seller']?['id'])
                   ?.toString();
-          if (item['isOwner'] == true ||
-              (user?['id'] != null && sellerId == user!['id'].toString()))
+          final currentUserId = user?['id']?.toString();
+          final isOwner = item['isOwner'] == true ||
+              (currentUserId != null && sellerId == currentUserId);
+
+          final rawScope = (item['paketIklan'] ?? 'RT').toString().toUpperCase();
+
+          // 1. Global / Semua: Visible to ALL registered users across all areas!
+          if (rawScope == 'SEMUA' ||
+              rawScope.contains('GLOBAL') ||
+              rawScope.contains('NASIONAL')) {
             return true;
-          final scope = (item['paketIklan'] ?? 'RT').toString().toUpperCase();
-          if (scope == 'NASIONAL' ||
-              scope.contains('SEMUA') ||
-              scope.contains('GLOBAL'))
+          }
+
+          // If the user is the owner, they can always see their ad
+          if (isOwner) return true;
+
+          // Area IDs and numbers from User
+          final userRtId = (user?['rtId'] ?? user?['rt']?['id'])?.toString();
+          final userRwId = (user?['rwId'] ?? user?['rt']?['rwId'] ?? user?['rw']?['id'])?.toString();
+          final userKelId = (user?['kelurahanId'] ?? user?['rt']?['rw']?['kelurahanId'] ?? user?['kelurahan']?['id'])?.toString();
+
+          final userRtNomor = (user?['rt']?['nomor'])?.toString().trim();
+          final userRwNomor = (user?['rw']?['nomor'] ?? user?['rt']?['rw']?['nomor'])?.toString().trim();
+
+          // Area IDs and numbers from Item
+          final itemRtId = (item['rtId'] ?? item['rt']?['id'] ?? item['seller']?['rtId'])?.toString();
+          final itemRwId = (item['rwId'] ?? item['rw']?['id'] ?? item['rt']?['rwId'] ?? item['rt']?['rw']?['id'] ?? item['seller']?['rwId'])?.toString();
+          final itemKelId = (item['kelurahanId'] ?? item['kelurahan']?['id'] ?? item['rt']?['rw']?['kelurahanId'] ?? item['seller']?['kelurahanId'])?.toString();
+
+          final itemRtNomor = (item['rt']?['nomor'])?.toString().trim();
+          final itemRwNomor = (item['rw']?['nomor'] ?? item['rt']?['rw']?['nomor'])?.toString().trim();
+
+          // 2. Kelurahan Scope: Visible to everyone in the same Kelurahan
+          if (rawScope.contains('KELURAHAN') || rawScope.contains('LURAH')) {
+            if (itemKelId != null && userKelId != null) {
+              return itemKelId == userKelId;
+            }
             return true;
-          final key = scope.contains('KELURAHAN')
-              ? 'kelurahanId'
-              : scope.contains('RW')
-              ? 'rwId'
-              : 'rtId';
-          final itemArea = (item[key] ?? item['seller']?[key])?.toString();
-          final userArea = user?[key]?.toString();
-          // The server scopes the catalog; reject a known mismatched area locally.
-          return itemArea == null || userArea == null || itemArea == userArea;
+          }
+
+          // 3. RW Scope: Visible to everyone in the same RW
+          if (rawScope.contains('RW')) {
+            if (itemRwId != null && userRwId != null && itemRwId == userRwId) return true;
+            if (itemRwNomor != null && userRwNomor != null && itemRwNomor == userRwNomor) return true;
+            return itemRwId == null || userRwId == null;
+          }
+
+          // 4. RT Scope: Visible to everyone in the same RT & RW
+          final sameRtId = itemRtId != null && userRtId != null && itemRtId == userRtId;
+          final sameRtNomor = itemRtNomor != null && userRtNomor != null && itemRtNomor == userRtNomor;
+          final sameRwNomor = itemRwNomor == null || userRwNomor == null || itemRwNomor == userRwNomor;
+
+          if (sameRtId) return true;
+          if (sameRtNomor && sameRwNomor) return true;
+
+          return itemRtId == null || userRtId == null;
         })
         .toList();
   }

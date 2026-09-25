@@ -128,7 +128,7 @@ void main() {
   });
 
   testWidgets(
-    'SOS requires explicit confirmation and preserves category and GPS',
+    'SOS sends immediately on tap and preserves category and GPS',
     (tester) async {
       final gateway = _FakeGateway(
         location: const PanicLocation(latitude: -6.2, longitude: 106.8),
@@ -136,9 +136,6 @@ void main() {
       await pumpHost(tester, gateway: gateway);
       await tester.ensureVisible(find.text('Medis'));
       await tester.tap(find.text('Medis'));
-      await tapSend(tester);
-      expect(gateway.calls, 0);
-      expect(find.text('Kirim SOS sekarang'), findsOneWidget);
       await tapSend(tester);
       expect(gateway.calls, 1);
       expect(gateway.sentCategory, 'Medis');
@@ -158,7 +155,7 @@ void main() {
     final gateway = _FakeGateway(fail: true);
     await pumpHost(tester, gateway: gateway);
     await tapSend(tester);
-    await tapSend(tester);
+    expect(gateway.calls, 1);
     expect(find.byType(PanicScreen), findsOneWidget);
     expect(
       find.textContaining('Pengiriman SOS belum terkonfirmasi'),

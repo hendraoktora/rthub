@@ -20,30 +20,32 @@ class PanicScreen extends StatefulWidget {
   State<PanicScreen> createState() => _PanicScreenState();
 }
 
-class _PanicScreenState extends State<PanicScreen> {
+class _PanicScreenState extends State<PanicScreen>
+    with SingleTickerProviderStateMixin {
   static const _categories = <String, (String, String, IconData)>{
     'BAHAYA_KEAMANAN': (
       'Keamanan',
       'Pencurian atau ancaman keselamatan',
-      Icons.shield_outlined,
+      Icons.shield_rounded,
     ),
     'KEBAKARAN': (
       'Kebakaran',
       'Api, asap, atau kebocoran gas',
-      Icons.local_fire_department_outlined,
+      Icons.local_fire_department_rounded,
     ),
     'MEDIS': (
       'Medis',
       'Bantuan kesehatan mendesak',
-      Icons.medical_services_outlined,
+      Icons.medical_services_rounded,
     ),
   };
   late String _category;
-  bool _confirming = false;
   bool _sending = false;
   bool _locating = true;
   PanicLocationResult? _location;
   String? _error;
+  AnimationController? _pulseController;
+  Animation<double>? _pulseAnimation;
 
   @override
   void initState() {
@@ -51,7 +53,30 @@ class _PanicScreenState extends State<PanicScreen> {
     _category = _categories.containsKey(widget.defaultCategory)
         ? widget.defaultCategory!
         : 'BAHAYA_KEAMANAN';
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _pulseController!, curve: Curves.easeInOut),
+    );
     _locate();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _pulseController?.stop();
+    } else if (_pulseController?.isAnimating != true) {
+      _pulseController?.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController?.dispose();
+    super.dispose();
   }
 
   Future<void> _locate() async {
@@ -72,7 +97,7 @@ class _PanicScreenState extends State<PanicScreen> {
   }
 
   Future<void> _send() async {
-    if (_sending || !_confirming) return;
+    if (_sending) return;
     HapticFeedback.heavyImpact();
     setState(() {
       _sending = true;
@@ -145,23 +170,43 @@ class _PanicScreenState extends State<PanicScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 12, 0),
+                  padding: const EdgeInsets.fromLTRB(24, 8, 12, 4),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.emergency_outlined,
-                        color: AppTheme.alertRed,
-                        size: 19,
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.emergency_rounded,
+                          color: AppTheme.alertRed,
+                          size: 18,
+                        ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       const Expanded(
-                        child: Text(
-                          'SOS DARURAT',
-                          style: TextStyle(
-                            fontSize: 12,
-                            letterSpacing: 1.8,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'SINYAL DARURAT',
+                              style: TextStyle(
+                                fontSize: 13,
+                                letterSpacing: 1.2,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.alertRed,
+                              ),
+                            ),
+                            Text(
+                              'Sentuh tombol untuk langsung kirim sinyal',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       IconButton(
@@ -174,52 +219,244 @@ class _PanicScreenState extends State<PanicScreen> {
                     ],
                   ),
                 ),
+                const Divider(height: 1, color: AppTheme.slateBorder),
                 Flexible(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     physics: const BouncingScrollPhysics(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Center(
-                          child: ClayIllustration(
-                            kind: ClayKind.siren,
-                            size: 116,
-                          ),
-                        ),
-                        Text(
-                          _confirming
-                              ? 'Siap mengirim bantuan?'
-                              : 'Tetap tenang.\nKami terhubung.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 27,
-                            height: 1.15,
-                            letterSpacing: -.9,
+                        // Category Selection - Compact Chips
+                        const Text(
+                          'PILIH KATEGORI DARURAT',
+                          style: TextStyle(
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryNavy,
+                            letterSpacing: 0.8,
+                            color: AppTheme.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Text(
-                          _confirming
-                              ? 'Sinyal ${_categories[_category]!.$1.toLowerCase()} akan dikirim ke pengurus RT dan petugas keamanan.'
-                              : 'Pilih kondisi darurat untuk meminta bantuan pengurus RT dan petugas keamanan.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 13,
-                            height: 1.6,
-                          ),
+                        Row(
+                          children: _categories.entries.map((entry) {
+                            final isSelected = _category == entry.key;
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onTap: _sending
+                                      ? null
+                                      : () {
+                                          HapticFeedback.selectionClick();
+                                          setState(() => _category = entry.key);
+                                        },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                      horizontal: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(0xFFFEF2F2)
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? AppTheme.alertRed
+                                            : AppTheme.slateBorder,
+                                        width: isSelected ? 2 : 1,
+                                      ),
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: AppTheme.alertRed.withOpacity(0.12),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 3),
+                                              )
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          entry.value.$3,
+                                          color: isSelected
+                                              ? AppTheme.alertRed
+                                              : AppTheme.textSecondary,
+                                          size: 24,
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          entry.value.$1,
+                                          textAlign: TextAlign.center,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w800
+                                                : FontWeight.w600,
+                                            color: isSelected
+                                                ? AppTheme.alertRed
+                                                : AppTheme.primaryNavy,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                         const SizedBox(height: 24),
-                        if (!_confirming)
-                          ..._categories.entries.map(
-                            (entry) => Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _categoryTile(entry.key, entry.value),
+
+                        // Prominent Center SOS Button
+                        Center(
+                          child: AnimatedBuilder(
+                            animation: _pulseAnimation ??
+                                const AlwaysStoppedAnimation(1.0),
+                            builder: (context, child) {
+                              final scale = _sending
+                                  ? 1.0
+                                  : (_pulseAnimation?.value ?? 1.0);
+                              return Transform.scale(
+                                scale: scale,
+                                child: child,
+                              );
+                            },
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Outer glow wave
+                                Container(
+                                  width: 176,
+                                  height: 176,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: const Color(0xFFEF4444).withOpacity(0.15),
+                                  ),
+                                ),
+                                // Middle ring
+                                Container(
+                                  width: 156,
+                                  height: 156,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: const Color(0xFFEF4444).withOpacity(0.25),
+                                  ),
+                                ),
+                                // Main clickable SOS button
+                                Material(
+                                  color: Colors.transparent,
+                                  shape: const CircleBorder(),
+                                  child: InkWell(
+                                    key: const ValueKey('send-panic'),
+                                    onTap: _sending ? null : _send,
+                                    customBorder: const CircleBorder(),
+                                    splashColor: Colors.white30,
+                                    highlightColor: Colors.white24,
+                                    child: Ink(
+                                      width: 136,
+                                      height: 136,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: const LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Color(0xFFFF3B30),
+                                            Color(0xFFDC2626),
+                                            Color(0xFF991B1B),
+                                          ],
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFDC2626).withOpacity(0.45),
+                                            blurRadius: 24,
+                                            spreadRadius: 2,
+                                            offset: const Offset(0, 8),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: _sending
+                                            ? const Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  SizedBox.square(
+                                                    dimension: 36,
+                                                    child: CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 3.5,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 10),
+                                                  Text(
+                                                    'MENGIRIM...',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.w900,
+                                                      letterSpacing: 1.2,
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            : Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.crisis_alert_rounded,
+                                                    color: Colors.white,
+                                                    size: 32,
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  const Text(
+                                                    'SOS',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 34,
+                                                      fontWeight: FontWeight.w900,
+                                                      letterSpacing: 2.5,
+                                                      height: 1.0,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    'TEKAN SEKARANG',
+                                                    style: TextStyle(
+                                                      color: Colors.white.withOpacity(0.9),
+                                                      fontSize: 9,
+                                                      fontWeight: FontWeight.w800,
+                                                      letterSpacing: 0.8,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          'Sinyal ${_categories[_category]!.$1.toLowerCase()} akan langsung dikirim ke pengurus RT dan satpam.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
                         _locationTile(),
                         if (_error != null) ...[
                           const SizedBox(height: 14),
@@ -230,83 +467,35 @@ class _PanicScreenState extends State<PanicScreen> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFEF2F2),
                                 borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                _error!,
-                                style: const TextStyle(
-                                  color: Color(0xFFB91C1C),
-                                  fontSize: 13,
-                                  height: 1.5,
+                                border: Border.all(
+                                  color: const Color(0xFFFCA5A5),
                                 ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(
+                                    Icons.error_outline_rounded,
+                                    color: Color(0xFFB91C1C),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      _error!,
+                                      style: const TextStyle(
+                                        color: Color(0xFFB91C1C),
+                                        fontSize: 12,
+                                        height: 1.4,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ],
-                        const SizedBox(height: 22),
-                        FilledButton.icon(
-                          key: const ValueKey('send-panic'),
-                          onPressed: _sending
-                              ? null
-                              : _confirming
-                              ? _send
-                              : () {
-                                  HapticFeedback.lightImpact();
-                                  setState(() => _confirming = true);
-                                },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppTheme.alertRed,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: const Color(0xFFFCA5A5),
-                            minimumSize: const Size.fromHeight(58),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          icon: _sending
-                              ? const SizedBox.square(
-                                  dimension: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Icon(
-                                  _confirming
-                                      ? Icons.sos_rounded
-                                      : Icons.crisis_alert_rounded,
-                                ),
-                          label: Text(
-                            _sending
-                                ? 'Mengirim SOS…'
-                                : _confirming
-                                ? (_error == null
-                                      ? 'Kirim SOS sekarang'
-                                      : 'Coba kirim SOS lagi')
-                                : 'Siapkan sinyal SOS',
-                            style: const TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (_confirming)
-                          TextButton(
-                            onPressed: _sending
-                                ? null
-                                : () => setState(() {
-                                    _confirming = false;
-                                    _error = null;
-                                  }),
-                            child: const Text('Ubah pilihan'),
-                          )
-                        else
-                          const Text(
-                            'Anda akan diminta konfirmasi sebelum SOS dikirim.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 11,
-                              height: 1.5,
-                            ),
-                          ),
                       ],
                     ),
                   ),
@@ -319,72 +508,6 @@ class _PanicScreenState extends State<PanicScreen> {
     );
   }
 
-  Widget _categoryTile(String id, (String, String, IconData) details) {
-    final selected = _category == id;
-    return Semantics(
-      selected: selected,
-      button: true,
-      child: Material(
-        color: selected ? const Color(0xFFFEF2F2) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: BorderSide(
-            color: selected ? AppTheme.alertRed : AppTheme.slateBorder,
-            width: selected ? 1.4 : 1,
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() => _category = id);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                Icon(
-                  details.$3,
-                  color: selected ? AppTheme.alertRed : AppTheme.textSecondary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        details.$1,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        details.$2,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  selected
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_off,
-                  size: 20,
-                  color: selected ? AppTheme.alertRed : AppTheme.textMuted,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _locationTile() {
     final available = _location?.location?.isValid == true;

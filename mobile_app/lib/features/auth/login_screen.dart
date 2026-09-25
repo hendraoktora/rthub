@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
 import '../../core/widgets/hub_motion.dart';
@@ -77,6 +79,133 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _showDemoAccountsModal() {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '⚡ Pilih Akun Demo Real',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF2261E8),
+                      ),
+                    ),
+                    Text(
+                      'Pass: Password123!',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: const Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Ketuk salah satu akun untuk mengisi otomatis:',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _demoAccountTile('👑 Ketua RT (Pak Hendra)', '081234567890', 'RT 03 / RW 05'),
+                _demoAccountTile('📝 Sekretaris RT (Pak Aditya)', '081288880001', 'RT 03 / RW 05'),
+                _demoAccountTile('💰 Bendahara RT (Ibu Siti)', '081398765432', 'RT 03 / RW 05'),
+                _demoAccountTile('🛡️ Satpam (Pak Joko)', '087812345678', 'Keamanan Lingkungan'),
+                _demoAccountTile('👤 Warga (Pak Fauzi)', '081211110001', 'Blok A3 No. 01'),
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _demoAccountTile(String label, String phone, String subtitle) {
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _usernameController.text = phone;
+          _passwordController.text = 'Password123!';
+        });
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Akun $label terpasang. Tekan "Masuk ke Lingkungan".'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: const Color(0xFF2261E8),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                  Text(
+                    '$phone • $subtitle',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF94A3B8)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,13 +221,12 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         title: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Text(
+          child: Text(
             'Kembali',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569)),
           ),
         ),
         titleSpacing: 0,
-        // Server config button is intentionally hidden as requested
         actions: const [],
       ),
       body: SafeArea(
@@ -108,113 +236,115 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 3D Animated Interactive Header Stage (Landing Page Inspired)
+              // 3D Animated Interactive Header Stage (Hold to show demo accounts)
               Center(
-                child: TiltCard(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: const Color(0xFFDCE1D7)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2261E8).withValues(alpha: 0.08),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        // 3D Logo Tile
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF2261E8), Color(0xFF164FC9)],
+                child: GestureDetector(
+                  onLongPress: _showDemoAccountsModal,
+                  child: TiltCard(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: const Color(0xFFDCE1D7)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2261E8).withValues(alpha: 0.08),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          // 3D Logo Tile (Hold this logo)
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Color(0xFF2261E8), Color(0xFF164FC9)],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF2261E8).withValues(alpha: 0.35),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF2261E8).withValues(alpha: 0.35),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                            padding: const EdgeInsets.all(9),
+                            child: const RtHubLogo(size: 34, showWordmark: false, isDark: true),
                           ),
-                          padding: const EdgeInsets.all(9),
-                          child: const RtHubLogo(size: 34, showWordmark: false, isDark: true),
-                        ),
-                        const SizedBox(width: 14),
-                        // 3D Micro Caption
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF047857),
-                                      shape: BoxShape.circle,
+                          const SizedBox(width: 14),
+                          // 3D Micro Caption
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF047857),
+                                        shape: BoxShape.circle,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    'PORTAL WARGA & PENGURUS',
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.6,
-                                      color: Color(0xFF5A6B5E),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'PORTAL WARGA & PENGURUS',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.6,
+                                        color: const Color(0xFF5A6B5E),
+                                      ),
                                     ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'RT Hub Digital',
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF263A32),
+                                    letterSpacing: -0.4,
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 3),
-                              const Text(
-                                'RT Hub Digital',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF263A32),
-                                  letterSpacing: -0.4,
                                 ),
-                              ),
-                              const Text(
-                                'Satu kampung, banyak cerita.',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF69776E),
-                                  fontWeight: FontWeight.w500,
+                                Text(
+                                  'Satu kampung, banyak cerita.',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    color: const Color(0xFF69776E),
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        // Mini 3D badge icon
-                        Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF7F8F2),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFDCE1D7)),
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F8F2),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFDCE1D7)),
+                            ),
+                            child: const Icon(Icons.holiday_village_rounded, size: 20, color: Color(0xFF2261E8)),
                           ),
-                          child: const Icon(Icons.holiday_village_rounded, size: 20, color: Color(0xFF2261E8)),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -222,33 +352,33 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 24),
 
               // Title + subtitle
-              const Text(
+              Text(
                 'Masuk Akun',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF263A32),
-                  letterSpacing: -0.7,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 27,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF263A32),
+                  letterSpacing: -0.8,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Kelola lingkungan, iuran, dan lapak tetangga Anda',
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
-                  color: Color(0xFF69776E),
+                  color: const Color(0xFF69776E),
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 22),
 
               // Identifier label
-              const Text(
+              Text(
                 'No. WhatsApp / Email / NIK',
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF334155),
+                  color: const Color(0xFF334155),
                 ),
               ),
               const SizedBox(height: 8),
@@ -269,7 +399,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: TextField(
                   controller: _usernameController,
                   keyboardType: TextInputType.phone,
-                  style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14.5, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
                     hintText: '08xx atau NIK Anda',
@@ -281,12 +411,12 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
 
               // Password label
-              const Text(
+              Text(
                 'Kata Sandi',
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF334155),
+                  color: const Color(0xFF334155),
                 ),
               ),
               const SizedBox(height: 8),
@@ -307,7 +437,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: TextField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14.5, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Masukkan kata sandi',
@@ -347,9 +477,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        const Text(
+                        Text(
                           'Ingat Saya',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF475569)),
                         ),
                       ],
                     ),
@@ -361,9 +491,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                    child: const Text(
+                    child: Text(
                       'Lupa Password?',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF2261E8)),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF2261E8)),
                     ),
                   ),
                 ],
@@ -391,15 +521,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: 22,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
                         )
-                      : const Row(
+                      : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               'Masuk ke Lingkungan',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: -0.2),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: -0.2),
                             ),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward_rounded, size: 18),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward_rounded, size: 18),
                           ],
                         ),
                 ),
@@ -412,7 +542,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Expanded(child: Divider(color: Color(0xFFDCE1D7))),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Text('atau', style: TextStyle(fontSize: 12.5, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w500)),
+                    child: Text('atau', style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w500)),
                   ),
                   const Expanded(child: Divider(color: Color(0xFFDCE1D7))),
                 ],
@@ -426,9 +556,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   spacing: 4,
                   children: [
-                    const Text(
+                    Text(
                       'Belum punya akun?',
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                      style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -437,10 +567,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           MaterialPageRoute(builder: (context) => const RegisterRtScreen()),
                         );
                       },
-                      child: const Text(
+                      child: Text(
                         'Daftar RT / Warga Baru',
-                        style: TextStyle(
-                          color: Color(0xFF2261E8),
+                        style: GoogleFonts.plusJakartaSans(
+                          color: const Color(0xFF2261E8),
                           fontWeight: FontWeight.w800,
                           fontSize: 13,
                         ),

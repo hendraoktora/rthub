@@ -20,10 +20,30 @@ export class LapakService {
         }
       }
 
-      const filters: any[] = [];
-      if (rwId) filters.push({ rwId });
-      if (kelurahanId) filters.push({ kelurahanId });
-      if (rtId) filters.push({ rtId });
+      const orConditions: any[] = [
+        { isPromoted: true, paketIklan: { in: ['SEMUA', 'GLOBAL', 'NASIONAL', 'IKLAN_GLOBAL'] } },
+      ];
+      if (user?.id) {
+        orConditions.push({ sellerId: user.id });
+      }
+      if (kelurahanId) {
+        orConditions.push({
+          kelurahanId,
+          isActive: true,
+        });
+      }
+      if (rwId) {
+        orConditions.push({
+          rwId,
+          isActive: true,
+        });
+      }
+      if (rtId) {
+        orConditions.push({
+          rtId,
+          isActive: true,
+        });
+      }
 
       try {
         const sanitizePromotion = (r: any) => {
@@ -37,30 +57,14 @@ export class LapakService {
           };
         };
 
-        if (filters.length === 0) {
-          const items = await this.prisma.lapakProduk.findMany({
-            where: { isActive: true },
-            include: {
-              seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
-              rt: { select: { nomor: true } },
-            },
-            orderBy: [{ isPromoted: 'desc' }, { createdAt: 'desc' }],
-            take: 50,
-          });
-          return items.map(sanitizePromotion);
-        }
-
         const items = await this.prisma.lapakProduk.findMany({
           where: {
-            OR: [
-              ...filters,
-              { isPromoted: true, paketIklan: 'SEMUA' },
-            ],
+            OR: orConditions,
             isActive: true,
           },
           include: {
             seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
-            rt: { select: { nomor: true } },
+            rt: { select: { id: true, nomor: true, rwId: true, rw: { select: { id: true, nomor: true, kelurahanId: true } } } },
           },
           orderBy: [
             { isPromoted: 'desc' },

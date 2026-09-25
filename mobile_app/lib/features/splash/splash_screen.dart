@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
 import '../../core/widgets/isometric_village_3d.dart';
-import '../../core/widgets/rthub_logo.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_rt_screen.dart';
 import '../home/home_screen.dart';
@@ -51,20 +51,23 @@ class _SplashScreenState extends State<SplashScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.dns_rounded, color: Color(0xFF2261E8)),
-            SizedBox(width: 8),
-            Text('Konfigurasi Server IP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Icon(Icons.dns_rounded, color: Color(0xFF2261E8)),
+            const SizedBox(width: 8),
+            Text(
+              'Konfigurasi Server IP',
+              style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Masukkan alamat IP server API backend:',
-              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -79,7 +82,7 @@ class _SplashScreenState extends State<SplashScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: Text('Batal', style: GoogleFonts.plusJakartaSans()),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -94,7 +97,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 );
               }
             },
-            child: const Text('Simpan'),
+            child: Text('Simpan', style: GoogleFonts.plusJakartaSans()),
           ),
         ],
       ),
@@ -140,45 +143,35 @@ class _SplashScreenState extends State<SplashScreen> {
             children: [
               const SizedBox(height: 6),
 
-              // Top Brand Pill Tag (identical to landing page .hero-tag)
+              // Official Logo from Landing Page
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   GestureDetector(
                     onLongPress: () => _showServerConfigDialog(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: const Color(0xFFDCE1D7)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.02),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
+                    child: Image.asset(
+                      'assets/images/rthub_logo_landing.png',
+                      height: 38,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF32664C), // Sage green dot
-                              shape: BoxShape.circle,
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2261E8),
+                              borderRadius: BorderRadius.circular(10),
                             ),
+                            child: const Icon(Icons.holiday_village_rounded, color: Colors.white, size: 20),
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            'RUANG DIGITAL UNTUK HIDUP BERTETANGGA',
-                            style: TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.8,
-                              color: Color(0xFF5A6B5E),
+                          Text(
+                            'RT Hub',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF263A32),
                             ),
                           ),
                         ],
@@ -187,51 +180,91 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 14),
+
+              // Top Brand Pill Tag (identical to landing page .hero-tag)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: const Color(0xFFDCE1D7)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF32664C), // Sage green dot
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'RUANG DIGITAL UNTUK HIDUP BERTETANGGA',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                        color: const Color(0xFF5A6B5E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 16),
 
-              // Hero Headline (matching landing page: "Satu kampung. Banyak cerita.")
+              // Hero Headline (matching landing page: Space Grotesk "Satu kampung. Banyak cerita.")
               RichText(
                 textAlign: TextAlign.center,
-                text: const TextSpan(
-                  style: TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1.0,
-                    height: 1.15,
-                    color: Color(0xFF263A32),
+                text: TextSpan(
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 35,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -1.5,
+                    height: 1.1,
+                    color: const Color(0xFF263A32),
                   ),
                   children: [
-                    TextSpan(text: 'Satu kampung.\n'),
+                    const TextSpan(text: 'Satu kampung.\n'),
                     TextSpan(
                       text: 'Banyak cerita.',
-                      style: TextStyle(color: Color(0xFF2261E8)),
+                      style: GoogleFonts.spaceGrotesk(color: const Color(0xFF2261E8)),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 8),
 
-              // Subtitle
-              const Text(
+              // Subtitle in Plus Jakarta Sans
+              Text(
                 'Urusan RT, sekarang lebih sederhana. Dari kas warga sampai lapak tetangga, semuanya terhubung.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.5,
-                  height: 1.55,
-                  color: Color(0xFF69776E),
+                  height: 1.6,
+                  color: const Color(0xFF69776E),
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
               // 3D Isometric Interactive Village Canvas
               const IsometricVillage3D(
-                height: 290,
+                height: 280,
                 interactive: true,
                 showFloatingBadges: true,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
               // Feature Badges (Landing page style)
               Wrap(
@@ -245,7 +278,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   _buildLandingPill(Icons.campaign_outlined, 'Warta RT', const Color(0xFFD97706)),
                 ],
               ),
-              const SizedBox(height: 26),
+              const SizedBox(height: 22),
 
               // Action Buttons
               // Primary "Masuk Akun" Button (.btn-primary style)
@@ -268,26 +301,26 @@ class _SplashScreenState extends State<SplashScreen> {
                       borderRadius: BorderRadius.circular(50), // Landing page round pill
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         'Masuk Akun',
-                        style: TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.2,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward_rounded, size: 18),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_forward_rounded, size: 18),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 10),
 
-              // Secondary "Daftar Akun Baru" Button (.btn-secondary style)
+              // Secondary "Daftar RT / Warga Baru" Button (.btn-secondary style)
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -306,12 +339,12 @@ class _SplashScreenState extends State<SplashScreen> {
                       borderRadius: BorderRadius.circular(50),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Daftar RT / Warga Baru',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF263A32),
+                      color: const Color(0xFF263A32),
                     ),
                   ),
                 ),
@@ -319,9 +352,13 @@ class _SplashScreenState extends State<SplashScreen> {
               const SizedBox(height: 16),
 
               // Subtle author & platform tag
-              const Text(
+              Text(
                 'RT Hub • Platform Digital Rukun Tetangga',
-                style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  color: const Color(0xFF94A3B8),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 6),
             ],
@@ -353,10 +390,10 @@ class _SplashScreenState extends State<SplashScreen> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF334155),
+              color: const Color(0xFF334155),
             ),
           ),
         ],

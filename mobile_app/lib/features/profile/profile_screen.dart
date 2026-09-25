@@ -1013,35 +1013,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Profil Saya & Kartu Keluarga'),
+        title: const Text(
+          'Profil & Kartu Keluarga',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            letterSpacing: -0.5,
+          ),
+        ),
+        centerTitle: false,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_note_rounded, color: AppTheme.electricBlue, size: 26),
-            tooltip: 'Edit Profil Diri',
-            onPressed: _handleEditProfile,
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: IconButton.filledTonal(
+              icon: const Icon(Icons.edit_note_rounded, size: 22),
+              tooltip: 'Edit Profil Diri',
+              onPressed: _handleEditProfile,
+            ),
           ),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile Header Card with Avatar Editor
+              // Profile Header Card (Porcelain White Surface)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.primaryNavy, Color(0xFF1E293B)],
-                  ),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: const [
                     BoxShadow(
-                      color: AppTheme.primaryNavy.withValues(alpha: 0.2),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+                      color: Color(0x060F172A),
+                      blurRadius: 18,
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
@@ -1053,7 +1070,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppTheme.electricBlue, width: 2),
+                            border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
                           ),
                           child: _buildAvatarWidget(avatarUrl, namaLengkap),
                         ),
@@ -1074,11 +1091,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     TextButton.icon(
                       onPressed: _showGantiFotoModal,
-                      icon: const Icon(Icons.photo_camera_outlined, size: 13, color: AppTheme.skyAzure),
-                      label: const Text('Ubah Foto Profil', style: TextStyle(color: AppTheme.skyAzure, fontSize: 11, fontWeight: FontWeight.bold)),
+                      icon: const Icon(Icons.photo_camera_outlined, size: 13, color: AppTheme.electricBlue),
+                      label: const Text('Ubah Foto Profil', style: TextStyle(color: AppTheme.electricBlue, fontSize: 12, fontWeight: FontWeight.bold)),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                         minimumSize: Size.zero,
@@ -1088,38 +1105,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 8),
                     Text(
                       namaLengkap,
-                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.4,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Unit Rumah: $noRumah',
-                      style: const TextStyle(color: AppTheme.skyAzure, fontSize: 13, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
                           ),
                           child: Text(
-                            '📍 RT $rtNomor / RW $rwNomor - $kelurahanNama',
-                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
+                            '📍 RT $rtNomor / RW $rwNomor · $kelurahanNama',
+                            style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: AppTheme.successGreen.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(10),
+                            color: const Color(0xFFE7F6EF),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFA7F3D0)),
                           ),
                           child: Text(
-                            role == 'ADMIN_RT' ? 'Ketua RT' : (role.contains('BENDAHARA') ? 'Bendahara' : (role == 'SECURITY' ? 'Satpam RT' : 'Warga Tetap')),
-                            style: const TextStyle(color: AppTheme.successGreen, fontSize: 10, fontWeight: FontWeight.bold),
+                            role == 'ADMIN_RT'
+                                ? 'Ketua RT'
+                                : (role.contains('BENDAHARA')
+                                    ? 'Bendahara'
+                                    : (role == 'SECURITY' ? 'Satpam RT' : 'Warga Tetap')),
+                            style: const TextStyle(
+                              color: Color(0xFF047857),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
@@ -1144,11 +1186,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 8),
 
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppTheme.slateBorder),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x060F172A),
+                      blurRadius: 14,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
@@ -1262,11 +1311,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final isKepala = member['hubungan'] == 'KEPALA_KELUARGA';
 
                   return Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.slateBorder),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x060F172A),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Row(
                       children: [

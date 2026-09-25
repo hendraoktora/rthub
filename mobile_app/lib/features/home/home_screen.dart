@@ -1669,7 +1669,7 @@ class _SosFabLocation extends FloatingActionButtonLocation {
   Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
     final Offset standard =
         FloatingActionButtonLocation.endFloat.getOffset(scaffoldGeometry);
-    // Lift the SOS button by 84dp so it floats cleanly above the glass bottom nav bar
-    return Offset(standard.dx, standard.dy - 84.0);
+    // Float just above the floating glass bottom navigation bar without overlapping content
+    return Offset(standard.dx, standard.dy - 24.0);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
 
@@ -357,18 +358,36 @@ class _AgendaScreenState extends State<AgendaScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Text('Agenda Kegiatan RT $rtNomor'),
+        title: Text(
+          'Agenda Kegiatan RT $rtNomor',
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            letterSpacing: -0.5,
+          ),
+        ),
+        centerTitle: false,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh DB',
+            tooltip: 'Perbarui agenda',
             onPressed: _loadAgendaFromDb,
           ),
           if (isPengurus)
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline_rounded, color: AppTheme.electricBlue),
-              tooltip: 'Tambah Agenda',
-              onPressed: _showTambahAgendaModal,
+            Padding(
+              padding: const EdgeInsets.only(right: 14),
+              child: IconButton.filledTonal(
+                icon: const Icon(Icons.add_rounded, size: 20),
+                tooltip: 'Tambah Agenda',
+                onPressed: _showTambahAgendaModal,
+              ),
             ),
         ],
       ),
@@ -377,48 +396,74 @@ class _AgendaScreenState extends State<AgendaScreen> {
           onRefresh: _loadAgendaFromDb,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Info Card
+                // Header Info Card (Porcelain White Surface)
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppTheme.primaryNavy, Color(0xFF1E293B)],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x060F172A),
+                        blurRadius: 16,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '📅 Kalender Kegiatan Lingkungan',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Wilayah RT $rtNomor / RW $rwNomor (Tersinkron Database)',
-                            style: const TextStyle(color: AppTheme.skyAzure, fontSize: 11),
-                          ),
-                        ],
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3E8FF),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.event_available_rounded,
+                          color: Color(0xFF7C3AED),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Kalender Lingkungan',
+                              style: TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Wilayah RT $rtNomor / RW $rwNomor',
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       if (isPengurus)
-                        ElevatedButton(
+                        FilledButton.tonalIcon(
                           onPressed: _showTambahAgendaModal,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.electricBlue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text('Buat', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
-                          child: const Text('+ Buat', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                         ),
                     ],
                   ),
@@ -626,16 +671,16 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       final isReminded = _remindedIds.contains(item['id']);
 
                       return Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: AppTheme.slateBorder),
-                          boxShadow: [
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          boxShadow: const [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.02),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
+                              color: Color(0x060F172A),
+                              blurRadius: 14,
+                              offset: Offset(0, 4),
                             ),
                           ],
                         ),
@@ -758,21 +803,34 @@ class _AgendaScreenState extends State<AgendaScreen> {
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: GestureDetector(
-        onTap: () => setState(() => _selectedCategory = cat),
-        child: Container(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          setState(() => _selectedCategory = cat);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.primaryNavy : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            color: isSelected ? const Color(0xFF0F172A) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? AppTheme.primaryNavy : AppTheme.slateBorder,
+              color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
             ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
           ),
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
               color: isSelected ? Colors.white : AppTheme.textSecondary,
             ),
           ),

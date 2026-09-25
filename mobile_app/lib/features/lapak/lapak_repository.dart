@@ -14,11 +14,18 @@ abstract class LapakRepository {
 class ApiLapakRepository extends LapakRepository {
   const ApiLapakRepository();
   @override
-  Future<List<LapakProduct>> loadProducts() async =>
-      (await ApiService.getLapakList(allowFallback: false))
-          .whereType<Map>()
-          .map((e) => LapakProduct.fromJson(Map<String, dynamic>.from(e)))
-          .toList();
+  Future<List<LapakProduct>> loadProducts() async {
+    List<dynamic> raw;
+    try {
+      raw = await ApiService.getLapakList(allowFallback: false);
+    } catch (_) {
+      raw = await ApiService.getLapakList(allowFallback: true);
+    }
+    return raw
+        .whereType<Map>()
+        .map((e) => LapakProduct.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
   @override
   Future<Map<String, dynamic>?> loadUser() => ApiService.getUserData();
   @override

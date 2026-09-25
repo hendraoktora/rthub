@@ -2,70 +2,8 @@ import { LapakService } from './lapak.service';
 export declare class LapakController {
     private readonly lapakService;
     constructor(lapakService: LapakService);
-    getProdukDefault(user: any): Promise<({
-        rt: {
-            nomor: string;
-        };
-        seller: {
-            profile: {
-                namaLengkap: string;
-                noRumah: string;
-            };
-            phone: string;
-            id: string;
-        };
-    } & {
-        rtId: string;
-        id: string;
-        isActive: boolean;
-        kelurahanId: string;
-        rwId: string;
-        createdAt: Date;
-        updatedAt: Date;
-        deskripsi: string;
-        kategori: string;
-        judul: string;
-        sellerId: string;
-        harga: import("@prisma/client/runtime/library").Decimal;
-        fotoUrl: string | null;
-        kontakWa: string;
-        isPromoted: boolean;
-        promotedBadge: string | null;
-        paketIklan: string | null;
-        promotedUntil: Date | null;
-    })[]>;
-    getProduk(user: any): Promise<({
-        rt: {
-            nomor: string;
-        };
-        seller: {
-            profile: {
-                namaLengkap: string;
-                noRumah: string;
-            };
-            phone: string;
-            id: string;
-        };
-    } & {
-        rtId: string;
-        id: string;
-        isActive: boolean;
-        kelurahanId: string;
-        rwId: string;
-        createdAt: Date;
-        updatedAt: Date;
-        deskripsi: string;
-        kategori: string;
-        judul: string;
-        sellerId: string;
-        harga: import("@prisma/client/runtime/library").Decimal;
-        fotoUrl: string | null;
-        kontakWa: string;
-        isPromoted: boolean;
-        promotedBadge: string | null;
-        paketIklan: string | null;
-        promotedUntil: Date | null;
-    })[]>;
+    getProdukDefault(user: any): Promise<any[]>;
+    getProduk(user: any): Promise<any[]>;
     getKontrakan(user: any): Promise<({
         rt: {
             nomor: string;

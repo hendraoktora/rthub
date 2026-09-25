@@ -723,21 +723,6 @@ class ApiService {
       }
     }
 
-    final token = await getToken();
-    if (token != null || liveList.isNotEmpty) {
-      final combined = [...liveList, ...filteredLocal];
-      final seenIds = <String>{};
-      final uniqueList = <dynamic>[];
-      for (final item in combined) {
-        final id = (item['id'] ?? '').toString();
-        if (id.isNotEmpty && !seenIds.contains(id)) {
-          seenIds.add(id);
-          uniqueList.add(item);
-        }
-      }
-      return uniqueList;
-    }
-
     final defaultLapak = [
       {
         'id': 'lapak_demo_1',
@@ -748,6 +733,9 @@ class ApiService {
         'kategori': 'Kuliner',
         'kontakWa': '081234567890',
         'sellerId': 'seller_mpok_siti',
+        'isPromoted': true,
+        'promotedBadge': 'SPONSORED',
+        'paketIklan': 'RT',
         'seller': {
           'profile': {'namaLengkap': 'Mpok Siti', 'noRumah': 'Blok A3 No. 5'},
         },
@@ -811,7 +799,11 @@ class ApiService {
       },
     ];
 
-    final combined = [...filteredLocal, ...defaultLapak];
+    final combined = [
+      ...liveList,
+      ...filteredLocal,
+      if (liveList.isEmpty) ...defaultLapak,
+    ];
     final seenIds = <String>{};
     final uniqueList = <dynamic>[];
     for (final item in combined) {
@@ -832,13 +824,39 @@ class ApiService {
     String? scope,
     String? paymentMethod,
   }) async {
+    final effectiveScope = scope ?? 'RT';
+    final expiry = DateTime.now().add(Duration(days: durationDays));
+
     await _lapakMutation('POST', '/lapak/${Uri.encodeComponent(id)}/boost', {
       'packageType': packageType,
-      'scope': scope ?? 'RT',
+      'scope': effectiveScope,
       'durationDays': durationDays,
       'price': price,
-      'paymentMethod': ?paymentMethod,
+      'paymentMethod': paymentMethod,
     });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedStr = prefs.getString('local_custom_lapak');
+      List<dynamic> localList = savedStr != null ? jsonDecode(savedStr) : [];
+      final idx = localList.indexWhere((item) => (item['id'] ?? '').toString() == id);
+      if (idx != -1) {
+        localList[idx]['isPromoted'] = true;
+        localList[idx]['promotedBadge'] = 'SPONSORED';
+        localList[idx]['paketIklan'] = effectiveScope;
+        localList[idx]['promotedUntil'] = expiry.toIso8601String();
+      } else {
+        localList.add({
+          'id': id,
+          'isPromoted': true,
+          'promotedBadge': 'SPONSORED',
+          'paketIklan': effectiveScope,
+          'promotedUntil': expiry.toIso8601String(),
+        });
+      }
+      await prefs.setString('local_custom_lapak', jsonEncode(localList));
+    } catch (_) {}
+
     invalidateCache('lapak');
   }
 

@@ -2,38 +2,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export declare class LapakService {
     private prisma;
     constructor(prisma: PrismaService);
-    getFeedLapak(user: any): Promise<({
-        rt: {
-            nomor: string;
-        };
-        seller: {
-            profile: {
-                namaLengkap: string;
-                noRumah: string;
-            };
-            phone: string;
-            id: string;
-        };
-    } & {
-        rtId: string;
-        id: string;
-        isActive: boolean;
-        kelurahanId: string;
-        rwId: string;
-        createdAt: Date;
-        updatedAt: Date;
-        deskripsi: string;
-        kategori: string;
-        judul: string;
-        sellerId: string;
-        harga: import("@prisma/client/runtime/library").Decimal;
-        fotoUrl: string | null;
-        kontakWa: string;
-        isPromoted: boolean;
-        promotedBadge: string | null;
-        paketIklan: string | null;
-        promotedUntil: Date | null;
-    })[]>;
+    getFeedLapak(user: any): Promise<any[]>;
     getFeedKontrakan(user: any): Promise<({
         rt: {
             nomor: string;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
-import '../../core/widgets/rthub_logo.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_rt_screen.dart';
 import '../home/home_screen.dart';
@@ -185,51 +184,48 @@ class _SplashScreenState extends State<SplashScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 16.0),
               child: Column(
                 children: [
-                  // Top Server Config Action
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.settings_ethernet_rounded,
-                        color: Colors.white.withValues(alpha: 0.5),
-                        size: 22,
-                      ),
-                      tooltip: 'Atur IP Server Backend',
-                      onPressed: () => _showServerConfigDialog(context),
-                    ),
-                  ),
+                  const SizedBox(height: 20),
 
                   const Spacer(flex: 2),
 
-                  // Glowing Center Card
-                  Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        width: 1.5,
+                  // Glowing Center Card (Secret long press for admin server config)
+                  GestureDetector(
+                    onLongPress: () => _showServerConfigDialog(context),
+                    child: Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF6366F1).withValues(alpha: 0.35),
+                            blurRadius: 36,
+                            spreadRadius: 2,
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF6366F1).withValues(alpha: 0.35),
-                          blurRadius: 36,
-                          spreadRadius: 2,
+                      alignment: Alignment.center,
+                      child: Center(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.asset(
+                            'assets/images/rthub_icon.png',
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.contain,
+                          ),
                         ),
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: const RtHubLogo(
-                      size: 56,
-                      showWordmark: false,
-                      isDark: true,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 22),

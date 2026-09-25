@@ -344,8 +344,8 @@ class _PulseSosButtonState extends State<PulseSosButton>
   @override
   Widget build(BuildContext context) => RepaintBoundary(
     child: SizedBox(
-      width: 80,
-      height: 80,
+      width: 76,
+      height: 76,
       child: AnimatedBuilder(
         animation: _pulse,
         child: Semantics(
@@ -354,33 +354,42 @@ class _PulseSosButtonState extends State<PulseSosButton>
           excludeSemantics: true,
           child: Material(
             color: Colors.transparent,
+            shape: const CircleBorder(),
+            clipBehavior: Clip.none,
             child: InkWell(
               customBorder: const CircleBorder(),
               onTap: () {
                 HapticFeedback.mediumImpact();
                 widget.onPressed();
               },
-              child: Ink(
-                width: 62,
-                height: 62,
+              child: Container(
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFFFF807A),
+                      Color(0xFFFF6962),
                       AppTheme.alertRed,
-                      Color(0xFFC52A38),
+                      Color(0xFFBA1A28),
                     ],
                   ),
-                  border: Border.all(color: const Color(0xFFFFB2AD), width: 2),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0xFFAC2030), offset: Offset(0, 4)),
+                  border: Border.all(
+                    color: const Color(0xFFFFB2AD),
+                    width: 2,
+                  ),
+                  boxShadow: [
                     BoxShadow(
-                      color: Color(0x35EF4444),
+                      color: const Color(0xFFBA1A28).withValues(alpha: 0.45),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                    BoxShadow(
+                      color: AppTheme.alertRed.withValues(alpha: 0.35),
                       blurRadius: 16,
-                      offset: Offset(0, 9),
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -392,12 +401,15 @@ class _PulseSosButtonState extends State<PulseSosButton>
                       color: Colors.white,
                       size: 22,
                     ),
+                    SizedBox(height: 1),
                     Text(
                       'SOS',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
+                        letterSpacing: 0.5,
+                        height: 1.0,
                       ),
                     ),
                   ],
@@ -408,17 +420,18 @@ class _PulseSosButtonState extends State<PulseSosButton>
         ),
         builder: (context, child) => Stack(
           alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
             Transform.scale(
-              scale: 1 + _pulse.value * .26,
+              scale: 1 + _pulse.value * .28,
               child: Container(
-                width: 62,
-                height: 62,
+                width: 58,
+                height: 58,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: AppTheme.alertRed.withValues(
-                      alpha: (1 - _pulse.value) * .24,
+                      alpha: (1 - _pulse.value) * .35,
                     ),
                     width: 2,
                   ),

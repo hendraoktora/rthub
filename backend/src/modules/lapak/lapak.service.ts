@@ -57,20 +57,42 @@ export class LapakService {
           take: 50,
         });
       } catch (innerErr) {
-        // Fallback for schema / prisma client variations
-        const whereClause: any = { isActive: true };
-        if (filters.length > 0) {
-          whereClause.OR = filters;
+        // Fallback with direct SQL so columns in MySQL are always queried safely
+        try {
+          const rawItems = await this.prisma.$queryRawUnsafe<any[]>(`
+            SELECT lp.*, 
+                   u.phone as sellerPhone,
+                   p.namaLengkap as sellerNama,
+                   p.noRumah as sellerRumah,
+                   rt.nomor as rtNomor
+            FROM LapakProduk lp
+            LEFT JOIN User u ON u.id = lp.sellerId
+            LEFT JOIN Profile p ON p.userId = u.id
+            LEFT JOIN RT rt ON rt.id = lp.rtId
+            WHERE lp.isActive = 1
+            ORDER BY lp.isPromoted DESC, lp.createdAt DESC
+            LIMIT 50
+          `);
+          return rawItems.map((r: any) => ({
+            ...r,
+            isPromoted: Boolean(r.isPromoted),
+            promotedBadge: r.promotedBadge || (r.isPromoted ? 'SPONSORED' : null),
+            paketIklan: r.paketIklan,
+            seller: {
+              id: r.sellerId,
+              phone: r.sellerPhone,
+              profile: {
+                namaLengkap: r.sellerNama,
+                noRumah: r.sellerRumah,
+              },
+            },
+            rt: {
+              nomor: r.rtNomor,
+            },
+          }));
+        } catch (_) {
+          return [];
         }
-        return await this.prisma.lapakProduk.findMany({
-          where: whereClause,
-          include: {
-            seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
-            rt: { select: { nomor: true } },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 50,
-        });
       }
     } catch (outerErr) {
       console.error('getFeedLapak error:', outerErr);
@@ -145,19 +167,44 @@ export class LapakService {
       ? new Date(data.promotedUntil)
       : new Date(Date.now() + duration * 24 * 60 * 60 * 1000);
 
-    return this.prisma.lapakProduk.update({
-      where: { id },
-      data: {
+    try {
+      return await this.prisma.lapakProduk.update({
+        where: { id },
+        data: {
+          isPromoted: true,
+          promotedBadge: 'SPONSORED',
+          paketIklan: scope,
+          promotedUntil: expiry,
+        },
+        include: {
+          seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
+          rt: { select: { nomor: true } },
+        },
+      });
+    } catch (err) {
+      // Direct SQL fallback if Prisma schema/client on server is older
+      const formattedDate = expiry.toISOString().slice(0, 19).replace('T', ' ');
+      await this.prisma.$executeRawUnsafe(
+        `UPDATE LapakProduk SET isPromoted = 1, promotedBadge = 'SPONSORED', paketIklan = ?, promotedUntil = ? WHERE id = ?`,
+        scope,
+        formattedDate,
+        id,
+      );
+      const res = await this.prisma.lapakProduk.findUnique({
+        where: { id },
+        include: {
+          seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
+          rt: { select: { nomor: true } },
+        },
+      });
+      return {
+        ...res,
         isPromoted: true,
         promotedBadge: 'SPONSORED',
         paketIklan: scope,
         promotedUntil: expiry,
-      },
-      include: {
-        seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
-        rt: { select: { nomor: true } },
-      },
-    });
+      };
+    }
   }
 
   async deleteProduk(id: string, user: any) {

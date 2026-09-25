@@ -1,8 +1,10 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '@prisma/client';
+import { AddonsService } from '../addons/addons.service';
 export declare class WilayahService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private addonsService;
+    constructor(prisma: PrismaService, addonsService: AddonsService);
     getKelurahanList(): Promise<({
         _count: {
             rws: number;
@@ -56,6 +58,10 @@ export declare class WilayahService {
         phone: string;
         saldoKas: number;
         createdAt: Date;
+        paket: string;
+        isPro: boolean;
+        statusAddon: "AKTIF" | "TRIAL" | "TIDAK_AKTIF";
+        expiredAt: string;
     }[]>;
     getWargaByRt(rtId: string): Promise<{
         totalRumah: number;

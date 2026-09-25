@@ -39,6 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role,
   // SECURITY: Absensi Pos, Lapor Patroli, Panic Alert, Lapor RT, Lapak
   const menuItems = [
     // 1. Superadmin Platform Only
+    { id: 'superadmin_overview', label: 'Overview Platform', icon: LayoutDashboard, roles: ['SUPERADMIN'] },
     { id: 'superadmin_rt', label: 'Monitoring Wilayah RT', icon: Building2, roles: ['SUPERADMIN'] },
     { id: 'uang_masuk', label: 'Arus Uang Masuk (PG)', icon: ArrowDownLeft, roles: ['SUPERADMIN'] },
     { id: 'approval_penarikan', label: 'Approval Penarikan RT', icon: ShieldCheck, roles: ['SUPERADMIN'] },

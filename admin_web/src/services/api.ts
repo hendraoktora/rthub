@@ -213,6 +213,44 @@ export const api = {
     return res.json();
   },
 
+  async getAddonSubscriptions() {
+    const token = this.getToken();
+    const res = await fetch(`${API_BASE_URL}/addons/all`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) throw new Error('Gagal memuat status langganan Add-Ons RT');
+    return res.json();
+  },
+
+  async updateAddonSubscription(data: { rtId: string; status: 'AKTIF' | 'TRIAL' | 'TIDAK_AKTIF'; durationDays?: number; paket?: 'BASIC' | 'PRO' }) {
+    const token = this.getToken();
+    const res = await fetch(`${API_BASE_URL}/addons/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Gagal memperbarui status paket Add-Ons RT');
+    return res.json();
+  },
+
+  async getMyAddonStatus() {
+    const token = this.getToken();
+    const res = await fetch(`${API_BASE_URL}/addons/status`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) throw new Error('Gagal memuat status Add-Ons RT');
+    return res.json();
+  },
+
   async getFeeConfig() {
     const token = this.getToken();
     const res = await fetch(`${API_BASE_URL}/kas/superadmin/fee-config`, {

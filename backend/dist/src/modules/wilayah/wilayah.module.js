@@ -10,11 +10,13 @@ exports.WilayahModule = void 0;
 const common_1 = require("@nestjs/common");
 const wilayah_service_1 = require("./wilayah.service");
 const wilayah_controller_1 = require("./wilayah.controller");
+const addons_module_1 = require("../addons/addons.module");
 let WilayahModule = class WilayahModule {
 };
 exports.WilayahModule = WilayahModule;
 exports.WilayahModule = WilayahModule = __decorate([
     (0, common_1.Module)({
+        imports: [addons_module_1.AddonsModule],
         controllers: [wilayah_controller_1.WilayahController],
         providers: [wilayah_service_1.WilayahService],
         exports: [wilayah_service_1.WilayahService],

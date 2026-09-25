@@ -13,9 +13,11 @@ exports.LaporanService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const client_1 = require("@prisma/client");
+const addons_service_1 = require("../addons/addons.service");
 let LaporanService = class LaporanService {
-    constructor(prisma) {
+    constructor(prisma, addonsService) {
         this.prisma = prisma;
+        this.addonsService = addonsService;
     }
     async createLaporan(user, data) {
         const dbUser = await this.prisma.user.findUnique({
@@ -27,6 +29,14 @@ let LaporanService = class LaporanService {
         const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
         if (!rtId) {
             throw new common_1.BadRequestException('Akun Anda belum terdaftar dalam unit RT manapun.');
+        }
+        const tipeLaporan = data.tipeLaporan || 'PENGADUAN';
+        const isSurat = tipeLaporan.startsWith('SURAT_') || tipeLaporan === 'SURAT_PENGANTAR';
+        if (isSurat) {
+            const isPro = await this.addonsService.isRtProActive(rtId);
+            if (!isPro) {
+                throw new common_1.ForbiddenException('Layanan E-Surat Digital memerlukan RT Anda mengaktifkan Paket RT Pro (Add-Ons Rp 49.000/bulan). Silakan hubungi Ketua RT/Pengurus Anda untuk mengaktifkan paket ini.');
+            }
         }
         const dataSuratString = data.dataSurat
             ? typeof data.dataSurat === 'object'
@@ -308,6 +318,7 @@ let LaporanService = class LaporanService {
 exports.LaporanService = LaporanService;
 exports.LaporanService = LaporanService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        addons_service_1.AddonsService])
 ], LaporanService);
 //# sourceMappingURL=laporan.service.js.map

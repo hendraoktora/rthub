@@ -16,6 +16,7 @@ class _LaporScreenState extends State<LaporScreen> {
   List<dynamic> _laporanList = [];
   bool _isLoading = false;
   Map<String, dynamic>? _user;
+  bool _isRtPro = false;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -28,6 +29,16 @@ class _LaporScreenState extends State<LaporScreen> {
   void _loadUserData() async {
     final user = await ApiService.getUserData();
     if (mounted) setState(() => _user = user);
+    _loadAddonStatus();
+  }
+
+  void _loadAddonStatus() async {
+    final status = await ApiService.getRtAddonStatus();
+    if (mounted) {
+      setState(() {
+        _isRtPro = status['isPro'] == true;
+      });
+    }
   }
 
   Future<void> _loadLaporanFromDb() async {
@@ -43,6 +54,7 @@ class _LaporScreenState extends State<LaporScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+    _loadAddonStatus();
   }
 
   // Strict Privacy: Regular WARGA only see their own reports or reports targeted to them
@@ -131,6 +143,112 @@ class _LaporScreenState extends State<LaporScreen> {
     }
   }
 
+  void _showProAddonUpgradePrompt(String templateName) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFEF3C7),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.workspace_premium_rounded,
+                color: Color(0xFFD97706),
+                size: 38,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Layanan $templateName',
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEDE9FE),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                '👑 Termasuk dalam Paket RT Pro (Add-Ons)',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF6D28D9),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Mohon maaf, RT Anda saat ini menggunakan Paket RT Basic (Gratis). Layanan pembuatan E-Surat Digital resmi ber-barcode validasi membutuhkan pengurus RT Anda mengaktifkan Paket RT Pro (Rp 49.000 / bulan / RT).\n\nSilakan sampaikan kepada Ketua RT atau Bendahara Anda untuk mengaktifkan paket ini agar seluruh warga dapat mengajukan surat secara online.',
+              style: TextStyle(
+                fontSize: 12.5,
+                color: AppTheme.textSecondary,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Tutup'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showBuatLaporanModal(initialTemplate: 'PENGADUAN');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryNavy,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.campaign_outlined, size: 16, color: Colors.white),
+                    label: const Text(
+                      'Buat Aduan Biasa',
+                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showBuatLaporanModal({String? initialTemplate}) {
     final messenger = ScaffoldMessenger.of(context);
     String tipeLaporan = initialTemplate ?? 'PENGADUAN';
@@ -144,6 +262,12 @@ class _LaporScreenState extends State<LaporScreen> {
         : tipeLaporan == 'SURAT_PENGANTAR'
         ? 'Permohonan Surat Pengantar Kelurahan'
         : '';
+
+    // Guard: Jika memilih template surat tapi RT belum aktifkan Pro
+    if (tipeLaporan.startsWith('SURAT_') && !_isRtPro) {
+      _showProAddonUpgradePrompt(initialTitle.isNotEmpty ? initialTitle : 'Surat Resmi RT');
+      return;
+    }
 
     final judulController = TextEditingController(text: initialTitle);
     final deskripsiController = TextEditingController();
@@ -223,26 +347,26 @@ class _LaporScreenState extends State<LaporScreen> {
                     labelText: 'Pilih Template / Layanan *',
                     prefixIcon: Icon(Icons.description_outlined),
                   ),
-                  items: const [
-                    DropdownMenuItem(
+                  items: [
+                    const DropdownMenuItem(
                       value: 'PENGADUAN',
-                      child: Text('📢 Pengaduan Lingkungan & Fasilitas'),
+                      child: Text('📢 Pengaduan Lingkungan (Gratis)'),
                     ),
                     DropdownMenuItem(
                       value: 'SURAT_PENGANTAR',
-                      child: Text('📑 Surat Pengantar Kelurahan (KTP/KK)'),
+                      child: Text(_isRtPro ? '📑 Surat Pengantar Kelurahan (KTP/KK)' : '📑 Surat Pengantar Kelurahan 🔒 Pro'),
                     ),
                     DropdownMenuItem(
                       value: 'SURAT_KEMATIAN',
-                      child: Text('📜 Surat Keterangan Kematian'),
+                      child: Text(_isRtPro ? '📜 Surat Keterangan Kematian' : '📜 Surat Keterangan Kematian 🔒 Pro'),
                     ),
                     DropdownMenuItem(
                       value: 'SURAT_SKTM',
-                      child: Text('📄 Surat Keterangan Tidak Mampu (SKTM)'),
+                      child: Text(_isRtPro ? '📄 Surat Keterangan Tidak Mampu (SKTM)' : '📄 Surat SKTM 🔒 Pro'),
                     ),
                     DropdownMenuItem(
                       value: 'SURAT_DOMISILI',
-                      child: Text('🏡 Surat Keterangan Domisili Warga'),
+                      child: Text(_isRtPro ? '🏡 Surat Keterangan Domisili Warga' : '🏡 Surat Domisili 🔒 Pro'),
                     ),
                   ],
                   onChanged: (val) {
@@ -272,6 +396,43 @@ class _LaporScreenState extends State<LaporScreen> {
                     }
                   },
                 ),
+                if (tipeLaporan.startsWith('SURAT_') && !_isRtPro) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFF59E0B)),
+                    ),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.lock_rounded, color: Color(0xFFB45309), size: 22),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Paket RT Pro Diperlukan',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Color(0xFF92400E),
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Layanan E-Surat Digital memerlukan RT Anda mengaktifkan Paket RT Pro (Add-Ons Rp 49.000/bln). Silakan hubungi Ketua RT/Pengurus Anda.',
+                                style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
 
                 // 2. Ditujukan Ke
@@ -686,85 +847,93 @@ class _LaporScreenState extends State<LaporScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 48,
-                  child: ElevatedButton(
-                    onPressed: isSubmitting
-                        ? null
-                        : () async {
-                            final j = judulController.text.trim();
-                            final desc = deskripsiController.text.trim();
+                  child: Builder(
+                    builder: (btnContext) {
+                      final bool isBlockedByPro = tipeLaporan.startsWith('SURAT_') && !_isRtPro;
 
-                            if (j.isEmpty || desc.isEmpty) {
-                              messenger.showSnackBar(
-                                const SnackBar(
-                                  content: Text('Judul dan rincian wajib diisi!'),
-                                  backgroundColor: AppTheme.alertRed,
+                      return ElevatedButton(
+                        onPressed: (isSubmitting || isBlockedByPro)
+                            ? null
+                            : () async {
+                                final j = judulController.text.trim();
+                                final desc = deskripsiController.text.trim();
+
+                                if (j.isEmpty || desc.isEmpty) {
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Judul dan rincian wajib diisi!'),
+                                      backgroundColor: AppTheme.alertRed,
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                setModalState(() {
+                                  isSubmitting = true;
+                                });
+
+                                Navigator.pop(modalContext);
+
+                                final dataSuratMap = {
+                                  'namaAlmarhum': namaAlmController.text.trim(),
+                                  'nikAlmarhum': nikAlmController.text.trim(),
+                                  'tglMeninggal': tglMeninggalController.text.trim(),
+                                  'tempatMeninggal': tempatMeninggalController.text
+                                      .trim(),
+                                  'hubunganPelapor': hubunganController.text.trim(),
+                                  'pekerjaan': pekerjaanController.text.trim(),
+                                  'penghasilan': penghasilanController.text.trim(),
+                                  'keperluan': keperluanController.text.trim(),
+                                  'alamatDomisili': alamatDomisiliController.text.trim(),
+                                  'lamaTinggal': lamaTinggalController.text.trim(),
+                                };
+
+                                try {
+                                  await ApiService.createLaporan({
+                                    'judul': j,
+                                    'deskripsi': desc,
+                                    'kategori': kategori,
+                                    'tujuan': tujuan,
+                                    'tipeLaporan': tipeLaporan,
+                                    'isAnonymous': isAnonymous,
+                                    'fotoUrl': fotoBase64,
+                                    'dataSurat': dataSuratMap,
+                                  });
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        '✅ Permohonan / Laporan berhasil dikirimkan secara privat!',
+                                      ),
+                                      backgroundColor: AppTheme.successGreen,
+                                    ),
+                                  );
+                                  _loadLaporanFromDb();
+                                } catch (e) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text('⚠️ Gagal mengirim: $e'),
+                                      backgroundColor: AppTheme.alertRed,
+                                    ),
+                                  );
+                                }
+                              },
+                        child: isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
                                 ),
-                              );
-                              return;
-                            }
-
-                            setModalState(() {
-                              isSubmitting = true;
-                            });
-
-                            Navigator.pop(modalContext);
-
-                            final dataSuratMap = {
-                              'namaAlmarhum': namaAlmController.text.trim(),
-                              'nikAlmarhum': nikAlmController.text.trim(),
-                              'tglMeninggal': tglMeninggalController.text.trim(),
-                              'tempatMeninggal': tempatMeninggalController.text
-                                  .trim(),
-                              'hubunganPelapor': hubunganController.text.trim(),
-                              'pekerjaan': pekerjaanController.text.trim(),
-                              'penghasilan': penghasilanController.text.trim(),
-                              'keperluan': keperluanController.text.trim(),
-                              'alamatDomisili': alamatDomisiliController.text.trim(),
-                              'lamaTinggal': lamaTinggalController.text.trim(),
-                            };
-
-                            try {
-                              await ApiService.createLaporan({
-                                'judul': j,
-                                'deskripsi': desc,
-                                'kategori': kategori,
-                                'tujuan': tujuan,
-                                'tipeLaporan': tipeLaporan,
-                                'isAnonymous': isAnonymous,
-                                'fotoUrl': fotoBase64,
-                                'dataSurat': dataSuratMap,
-                              });
-                              messenger.showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    '✅ Permohonan / Laporan berhasil dikirimkan secara privat!',
-                                  ),
-                                  backgroundColor: AppTheme.successGreen,
-                                ),
-                              );
-                              _loadLaporanFromDb();
-                            } catch (e) {
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text('⚠️ Gagal mengirim: $e'),
-                                  backgroundColor: AppTheme.alertRed,
-                                ),
-                              );
-                            }
-                          },
-                    child: isSubmitting
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Kirim Permohonan Sekarang',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                              )
+                            : Text(
+                                isBlockedByPro
+                                    ? '🔒 Butuh Paket RT Pro'
+                                    : 'Kirim Permohonan Sekarang',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -1437,9 +1606,23 @@ class _LaporScreenState extends State<LaporScreen> {
                 final bgColor = t['bgColor'] as Color;
                 final icon = t['icon'] as IconData;
 
+                final isSurat = (t['id'] as String).startsWith('SURAT_');
+                final badgeText = !isSurat
+                    ? (t['badge'] as String)
+                    : (_isRtPro ? '👑 Pro' : '🔒 RT Pro');
+                final badgeColor = !isSurat
+                    ? color
+                    : (_isRtPro ? const Color(0xFF7C3AED) : const Color(0xFFD97706));
+
                 return GestureDetector(
-                  onTap: () =>
-                      _showBuatLaporanModal(initialTemplate: t['id'] as String),
+                  onTap: () {
+                    final id = t['id'] as String;
+                    if (id.startsWith('SURAT_') && !_isRtPro) {
+                      _showProAddonUpgradePrompt(t['title'] as String);
+                    } else {
+                      _showBuatLaporanModal(initialTemplate: id);
+                    }
+                  },
                   child: Container(
                     width: 175,
                     padding: const EdgeInsets.all(12),
@@ -1483,17 +1666,17 @@ class _LaporScreenState extends State<LaporScreen> {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: color.withValues(alpha: 0.1),
+                                    color: badgeColor.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
-                                    t['badge'] as String,
+                                    badgeText,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 8.5,
                                       fontWeight: FontWeight.bold,
-                                      color: color,
+                                      color: badgeColor,
                                     ),
                                   ),
                                 ),

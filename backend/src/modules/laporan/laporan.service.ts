@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StatusLaporan, Role } from '@prisma/client';
+import { AddonsService } from '../addons/addons.service';
 
 @Injectable()
 export class LaporanService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private addonsService: AddonsService,
+  ) {}
 
   async createLaporan(user: any, data: {
     judul: string;
@@ -26,6 +30,22 @@ export class LaporanService {
 
     if (!rtId) {
       throw new BadRequestException('Akun Anda belum terdaftar dalam unit RT manapun.');
+    }
+
+    // STRICT ADD-ONS CHECK:
+    // Permohonan E-Surat Digital (SURAT_PENGANTAR, SURAT_KEMATIAN, SURAT_SKTM, SURAT_DOMISILI)
+    // memerlukan RT berlangganan Paket RT Pro (Add-Ons Rp 49.000/bln).
+    // Pengaduan/keluhan lingkungan biasa (tipeLaporan === 'PENGADUAN') tetap 100% GRATIS untuk semua RT.
+    const tipeLaporan = data.tipeLaporan || 'PENGADUAN';
+    const isSurat = tipeLaporan.startsWith('SURAT_') || tipeLaporan === 'SURAT_PENGANTAR';
+
+    if (isSurat) {
+      const isPro = await this.addonsService.isRtProActive(rtId);
+      if (!isPro) {
+        throw new ForbiddenException(
+          'Layanan E-Surat Digital memerlukan RT Anda mengaktifkan Paket RT Pro (Add-Ons Rp 49.000/bulan). Silakan hubungi Ketua RT/Pengurus Anda untuk mengaktifkan paket ini.',
+        );
+      }
     }
 
     const dataSuratString = data.dataSurat

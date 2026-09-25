@@ -14,6 +14,7 @@ import { CctvModule } from './modules/cctv/cctv.module';
 import { LaporanModule } from './modules/laporan/laporan.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { GempaModule } from './modules/gempa/gempa.module';
+import { AddonsModule } from './modules/addons/addons.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { GempaModule } from './modules/gempa/gempa.module';
     AlertModule,
     CctvModule,
     LaporanModule,
+    AddonsModule,
   ],
   controllers: [AppController],
 })

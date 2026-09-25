@@ -2,10 +2,14 @@ import { Injectable, BadRequestException, ConflictException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role, StatusTagihan, TipeKas } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { AddonsService } from '../addons/addons.service';
 
 @Injectable()
 export class WilayahService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private addonsService: AddonsService,
+  ) {}
 
   async getKelurahanList() {
     return this.prisma.kelurahan.findMany({
@@ -77,6 +81,9 @@ export class WilayahService {
         const ketua = rt.users[0]?.profile?.namaLengkap || 'Ketua RT Aktif';
         const phone = rt.users[0]?.phone || '-';
 
+        const sub = await this.addonsService.getRtSubscription(rt.id);
+        const isPro = await this.addonsService.isRtProActive(rt.id);
+
         return {
           id: rt.id,
           nomor: rt.nomor,
@@ -91,6 +98,10 @@ export class WilayahService {
           phone,
           saldoKas,
           createdAt: rt.createdAt,
+          paket: isPro ? 'PRO' : 'BASIC',
+          isPro,
+          statusAddon: sub.status,
+          expiredAt: sub.expiredAt,
         };
       }),
     );

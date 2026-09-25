@@ -6,6 +6,7 @@ import { WargaManagement } from './pages/WargaManagement';
 import { TagihanBilling } from './pages/TagihanBilling';
 import { SuperadminRevenue } from './pages/SuperadminRevenue';
 import { SuperadminDashboard } from './pages/SuperadminDashboard';
+import { SuperadminOverview } from './pages/SuperadminOverview';
 import { SuperadminUangMasuk } from './pages/SuperadminUangMasuk';
 import { SuperadminApprovalPenarikan } from './pages/SuperadminApprovalPenarikan';
 import { SuperadminAddons } from './pages/SuperadminAddons';
@@ -31,7 +32,7 @@ export default function App() {
     const savedUser = api.getUser();
     if (savedUser) {
       setUser(savedUser);
-      if (savedUser.role === 'SUPERADMIN') setActiveTab('superadmin_rt');
+      if (savedUser.role === 'SUPERADMIN') setActiveTab('superadmin_overview');
       else if (savedUser.role === 'SEKRETARIS') setActiveTab('warga');
       else if (savedUser.role === 'BENDAHARA') setActiveTab('dashboard');
       else if (savedUser.role === 'SECURITY') setActiveTab('security');
@@ -55,7 +56,7 @@ export default function App() {
         onBack={() => setPublicView('landing')}
         onLogin={(loggedUser) => {
           setUser(loggedUser);
-          if (loggedUser.role === 'SUPERADMIN') setActiveTab('superadmin_rt');
+          if (loggedUser.role === 'SUPERADMIN') setActiveTab('superadmin_overview');
           else if (loggedUser.role === 'SEKRETARIS') setActiveTab('warga');
           else if (loggedUser.role === 'BENDAHARA') setActiveTab('dashboard');
           else if (loggedUser.role === 'SECURITY') setActiveTab('security');
@@ -67,6 +68,8 @@ export default function App() {
 
   const getPageInfo = () => {
     switch (activeTab) {
+      case 'superadmin_overview':
+        return { title: 'Executive Overview (Nasional)', subtitle: 'Statistik ekosistem RT, warga, KK, saldo kas, dan adopsi paket Add-Ons' };
       case 'superadmin_rt':
         return { title: 'Monitoring Wilayah RT (Superadmin)', subtitle: 'Pilihan & filter transaksi serta rekap RT se-Indonesia' };
       case 'uang_masuk':
@@ -127,6 +130,7 @@ export default function App() {
         <Header title={pageInfo.title} subtitle={pageInfo.subtitle} user={user} />
         
         <main className="flex-1 overflow-y-auto p-8">
+          {activeTab === 'superadmin_overview' && <SuperadminOverview onNavigateTab={setActiveTab} />}
           {activeTab === 'superadmin_rt' && <SuperadminDashboard />}
           {activeTab === 'uang_masuk' && <SuperadminUangMasuk />}
           {activeTab === 'approval_penarikan' && <SuperadminApprovalPenarikan />}

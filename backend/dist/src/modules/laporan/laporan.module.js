@@ -10,11 +10,13 @@ exports.LaporanModule = void 0;
 const common_1 = require("@nestjs/common");
 const laporan_controller_1 = require("./laporan.controller");
 const laporan_service_1 = require("./laporan.service");
+const addons_module_1 = require("../addons/addons.module");
 let LaporanModule = class LaporanModule {
 };
 exports.LaporanModule = LaporanModule;
 exports.LaporanModule = LaporanModule = __decorate([
     (0, common_1.Module)({
+        imports: [addons_module_1.AddonsModule],
         controllers: [laporan_controller_1.LaporanController],
         providers: [laporan_service_1.LaporanService],
         exports: [laporan_service_1.LaporanService],

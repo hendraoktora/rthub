@@ -1186,6 +1186,36 @@ class ApiService {
     } catch (_) {}
   }
 
+  // Cek Status Langganan Add-Ons RT (E-Surat Digital & Cetak Resi Kas Manual)
+  static Future<Map<String, dynamic>> getRtAddonStatus() async {
+    try {
+      final token = await getToken();
+      final configuredUrl = await getBaseUrl();
+      final res = await http
+          .get(
+            Uri.parse('$configuredUrl/addons/status'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 8));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded is Map<String, dynamic>) {
+          return decoded;
+        }
+      }
+    } catch (_) {}
+
+    return {
+      'isPro': false,
+      'paket': 'BASIC',
+      'status': 'TIDAK_AKTIF',
+    };
+  }
+
   // Real Database Payment Tagihan IPL
   static Future<Map<String, dynamic>> payTagihan(
     String tagihanId,

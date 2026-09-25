@@ -1,8 +1,10 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { StatusLaporan } from '@prisma/client';
+import { AddonsService } from '../addons/addons.service';
 export declare class LaporanService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private addonsService;
+    constructor(prisma: PrismaService, addonsService: AddonsService);
     createLaporan(user: any, data: {
         judul: string;
         deskripsi: string;

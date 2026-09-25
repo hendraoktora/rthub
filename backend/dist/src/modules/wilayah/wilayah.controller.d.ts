@@ -56,6 +56,10 @@ export declare class WilayahController {
         phone: string;
         saldoKas: number;
         createdAt: Date;
+        paket: string;
+        isPro: boolean;
+        statusAddon: "AKTIF" | "TRIAL" | "TIDAK_AKTIF";
+        expiredAt: string;
     }[]>;
     getWargaByRt(rtId: string): Promise<{
         totalRumah: number;

@@ -16,6 +16,10 @@ interface RTItem {
   phone: string;
   saldoKas: number;
   createdAt: string;
+  paket?: 'BASIC' | 'PRO';
+  isPro?: boolean;
+  statusAddon?: string;
+  expiredAt?: string | null;
 }
 
 interface WargaData {
@@ -39,6 +43,8 @@ export const SuperadminDashboard: React.FC = () => {
   const [searchWarga, setSearchWarga] = useState('');
   const [wargaList, setWargaList] = useState<WargaData[]>([]);
   const [isLoadingWarga, setIsLoadingWarga] = useState(false);
+  const [viewMode, setViewMode] = useState<'LIST' | 'GRID'>('LIST');
+  const [searchRtQuery, setSearchRtQuery] = useState('');
 
   const [rts, setRts] = useState<RTItem[]>([]);
 
@@ -132,6 +138,20 @@ export const SuperadminDashboard: React.FC = () => {
 
   const filteredTransactions = selectedRt === 'ALL' ? transactions : transactions.filter(t => t.rt === selectedRt);
 
+  const filteredRts = rts.filter(r => {
+    const q = searchRtQuery.toLowerCase();
+    const matchesSearch = 
+      r.label.toLowerCase().includes(q) ||
+      r.nomor.toLowerCase().includes(q) ||
+      r.rwNomor.toLowerCase().includes(q) ||
+      r.kelurahanNama.toLowerCase().includes(q) ||
+      r.ketua.toLowerCase().includes(q) ||
+      r.namaJalan.toLowerCase().includes(q);
+    
+    if (selectedRt === 'ALL') return matchesSearch;
+    return matchesSearch && `RT ${r.nomor}` === selectedRt;
+  });
+
   return (
     <div className="space-y-6">
       {/* Top Action Bar with Real-Time Refresh */}
@@ -154,6 +174,52 @@ export const SuperadminDashboard: React.FC = () => {
           <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
           {isLoading ? 'Menyinkronkan...' : '🔄 Sinkronkan Data DB'}
         </button>
+      </div>
+
+      {/* Search Bar & View Mode Toggle */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="relative w-full sm:w-96">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Cari nomor RT, RW, Kelurahan, atau nama Ketua..."
+            value={searchRtQuery}
+            onChange={(e) => setSearchRtQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500 focus:bg-white transition"
+          />
+          {searchRtQuery && (
+            <button
+              onClick={() => setSearchRtQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <span className="text-xs text-slate-400 font-semibold mr-1">Tampilan:</span>
+          <button
+            onClick={() => setViewMode('LIST')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
+              viewMode === 'LIST'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            📋 Tabel Ringkas
+          </button>
+          <button
+            onClick={() => setViewMode('GRID')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
+              viewMode === 'GRID'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            🗂️ Kartu Grid
+          </button>
+        </div>
       </div>
 
       {/* RT Filter Strip */}
@@ -185,65 +251,180 @@ export const SuperadminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Overview per RT Cards (Interactive Clickable to Open Detail Modal) */}
+      {/* Main Content: Table List View (Default) or Grid Cards */}
       {isLoading && rts.length === 0 ? (
         <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-3">
           <RefreshCw className="animate-spin text-blue-600" size={28} />
           <p className="text-sm font-bold text-slate-700">Menyinkronkan data seluruh wilayah RT dari server...</p>
         </div>
-      ) : rts.length === 0 ? (
+      ) : filteredRts.length === 0 ? (
         <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
           <Building2 className="text-slate-400 mx-auto mb-2" size={36} />
-          <p className="text-sm font-bold text-slate-700">Belum ada wilayah RT yang terdeteksi di database.</p>
+          <p className="text-sm font-bold text-slate-700">
+            {searchRtQuery ? 'Tidak ada wilayah RT yang cocok dengan kata kunci pencarian.' : 'Belum ada wilayah RT yang terdeteksi di database.'}
+          </p>
+        </div>
+      ) : viewMode === 'LIST' ? (
+        /* 1. COMPACT LIST / TABLE VIEW */
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                  <th className="py-3.5 px-4">Unit RT / RW</th>
+                  <th className="py-3.5 px-4">Wilayah & Alamat</th>
+                  <th className="py-3.5 px-4">Ketua RT & Kontak</th>
+                  <th className="py-3.5 px-4 text-center">Penduduk (Jiwa / KK)</th>
+                  <th className="py-3.5 px-4 text-right">Saldo Kas RT</th>
+                  <th className="py-3.5 px-4 text-center">Paket Ekosistem</th>
+                  <th className="py-3.5 px-4 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredRts.map((r) => (
+                  <tr 
+                    key={r.id}
+                    className="hover:bg-blue-50/40 transition duration-150 group cursor-pointer"
+                    onClick={() => openRtDetail(r)}
+                  >
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 font-extrabold flex items-center justify-center text-xs shrink-0">
+                          {r.nomor}
+                        </span>
+                        <div>
+                          <span className="font-extrabold text-slate-900 text-sm block">
+                            {r.label}
+                          </span>
+                          <span className="text-[11px] text-slate-400 truncate block max-w-[180px]" title={r.namaJalan}>
+                            {r.namaJalan}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="py-3.5 px-4">
+                      <span className="font-semibold text-slate-800 block">
+                        Kel. {r.kelurahanNama}
+                      </span>
+                      <span className="text-[11px] text-slate-400 block">
+                        Kota {r.kota}
+                      </span>
+                    </td>
+
+                    <td className="py-3.5 px-4">
+                      <span className="font-bold text-slate-800 block">{r.ketua}</span>
+                      {r.phone && r.phone !== '-' ? (
+                        <a 
+                          href={`https://wa.me/${r.phone.replace(/[^0-9]/g, '')}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold"
+                        >
+                          <Phone size={11} />
+                          {r.phone}
+                        </a>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">-</span>
+                      )}
+                    </td>
+
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="inline-flex items-center gap-2 bg-slate-100/70 px-2.5 py-1 rounded-lg">
+                        <span className="font-extrabold text-blue-700 text-xs">{r.wargaCount} Jiwa</span>
+                        <span className="text-slate-300">|</span>
+                        <span className="font-semibold text-slate-600 text-xs">{r.rumahCount || 1} KK</span>
+                      </div>
+                    </td>
+
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="font-extrabold text-emerald-600 text-sm block">
+                        Rp {r.saldoKas.toLocaleString('id-ID')}
+                      </span>
+                      <span className="text-[10px] text-slate-400">Kas Terverifikasi</span>
+                    </td>
+
+                    <td className="py-3.5 px-4 text-center">
+                      {r.isPro || r.paket === 'PRO' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                          👑 RT Pro (Rp 49rb)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                          🌱 RT Basic (Gratis)
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => openRtDetail(r)}
+                        className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto"
+                      >
+                        <span>Buka Detail</span>
+                        <span>→</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="p-3 bg-slate-50/70 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 font-medium">
+            <span>Menampilkan <strong>{filteredRts.length}</strong> dari <strong>{rts.length}</strong> wilayah RT terdaftar</span>
+            <span className="text-[11px] text-slate-400">Klik baris mana saja untuk membuka rincian Warga & Tagihan Iuran</span>
+          </div>
         </div>
       ) : (
+        /* 2. GRID CARDS VIEW */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {rts.map(r => (
-          <div 
-            key={r.id} 
-            onClick={() => openRtDetail(r)}
-            className="group cursor-pointer bg-white p-5 rounded-2xl border-2 border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all duration-200 space-y-3 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl opacity-90 group-hover:opacity-100 transition">
-              🔍 Klik Cek Detail RT
-            </div>
+          {filteredRts.map(r => (
+            <div 
+              key={r.id} 
+              onClick={() => openRtDetail(r)}
+              className="group cursor-pointer bg-white p-5 rounded-2xl border-2 border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all duration-200 space-y-3 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl opacity-90 group-hover:opacity-100 transition">
+                🔍 Klik Cek Detail RT
+              </div>
 
-            <div className="flex justify-between items-start pt-1">
-              <div>
-                <span className="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold text-xs rounded-lg block w-fit mb-1">
-                  {r.label}
-                </span>
-                <p className="text-xs text-slate-500 font-medium truncate max-w-[200px]" title={r.namaJalan}>
-                  📍 {r.namaJalan}
-                </p>
+              <div className="flex justify-between items-start pt-1">
+                <div>
+                  <span className="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold text-xs rounded-lg block w-fit mb-1">
+                    {r.label}
+                  </span>
+                  <p className="text-xs text-slate-500 font-medium truncate max-w-[200px]" title={r.namaJalan}>
+                    📍 {r.namaJalan}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span className="text-slate-400 font-medium">Ketua RT:</span>
+                <span className="font-bold text-slate-800">{r.ketua}</span>
+              </div>
+
+              <div className="flex justify-between items-end pt-1 bg-slate-50/70 p-3 rounded-xl">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">Total Warga</span>
+                  <p className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
+                    <Users size={16} className="text-blue-600" />
+                    {r.wargaCount} Jiwa ({r.rumahCount || 1} KK)
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">Saldo Kas RT</span>
+                  <p className="text-base font-extrabold text-emerald-600">Rp {r.saldoKas.toLocaleString('id-ID')}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-blue-600 font-bold group-hover:translate-x-1 transition-transform">
+                <span>Buka Data Warga & Status Iuran</span>
+                <span>→</span>
               </div>
             </div>
-
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-slate-400 font-medium">Ketua RT:</span>
-              <span className="font-bold text-slate-800">{r.ketua}</span>
-            </div>
-
-            <div className="flex justify-between items-end pt-1 bg-slate-50/70 p-3 rounded-xl">
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase font-bold">Total Warga</span>
-                <p className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
-                  <Users size={16} className="text-blue-600" />
-                  {r.wargaCount} KK
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-slate-400 uppercase font-bold">Saldo Kas RT</span>
-                <p className="text-base font-extrabold text-emerald-600">Rp {r.saldoKas.toLocaleString('id-ID')}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] text-blue-600 font-bold group-hover:translate-x-1 transition-transform">
-              <span>Buka Data Warga & Status Iuran</span>
-              <span>→</span>
-            </div>
-          </div>
-        ))}
+          ))}
         </div>
       )}
 

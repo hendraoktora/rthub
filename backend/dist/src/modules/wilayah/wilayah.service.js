@@ -47,9 +47,11 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcryptjs"));
+const addons_service_1 = require("../addons/addons.service");
 let WilayahService = class WilayahService {
-    constructor(prisma) {
+    constructor(prisma, addonsService) {
         this.prisma = prisma;
+        this.addonsService = addonsService;
     }
     async getKelurahanList() {
         return this.prisma.kelurahan.findMany({
@@ -112,6 +114,8 @@ let WilayahService = class WilayahService {
             const saldoKas = sumIn - sumOut;
             const ketua = rt.users[0]?.profile?.namaLengkap || 'Ketua RT Aktif';
             const phone = rt.users[0]?.phone || '-';
+            const sub = await this.addonsService.getRtSubscription(rt.id);
+            const isPro = await this.addonsService.isRtProActive(rt.id);
             return {
                 id: rt.id,
                 nomor: rt.nomor,
@@ -126,6 +130,10 @@ let WilayahService = class WilayahService {
                 phone,
                 saldoKas,
                 createdAt: rt.createdAt,
+                paket: isPro ? 'PRO' : 'BASIC',
+                isPro,
+                statusAddon: sub.status,
+                expiredAt: sub.expiredAt,
             };
         }));
         return results;
@@ -393,6 +401,7 @@ let WilayahService = class WilayahService {
 exports.WilayahService = WilayahService;
 exports.WilayahService = WilayahService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        addons_service_1.AddonsService])
 ], WilayahService);
 //# sourceMappingURL=wilayah.service.js.map

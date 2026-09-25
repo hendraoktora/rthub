@@ -18,13 +18,20 @@ let LapakService = class LapakService {
     }
     async getFeedLapak(user) {
         try {
-            const dbUser = await this.prisma.user.findUnique({
-                where: { id: user.id },
-                include: { rt: { include: { rw: true } } },
-            });
-            const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId || user?.rt?.rwId;
-            const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId || user?.rt?.rw?.kelurahanId;
-            const rtId = dbUser?.rtId || user?.rtId;
+            let rwId = user?.rwId || user?.rt?.rwId;
+            let kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
+            let rtId = user?.rtId;
+            if (user?.id) {
+                const dbUser = await this.prisma.user.findUnique({
+                    where: { id: user.id },
+                    include: { rt: { include: { rw: true } } },
+                });
+                if (dbUser) {
+                    rwId = dbUser.rwId || dbUser.rt?.rwId || rwId;
+                    kelurahanId = dbUser.kelurahanId || dbUser.rt?.rw?.kelurahanId || kelurahanId;
+                    rtId = dbUser.rtId || rtId;
+                }
+            }
             const orConditions = [];
             if (user?.id) {
                 orConditions.push({ sellerId: user.id });
@@ -160,15 +167,31 @@ let LapakService = class LapakService {
         });
     }
     async createProduk(user, data) {
+        if (!user || !user.id) {
+            throw new common_1.BadRequestException('Autentikasi akun diperlukan untuk membuat produk.');
+        }
         const dbUser = await this.prisma.user.findUnique({
             where: { id: user.id },
             include: { rt: { include: { rw: true } } },
         });
-        const rtId = dbUser?.rtId || user?.rtId;
-        const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
-        const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
+        let rtId = dbUser?.rtId || user?.rtId;
+        let rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+        let kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
+        if (!rwId && rtId) {
+            const rt = await this.prisma.rT.findUnique({ where: { id: rtId }, include: { rw: true } });
+            if (rt) {
+                rwId = rt.rwId;
+                kelurahanId = kelurahanId || rt.rw?.kelurahanId;
+            }
+        }
+        if (!kelurahanId && rwId) {
+            const rw = await this.prisma.rW.findUnique({ where: { id: rwId } });
+            if (rw) {
+                kelurahanId = rw.kelurahanId;
+            }
+        }
         if (!rtId || !rwId || !kelurahanId) {
-            throw new Error('Data wilayah (RT/RW/Kelurahan) Anda belum lengkap.');
+            throw new common_1.BadRequestException('Data wilayah (RT/RW/Kelurahan) Anda belum lengkap.');
         }
         return this.prisma.lapakProduk.create({
             data: {

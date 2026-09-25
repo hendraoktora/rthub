@@ -282,7 +282,7 @@ export class AuthService {
       throw new UnauthorizedException('Akun Anda dinonaktifkan. Silakan hubungi Pengurus RT.');
     }
 
-    const token = this.generateToken(user.id, user.phone, user.role);
+    const token = this.generateToken(user.id, user.phone, user.role, user.rtId || undefined, user.rwId || undefined, user.kelurahanId || undefined);
 
     return {
       message: 'Login berhasil!',
@@ -423,9 +423,9 @@ export class AuthService {
     };
   }
 
-  private generateToken(userId: string, phone: string, role: string): string {
+  private generateToken(userId: string, phone: string, role: string, rtId?: string, rwId?: string, kelurahanId?: string): string {
     return this.jwtService.sign(
-      { sub: userId, phone, role },
+      { sub: userId, id: userId, phone, role, rtId, rwId, kelurahanId },
       {
         secret: process.env.JWT_SECRET || 'rthub-super-secret-jwt-key-2026-production',
         expiresIn: '7d',

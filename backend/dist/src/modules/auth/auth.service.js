@@ -274,7 +274,7 @@ let AuthService = class AuthService {
         if (!user.isActive) {
             throw new common_1.UnauthorizedException('Akun Anda dinonaktifkan. Silakan hubungi Pengurus RT.');
         }
-        const token = this.generateToken(user.id, user.phone, user.role);
+        const token = this.generateToken(user.id, user.phone, user.role, user.rtId || undefined, user.rwId || undefined, user.kelurahanId || undefined);
         return {
             message: 'Login berhasil!',
             user: this.sanitizeUser(user),
@@ -396,8 +396,8 @@ let AuthService = class AuthService {
             message: 'NIK valid & tersedia untuk pendaftaran.',
         };
     }
-    generateToken(userId, phone, role) {
-        return this.jwtService.sign({ sub: userId, phone, role }, {
+    generateToken(userId, phone, role, rtId, rwId, kelurahanId) {
+        return this.jwtService.sign({ sub: userId, id: userId, phone, role, rtId, rwId, kelurahanId }, {
             secret: process.env.JWT_SECRET || 'rthub-super-secret-jwt-key-2026-production',
             expiresIn: '7d',
         });

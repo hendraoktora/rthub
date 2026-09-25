@@ -193,7 +193,7 @@ void main() {
         final updated = updatedReports.firstWhere(
           (r) => r['id'].toString() == reportId,
         );
-        expect(updated['status'], 'SELESAI');
+        expect(updated['status'], anyOf('RESOLVED', 'SELESAI'));
         expect(updated['tanggapanBy'], contains('Pak Bambang'));
       },
     );

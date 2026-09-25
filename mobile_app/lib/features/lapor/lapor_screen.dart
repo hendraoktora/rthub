@@ -784,7 +784,7 @@ class _LaporScreenState extends State<LaporScreen> {
       text:
           _user?['profile']?['namaLengkap'] ?? _user?['phone'] ?? 'Pengurus RT',
     );
-    String newStatus = 'SELESAI';
+    String newStatus = 'RESOLVED';
 
     showModalBottomSheet(
       context: context,
@@ -838,15 +838,15 @@ class _LaporScreenState extends State<LaporScreen> {
                   ),
                   items: const [
                     DropdownMenuItem(
-                      value: 'SELESAI',
+                      value: 'RESOLVED',
                       child: Text('✓ Setujui & Selesaikan (Terbitkan Surat)'),
                     ),
                     DropdownMenuItem(
-                      value: 'DIPROSES',
+                      value: 'IN_PROGRESS',
                       child: Text('🔄 Sedang Ditangani / Dalam Proses'),
                     ),
                     DropdownMenuItem(
-                      value: 'DITOLAK',
+                      value: 'REJECTED',
                       child: Text('✗ Tolak Permohonan / Dibatalkan'),
                     ),
                   ],
@@ -882,7 +882,7 @@ class _LaporScreenState extends State<LaporScreen> {
                   height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: newStatus == 'SELESAI'
+                      backgroundColor: (newStatus == 'RESOLVED' || newStatus == 'SELESAI')
                           ? AppTheme.successGreen
                           : AppTheme.primaryNavy,
                       foregroundColor: Colors.white,
@@ -917,7 +917,7 @@ class _LaporScreenState extends State<LaporScreen> {
                         messenger.showSnackBar(
                           SnackBar(
                             content: Text(
-                              newStatus == 'SELESAI'
+                              (newStatus == 'RESOLVED' || newStatus == 'SELESAI')
                                   ? '✅ Berhasil disetujui & diselesaikan!'
                                   : '✅ Status berhasil diperbarui!',
                             ),

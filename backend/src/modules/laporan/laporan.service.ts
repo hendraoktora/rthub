@@ -267,6 +267,20 @@ export class LaporanService {
       throw new NotFoundException('Laporan atau permohonan surat tidak ditemukan.');
     }
 
+    let mappedStatus: StatusLaporan;
+    const rawStatus = String(data.status || '').toUpperCase();
+    if (rawStatus === 'SELESAI' || rawStatus === 'RESOLVED' || rawStatus === 'SELESAIKAN') {
+      mappedStatus = StatusLaporan.RESOLVED;
+    } else if (rawStatus === 'DIPROSES' || rawStatus === 'IN_PROGRESS' || rawStatus === 'PROSES') {
+      mappedStatus = StatusLaporan.IN_PROGRESS;
+    } else if (rawStatus === 'DITOLAK' || rawStatus === 'REJECTED' || rawStatus === 'TOLAK') {
+      mappedStatus = StatusLaporan.REJECTED;
+    } else if (rawStatus === 'PENDING' || rawStatus === 'MENUNGGU') {
+      mappedStatus = StatusLaporan.PENDING;
+    } else {
+      mappedStatus = (rawStatus as StatusLaporan) || StatusLaporan.RESOLVED;
+    }
+
     // Strict Response Permission Check:
     const userRole = user?.role;
     const isSuperAdmin = userRole === Role.SUPERADMIN;
@@ -283,7 +297,7 @@ export class LaporanService {
 
     // Auto-generate official letter registration number if resolving a letter request
     let nomorSurat = data.nomorSurat || laporan.nomorSurat;
-    if (data.status === StatusLaporan.RESOLVED && !nomorSurat && laporan.tipeLaporan !== 'PENGADUAN') {
+    if (mappedStatus === StatusLaporan.RESOLVED && !nomorSurat && laporan.tipeLaporan !== 'PENGADUAN') {
       const currentYear = new Date().getFullYear();
       const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
       const romanMonth = romanMonths[new Date().getMonth()];
@@ -298,7 +312,7 @@ export class LaporanService {
     return this.prisma.laporanWarga.update({
       where: { id: laporanId },
       data: {
-        status: data.status,
+        status: mappedStatus,
         tanggapanRT: data.tanggapanRT || null,
         tanggapanBy: responderName,
         nomorSurat: nomorSurat || null,

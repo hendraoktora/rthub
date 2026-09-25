@@ -241,6 +241,23 @@ let LaporanService = class LaporanService {
         if (!laporan) {
             throw new common_1.NotFoundException('Laporan atau permohonan surat tidak ditemukan.');
         }
+        let mappedStatus;
+        const rawStatus = String(data.status || '').toUpperCase();
+        if (rawStatus === 'SELESAI' || rawStatus === 'RESOLVED' || rawStatus === 'SELESAIKAN') {
+            mappedStatus = client_1.StatusLaporan.RESOLVED;
+        }
+        else if (rawStatus === 'DIPROSES' || rawStatus === 'IN_PROGRESS' || rawStatus === 'PROSES') {
+            mappedStatus = client_1.StatusLaporan.IN_PROGRESS;
+        }
+        else if (rawStatus === 'DITOLAK' || rawStatus === 'REJECTED' || rawStatus === 'TOLAK') {
+            mappedStatus = client_1.StatusLaporan.REJECTED;
+        }
+        else if (rawStatus === 'PENDING' || rawStatus === 'MENUNGGU') {
+            mappedStatus = client_1.StatusLaporan.PENDING;
+        }
+        else {
+            mappedStatus = rawStatus || client_1.StatusLaporan.RESOLVED;
+        }
         const userRole = user?.role;
         const isSuperAdmin = userRole === client_1.Role.SUPERADMIN;
         const isKetuaRT = userRole === client_1.Role.ADMIN_RT && laporan.rtId === user.rtId;
@@ -251,7 +268,7 @@ let LaporanService = class LaporanService {
             throw new common_1.ForbiddenException('Hanya pihak yang ditunjuk atau Ketua RT yang memiliki wewenang untuk memberikan tanggapan atau menyelesaikan laporan ini.');
         }
         let nomorSurat = data.nomorSurat || laporan.nomorSurat;
-        if (data.status === client_1.StatusLaporan.RESOLVED && !nomorSurat && laporan.tipeLaporan !== 'PENGADUAN') {
+        if (mappedStatus === client_1.StatusLaporan.RESOLVED && !nomorSurat && laporan.tipeLaporan !== 'PENGADUAN') {
             const currentYear = new Date().getFullYear();
             const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
             const romanMonth = romanMonths[new Date().getMonth()];
@@ -263,7 +280,7 @@ let LaporanService = class LaporanService {
         return this.prisma.laporanWarga.update({
             where: { id: laporanId },
             data: {
-                status: data.status,
+                status: mappedStatus,
                 tanggapanRT: data.tanggapanRT || null,
                 tanggapanBy: responderName,
                 nomorSurat: nomorSurat || null,

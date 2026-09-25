@@ -1047,6 +1047,17 @@ class ApiService {
     String? tanggapanBy,
     String? nomorSurat,
   }) async {
+    String canonicalStatus = status.toUpperCase();
+    if (canonicalStatus == 'SELESAI' || canonicalStatus == 'SELESAIKAN') {
+      canonicalStatus = 'RESOLVED';
+    } else if (canonicalStatus == 'DIPROSES' || canonicalStatus == 'PROSES') {
+      canonicalStatus = 'IN_PROGRESS';
+    } else if (canonicalStatus == 'DITOLAK' || canonicalStatus == 'TOLAK') {
+      canonicalStatus = 'REJECTED';
+    } else if (canonicalStatus == 'PENDING' || canonicalStatus == 'MENUNGGU') {
+      canonicalStatus = 'PENDING';
+    }
+
     final currentYear = DateTime.now().year;
     final romanMonths = [
       '',
@@ -1074,7 +1085,7 @@ class ApiService {
       List<dynamic> list = savedStr != null ? jsonDecode(savedStr) : [];
       final idx = list.indexWhere((e) => (e['id'] ?? '').toString() == id);
       if (idx != -1) {
-        list[idx]['status'] = status;
+        list[idx]['status'] = canonicalStatus;
         if (tanggapanRT != null) list[idx]['tanggapanRT'] = tanggapanRT;
         if (tanggapanBy != null) list[idx]['tanggapanBy'] = tanggapanBy;
         if (list[idx]['nomorSurat'] == null &&
@@ -1090,7 +1101,7 @@ class ApiService {
         );
         if (found != null) {
           final updated = Map<String, dynamic>.from(found);
-          updated['status'] = status;
+          updated['status'] = canonicalStatus;
           if (tanggapanRT != null) updated['tanggapanRT'] = tanggapanRT;
           if (tanggapanBy != null) updated['tanggapanBy'] = tanggapanBy;
           if (found['nomorSurat'] == null &&
@@ -1115,13 +1126,13 @@ class ApiService {
               if (token != null) 'Authorization': 'Bearer $token',
             },
             body: jsonEncode({
-              'status': status,
+              'status': canonicalStatus,
               'tanggapanRT': tanggapanRT,
               'tanggapanBy': tanggapanBy,
               'nomorSurat': autoNo,
             }),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 10));
     } catch (_) {}
   }
 

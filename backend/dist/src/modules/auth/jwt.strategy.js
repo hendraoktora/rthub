@@ -24,8 +24,12 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         this.prisma = prisma;
     }
     async validate(payload) {
+        const userId = payload?.sub || payload?.id;
+        if (!userId) {
+            throw new common_1.UnauthorizedException('Sesi telah berakhir atau token tidak valid.');
+        }
         const user = await this.prisma.user.findUnique({
-            where: { id: payload.sub },
+            where: { id: userId },
             include: {
                 profile: true,
                 rt: true,

@@ -441,6 +441,56 @@ class ApiService {
     throw Exception('Gagal mencatat mutasi kas ke database');
   }
 
+  static Future<Map<String, dynamic>> ajukanPenarikanKas(
+    Map<String, dynamic> data,
+  ) async {
+    final token = await getToken();
+    final configuredUrl = await getBaseUrl();
+    try {
+      final res = await http
+          .post(
+            Uri.parse('$configuredUrl/kas/penarikan/ajukan'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(data),
+          )
+          .timeout(const Duration(seconds: 12));
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return jsonDecode(res.body);
+      }
+      final err = jsonDecode(res.body);
+      throw Exception(err['message'] ?? 'Gagal mengajukan penarikan');
+    } catch (e) {
+      if (e.toString().contains('Exception:')) rethrow;
+      throw Exception('Gagal menghubungi server penarikan: $e');
+    }
+  }
+
+  static Future<List<dynamic>> getRiwayatPenarikan() async {
+    try {
+      final token = await getToken();
+      final configuredUrl = await getBaseUrl();
+      final res = await http
+          .get(
+            Uri.parse('$configuredUrl/kas/penarikan/riwayat'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final list = jsonDecode(res.body);
+        if (list is List) return list;
+      }
+    } catch (_) {}
+    return [];
+  }
+
   static Future<List<dynamic>> getTagihanSaya({
     bool allowFallback = true,
   }) async {

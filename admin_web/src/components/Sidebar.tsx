@@ -14,7 +14,10 @@ import {
   MessageSquarePlus,
   Store,
   Calendar,
-  Megaphone
+  Megaphone,
+  ArrowDownLeft,
+  ShieldCheck,
+  Crown
 } from 'lucide-react';
 import { RtHubLogo } from './RtHubLogo';
 
@@ -29,7 +32,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role, setRole, user, onLogout }) => {
   // STRICT RBAC MENU RULES:
-  // SUPERADMIN: ONLY Global Platform & Tenant Overview (No private neighborhood data)
+  // SUPERADMIN: Global Platform, Financial Inflow, Withdrawal Approval & Add-ons
   // ADMIN_RT / KETUA RT: Full RT Operational (Kas, Warga, Pengurus, Ronda, Tagihan, Panic, Lapor RT, Lapak, Agenda, Berita)
   // SEKRETARIS: Warga, Pengurus, Ronda, Lapor RT, Lapak, Agenda, Berita
   // BENDAHARA: Kas, Tagihan, Setting Iuran, Lapor RT, Lapak
@@ -37,7 +40,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role,
   const menuItems = [
     // 1. Superadmin Platform Only
     { id: 'superadmin_rt', label: 'Monitoring Wilayah RT', icon: Building2, roles: ['SUPERADMIN'] },
+    { id: 'uang_masuk', label: 'Arus Uang Masuk (PG)', icon: ArrowDownLeft, roles: ['SUPERADMIN'] },
+    { id: 'approval_penarikan', label: 'Approval Penarikan RT', icon: ShieldCheck, roles: ['SUPERADMIN'] },
     { id: 'revenue', label: 'Fee Platform RtHub', icon: TrendingUp, roles: ['SUPERADMIN'] },
+    { id: 'addons_rt', label: 'Paket Add-Ons RT', icon: Crown, roles: ['SUPERADMIN'] },
 
     // 2. RT Operational (Ketua RT, Sekretaris, Bendahara)
     { id: 'dashboard', label: 'Buku Kas & Keuangan RT', icon: Wallet, roles: ['ADMIN_RT', 'BENDAHARA'] },

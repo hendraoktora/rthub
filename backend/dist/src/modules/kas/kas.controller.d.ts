@@ -56,4 +56,152 @@ export declare class KasController {
         keterangan: string;
         buktiNotaUrl: string | null;
     }>;
+    getRiwayatPenarikan(user: any): Promise<{
+        id: string;
+        rtId: string;
+        rtNomor: string;
+        rwNomor: string;
+        kelurahan: string;
+        requestedById: string;
+        requestedByName: string;
+        bankName: string;
+        nomorRekening: string;
+        namaPemilik: string;
+        nominalTarik: number;
+        biayaAdmin: number;
+        totalDipotong: number;
+        saldoKasSaatPengajuan: number;
+        status: "MENUNGGU_APPROVAL" | "APPROVED" | "REJECTED";
+        catatanApproval?: string;
+        createdAt: string;
+        approvedAt?: string;
+    }[]>;
+    ajukanPenarikan(user: any, body: {
+        bankName: string;
+        nomorRekening: string;
+        namaPemilik: string;
+        nominalTarik: number;
+    }): Promise<{
+        message: string;
+        penarikan: {
+            id: string;
+            rtId: string;
+            rtNomor: string;
+            rwNomor: string;
+            kelurahan: string;
+            requestedById: string;
+            requestedByName: string;
+            bankName: string;
+            nomorRekening: string;
+            namaPemilik: string;
+            nominalTarik: number;
+            biayaAdmin: number;
+            totalDipotong: number;
+            saldoKasSaatPengajuan: number;
+            status: "MENUNGGU_APPROVAL";
+            createdAt: string;
+        };
+    }>;
+    getPenarikanSuperadmin(): Promise<{
+        auditChecks: {
+            saldoKasSaatIni: number;
+            isSaldoCukup: boolean;
+            isPgSufficient: boolean;
+            estimasiSaldoPg: number;
+            validitasSumberDana: string;
+            isNamaCocok: boolean;
+            kesimpulanAudit: string;
+        };
+        id: string;
+        rtId: string;
+        rtNomor: string;
+        rwNomor: string;
+        kelurahan: string;
+        requestedById: string;
+        requestedByName: string;
+        bankName: string;
+        nomorRekening: string;
+        namaPemilik: string;
+        nominalTarik: number;
+        biayaAdmin: number;
+        totalDipotong: number;
+        saldoKasSaatPengajuan: number;
+        status: "MENUNGGU_APPROVAL" | "APPROVED" | "REJECTED";
+        catatanApproval?: string;
+        createdAt: string;
+        approvedAt?: string;
+    }[]>;
+    approvePenarikan(user: any, body: {
+        penarikanId: string;
+    }): Promise<{
+        message: string;
+        penarikan: {
+            id: string;
+            rtId: string;
+            rtNomor: string;
+            rwNomor: string;
+            kelurahan: string;
+            requestedById: string;
+            requestedByName: string;
+            bankName: string;
+            nomorRekening: string;
+            namaPemilik: string;
+            nominalTarik: number;
+            biayaAdmin: number;
+            totalDipotong: number;
+            saldoKasSaatPengajuan: number;
+            status: "MENUNGGU_APPROVAL" | "APPROVED" | "REJECTED";
+            catatanApproval?: string;
+            createdAt: string;
+            approvedAt?: string;
+        };
+    }>;
+    rejectPenarikan(body: {
+        penarikanId: string;
+        alasan?: string;
+    }): Promise<{
+        message: string;
+        penarikan: {
+            id: string;
+            rtId: string;
+            rtNomor: string;
+            rwNomor: string;
+            kelurahan: string;
+            requestedById: string;
+            requestedByName: string;
+            bankName: string;
+            nomorRekening: string;
+            namaPemilik: string;
+            nominalTarik: number;
+            biayaAdmin: number;
+            totalDipotong: number;
+            saldoKasSaatPengajuan: number;
+            status: "MENUNGGU_APPROVAL" | "APPROVED" | "REJECTED";
+            catatanApproval?: string;
+            createdAt: string;
+            approvedAt?: string;
+        };
+    }>;
+    getSuperadminUangMasuk(): Promise<{
+        summary: {
+            totalBruto: number;
+            totalHakKasRt: number;
+            totalCuanPlatform: number;
+            totalFeeBankVa: number;
+            totalTransaksi: number;
+        };
+        transactions: {
+            id: string;
+            waktu: string;
+            wilayah: string;
+            tipe: string;
+            pembayar: string;
+            metode: string;
+            nominalPokok: number;
+            feePlatform: number;
+            feeBankVa: number;
+            totalBayar: number;
+            status: string;
+        }[];
+    }>;
 }

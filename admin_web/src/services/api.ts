@@ -314,4 +314,31 @@ export const api = {
     if (!res.ok) throw new Error('Gagal menghapus pengumuman');
     return res.json();
   },
+
+  async get(endpoint: string) {
+    const token = this.getToken();
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const res = await fetch(`${API_BASE_URL}${cleanEndpoint}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+    return res.json();
+  },
+
+  async post(endpoint: string, data?: any) {
+    const token = this.getToken();
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const res = await fetch(`${API_BASE_URL}${cleanEndpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+    return res.json();
+  },
 };

@@ -34,6 +34,24 @@ let KasController = class KasController {
     async createKasAlias(user, body) {
         return this.kasService.createKasEntry(user.rtId, user.id, body);
     }
+    async getRiwayatPenarikan(user) {
+        return this.kasService.getRiwayatPenarikan(user.rtId);
+    }
+    async ajukanPenarikan(user, body) {
+        return this.kasService.ajukanPenarikanKas(user.rtId, user.id, body);
+    }
+    async getPenarikanSuperadmin() {
+        return this.kasService.getAllPenarikanSuperadmin();
+    }
+    async approvePenarikan(user, body) {
+        return this.kasService.approvePenarikan(body.penarikanId, user.id);
+    }
+    async rejectPenarikan(body) {
+        return this.kasService.rejectPenarikan(body.penarikanId, body.alasan);
+    }
+    async getSuperadminUangMasuk() {
+        return this.kasService.getSuperadminUangMasuk();
+    }
 };
 exports.KasController = KasController;
 __decorate([
@@ -64,6 +82,60 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], KasController.prototype, "createKasAlias", null);
+__decorate([
+    (0, common_1.Get)('penarikan/riwayat'),
+    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.ADMIN_RT, client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Melihat riwayat pengajuan penarikan dana kas RT' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], KasController.prototype, "getRiwayatPenarikan", null);
+__decorate([
+    (0, common_1.Post)('penarikan/ajukan'),
+    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.ADMIN_RT, client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Mengajukan pencairan dana kas RT ke rekening bank pengurus (Biaya Rp 6.000)' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], KasController.prototype, "ajukanPenarikan", null);
+__decorate([
+    (0, common_1.Get)('superadmin/penarikan-list'),
+    (0, roles_decorator_1.Roles)(client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Mendapatkan daftar pengajuan penarikan kas RT lengkap dengan multi-layer verification audit (Superadmin)' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], KasController.prototype, "getPenarikanSuperadmin", null);
+__decorate([
+    (0, common_1.Post)('superadmin/penarikan-approve'),
+    (0, roles_decorator_1.Roles)(client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Menyetujui dan mencairkan penarikan dana kas RT (Superadmin)' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], KasController.prototype, "approvePenarikan", null);
+__decorate([
+    (0, common_1.Post)('superadmin/penarikan-reject'),
+    (0, roles_decorator_1.Roles)(client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Menolak permohonan penarikan kas RT (Superadmin)' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], KasController.prototype, "rejectPenarikan", null);
+__decorate([
+    (0, common_1.Get)('superadmin/uang-masuk'),
+    (0, roles_decorator_1.Roles)(client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Monitoring rincian seluruh arus uang masuk dari iuran & iklan lapak (Superadmin)' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], KasController.prototype, "getSuperadminUangMasuk", null);
 exports.KasController = KasController = __decorate([
     (0, swagger_1.ApiTags)('Kas RT (Pembukuan & Saldo Lingkungan)'),
     (0, common_1.Controller)('api/kas'),

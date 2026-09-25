@@ -6,6 +6,9 @@ import { WargaManagement } from './pages/WargaManagement';
 import { TagihanBilling } from './pages/TagihanBilling';
 import { SuperadminRevenue } from './pages/SuperadminRevenue';
 import { SuperadminDashboard } from './pages/SuperadminDashboard';
+import { SuperadminUangMasuk } from './pages/SuperadminUangMasuk';
+import { SuperadminApprovalPenarikan } from './pages/SuperadminApprovalPenarikan';
+import { SuperadminAddons } from './pages/SuperadminAddons';
 import { PengurusManagement } from './pages/PengurusManagement';
 import { RondaManagement } from './pages/RondaManagement';
 import { MasterTagihanSetting } from './pages/MasterTagihanSetting';
@@ -66,8 +69,14 @@ export default function App() {
     switch (activeTab) {
       case 'superadmin_rt':
         return { title: 'Monitoring Wilayah RT (Superadmin)', subtitle: 'Pilihan & filter transaksi serta rekap RT se-Indonesia' };
+      case 'uang_masuk':
+        return { title: 'Monitoring Arus Uang Masuk (Payment Gateway)', subtitle: 'Rincian transaksi iuran warga, boost iklan lapak, dan pembagian fee nasional' };
+      case 'approval_penarikan':
+        return { title: 'Approval Penarikan Kas RT (Payout)', subtitle: 'Verifikasi multi-layer saldo kas, saldo PG, dan keabsahan rekening pengurus RT' };
       case 'revenue':
-        return { title: 'Pendapatan Fee Platform RtHub', subtitle: 'Monitoring monetisasi fee transaksi admin nasional (Rp 2.000 / transaksi)' };
+        return { title: 'Pendapatan Fee Platform RtHub', subtitle: 'Monitoring monetisasi fee transaksi admin nasional (Rp 1.500 / transaksi)' };
+      case 'addons_rt':
+        return { title: 'Paket Add-Ons Ekosistem RT (Rp 49.000/bln)', subtitle: 'Layanan administrasi surat pengantar digital & pencatatan iuran manual RT' };
       case 'dashboard':
         return { title: 'Buku Kas & Keuangan RT', subtitle: `Pencatatan kas masuk, pengeluaran & transparansi publik (${user.wilayah})` };
       case 'agenda_rt':
@@ -119,6 +128,9 @@ export default function App() {
         
         <main className="flex-1 overflow-y-auto p-8">
           {activeTab === 'superadmin_rt' && <SuperadminDashboard />}
+          {activeTab === 'uang_masuk' && <SuperadminUangMasuk />}
+          {activeTab === 'approval_penarikan' && <SuperadminApprovalPenarikan />}
+          {activeTab === 'addons_rt' && <SuperadminAddons />}
           {activeTab === 'dashboard' && <DashboardOverview user={user} />}
           {activeTab === 'agenda_rt' && <AgendaManagement user={user} />}
           {activeTab === 'berita_rt' && <BeritaManagement user={user} />}

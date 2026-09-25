@@ -19,9 +19,9 @@ export declare class BeritaService {
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;
-        judul: string;
         konten: string;
         coverUrl: string | null;
         isPinned: boolean;
@@ -39,9 +39,9 @@ export declare class BeritaService {
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;
-        judul: string;
         konten: string;
         coverUrl: string | null;
         isPinned: boolean;
@@ -59,9 +59,9 @@ export declare class BeritaService {
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;
-        judul: string;
         konten: string;
         coverUrl: string | null;
         isPinned: boolean;
@@ -73,9 +73,9 @@ export declare class BeritaService {
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;
-        judul: string;
         konten: string;
         coverUrl: string | null;
         isPinned: boolean;

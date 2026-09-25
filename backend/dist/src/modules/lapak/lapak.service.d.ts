@@ -42,8 +42,8 @@ export declare class LapakService {
         updatedAt: Date;
         deskripsi: string;
         kategori: string;
-        judul: string;
         sellerId: string;
+        judul: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
         kontakWa: string;
@@ -100,8 +100,8 @@ export declare class LapakService {
         updatedAt: Date;
         deskripsi: string;
         kategori: string;
-        judul: string;
         sellerId: string;
+        judul: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
         kontakWa: string;
@@ -121,8 +121,8 @@ export declare class LapakService {
         updatedAt: Date;
         deskripsi: string;
         kategori: string;
-        judul: string;
         sellerId: string;
+        judul: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
         kontakWa: string;

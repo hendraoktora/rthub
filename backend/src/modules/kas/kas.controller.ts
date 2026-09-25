@@ -39,4 +39,58 @@ export class KasController {
   ) {
     return this.kasService.createKasEntry(user.rtId, user.id, body);
   }
+
+  // ================= PENARIKAN KAS RT (BENDAHARA) =================
+
+  @Get('penarikan/riwayat')
+  @Roles(Role.BENDAHARA_RT, Role.ADMIN_RT, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Melihat riwayat pengajuan penarikan dana kas RT' })
+  async getRiwayatPenarikan(@CurrentUser() user: any) {
+    return this.kasService.getRiwayatPenarikan(user.rtId);
+  }
+
+  @Post('penarikan/ajukan')
+  @Roles(Role.BENDAHARA_RT, Role.ADMIN_RT, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Mengajukan pencairan dana kas RT ke rekening bank pengurus (Biaya Rp 6.000)' })
+  async ajukanPenarikan(
+    @CurrentUser() user: any,
+    @Body() body: { bankName: string; nomorRekening: string; namaPemilik: string; nominalTarik: number },
+  ) {
+    return this.kasService.ajukanPenarikanKas(user.rtId, user.id, body);
+  }
+
+  // ================= SUPERADMIN AUDIT & REVENUE =================
+
+  @Get('superadmin/penarikan-list')
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Mendapatkan daftar pengajuan penarikan kas RT lengkap dengan multi-layer verification audit (Superadmin)' })
+  async getPenarikanSuperadmin() {
+    return this.kasService.getAllPenarikanSuperadmin();
+  }
+
+  @Post('superadmin/penarikan-approve')
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Menyetujui dan mencairkan penarikan dana kas RT (Superadmin)' })
+  async approvePenarikan(
+    @CurrentUser() user: any,
+    @Body() body: { penarikanId: string },
+  ) {
+    return this.kasService.approvePenarikan(body.penarikanId, user.id);
+  }
+
+  @Post('superadmin/penarikan-reject')
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Menolak permohonan penarikan kas RT (Superadmin)' })
+  async rejectPenarikan(
+    @Body() body: { penarikanId: string; alasan?: string },
+  ) {
+    return this.kasService.rejectPenarikan(body.penarikanId, body.alasan);
+  }
+
+  @Get('superadmin/uang-masuk')
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Monitoring rincian seluruh arus uang masuk dari iuran & iklan lapak (Superadmin)' })
+  async getSuperadminUangMasuk() {
+    return this.kasService.getSuperadminUangMasuk();
+  }
 }

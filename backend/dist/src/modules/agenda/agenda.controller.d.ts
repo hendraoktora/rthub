@@ -12,8 +12,8 @@ export declare class AgendaController {
         updatedAt: Date;
         deskripsi: string | null;
         kategori: string;
-        scope: import(".prisma/client").$Enums.ScopeWilayah;
         judul: string;
+        scope: import(".prisma/client").$Enums.ScopeWilayah;
         tanggalMulai: Date;
         tanggalSelesai: Date | null;
         lokasi: string | null;
@@ -35,8 +35,8 @@ export declare class AgendaController {
         updatedAt: Date;
         deskripsi: string | null;
         kategori: string;
-        scope: import(".prisma/client").$Enums.ScopeWilayah;
         judul: string;
+        scope: import(".prisma/client").$Enums.ScopeWilayah;
         tanggalMulai: Date;
         tanggalSelesai: Date | null;
         lokasi: string | null;
@@ -57,8 +57,8 @@ export declare class AgendaController {
         updatedAt: Date;
         deskripsi: string | null;
         kategori: string;
-        scope: import(".prisma/client").$Enums.ScopeWilayah;
         judul: string;
+        scope: import(".prisma/client").$Enums.ScopeWilayah;
         tanggalMulai: Date;
         tanggalSelesai: Date | null;
         lokasi: string | null;
@@ -72,8 +72,8 @@ export declare class AgendaController {
         updatedAt: Date;
         deskripsi: string | null;
         kategori: string;
-        scope: import(".prisma/client").$Enums.ScopeWilayah;
         judul: string;
+        scope: import(".prisma/client").$Enums.ScopeWilayah;
         tanggalMulai: Date;
         tanggalSelesai: Date | null;
         lokasi: string | null;

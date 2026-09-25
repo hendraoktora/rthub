@@ -60,7 +60,13 @@ class ApiHomeRepository implements HomeRepository {
       read('kas', () => ApiService.getKasSummary(allowFallback: false)),
       read('agenda', () => ApiService.getAgendaList(allowFallback: false)),
       read('pengumuman', () => ApiService.getBeritaFeed(allowFallback: false)),
-      read('lapak', () => ApiService.getLapakList(allowFallback: false)),
+      read('lapak', () async {
+        try {
+          return await ApiService.getLapakList(allowFallback: false);
+        } catch (_) {
+          return await ApiService.getLapakList(allowFallback: true);
+        }
+      }),
       read('iuran', () => ApiService.getTagihanSaya(allowFallback: false)),
       read('BMKG', () => ApiService.getGempaTerkini(allowFallback: false)),
     ]);

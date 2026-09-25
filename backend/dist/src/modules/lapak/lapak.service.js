@@ -17,52 +17,75 @@ let LapakService = class LapakService {
         this.prisma = prisma;
     }
     async getFeedLapak(user) {
-        let rwId = user?.rwId || user?.rt?.rwId;
-        let kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
-        let rtId = user?.rtId;
-        if ((!rwId || !kelurahanId) && rtId) {
-            const rt = await this.prisma.rT.findUnique({ where: { id: rtId }, include: { rw: true } });
-            if (rt) {
-                rwId = rwId || rt.rwId;
-                kelurahanId = kelurahanId || rt.rw?.kelurahanId;
+        try {
+            let rwId = user?.rwId || user?.rt?.rwId;
+            let kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
+            let rtId = user?.rtId;
+            if ((!rwId || !kelurahanId) && rtId) {
+                const rt = await this.prisma.rT.findUnique({ where: { id: rtId }, include: { rw: true } });
+                if (rt) {
+                    rwId = rwId || rt.rwId;
+                    kelurahanId = kelurahanId || rt.rw?.kelurahanId;
+                }
+            }
+            const filters = [];
+            if (rwId)
+                filters.push({ rwId });
+            if (kelurahanId)
+                filters.push({ kelurahanId });
+            if (rtId)
+                filters.push({ rtId });
+            try {
+                if (filters.length === 0) {
+                    return await this.prisma.lapakProduk.findMany({
+                        where: { isActive: true },
+                        include: {
+                            seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
+                            rt: { select: { nomor: true } },
+                        },
+                        orderBy: [{ isPromoted: 'desc' }, { createdAt: 'desc' }],
+                        take: 50,
+                    });
+                }
+                return await this.prisma.lapakProduk.findMany({
+                    where: {
+                        OR: [
+                            ...filters,
+                            { isPromoted: true, paketIklan: 'SEMUA' },
+                        ],
+                        isActive: true,
+                    },
+                    include: {
+                        seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
+                        rt: { select: { nomor: true } },
+                    },
+                    orderBy: [
+                        { isPromoted: 'desc' },
+                        { createdAt: 'desc' },
+                    ],
+                    take: 50,
+                });
+            }
+            catch (innerErr) {
+                const whereClause = { isActive: true };
+                if (filters.length > 0) {
+                    whereClause.OR = filters;
+                }
+                return await this.prisma.lapakProduk.findMany({
+                    where: whereClause,
+                    include: {
+                        seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
+                        rt: { select: { nomor: true } },
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    take: 50,
+                });
             }
         }
-        const filters = [];
-        if (rwId)
-            filters.push({ rwId });
-        if (kelurahanId)
-            filters.push({ kelurahanId });
-        if (rtId)
-            filters.push({ rtId });
-        if (filters.length === 0) {
-            return this.prisma.lapakProduk.findMany({
-                where: { isActive: true },
-                include: {
-                    seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
-                    rt: { select: { nomor: true } },
-                },
-                orderBy: [{ isPromoted: 'desc' }, { createdAt: 'desc' }],
-                take: 50,
-            });
+        catch (outerErr) {
+            console.error('getFeedLapak error:', outerErr);
+            return [];
         }
-        return this.prisma.lapakProduk.findMany({
-            where: {
-                OR: [
-                    ...filters,
-                    { isPromoted: true, paketIklan: 'SEMUA' },
-                ],
-                isActive: true,
-            },
-            include: {
-                seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
-                rt: { select: { nomor: true } },
-            },
-            orderBy: [
-                { isPromoted: 'desc' },
-                { createdAt: 'desc' },
-            ],
-            take: 50,
-        });
     }
     async getFeedKontrakan(user) {
         const rwId = user?.rwId || user?.rt?.rwId;

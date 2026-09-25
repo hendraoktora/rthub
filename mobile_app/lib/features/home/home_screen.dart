@@ -40,8 +40,74 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void>? _activeLoad;
   String get _rt => _data.user?['rt']?['nomor']?.toString() ?? '—';
   String get _rw => _data.user?['rw']?['nomor']?.toString() ?? '—';
-  String get _name =>
-      _data.user?['profile']?['namaLengkap']?.toString() ?? 'Warga';
+  String get _name {
+    final user = _data.user;
+    final profile = user?['profile'];
+    final candidate = profile?['namaLengkap'] ??
+        profile?['nama'] ??
+        user?['namaLengkap'] ??
+        user?['name'] ??
+        user?['nama'] ??
+        user?['phone'];
+    return candidate?.toString().trim() ?? 'Warga';
+  }
+
+  String _formatDisplayName(String raw) {
+    if (raw.isEmpty) return 'Warga';
+    final withoutParentheses =
+        raw.replaceAll(RegExp(r'\s*\(.*?\)\s*'), '').trim();
+    if (withoutParentheses.isEmpty) return 'Warga';
+
+    final tokens = withoutParentheses
+        .split(RegExp(r'\s+'))
+        .where((t) => t.isNotEmpty)
+        .toList();
+    if (tokens.isEmpty) return 'Warga';
+
+    const titles = {
+      'bpk.',
+      'bpk',
+      'bapak',
+      'pak',
+      'ibu',
+      'bu',
+      'h.',
+      'hj.',
+      'haji',
+      'hajjah',
+      'dr.',
+      'dr',
+      'dra.',
+      'drs.',
+      'ir.',
+      'prof.',
+      'mas',
+      'mbak',
+      'kak',
+      'bang',
+      'om',
+      'tante',
+      'sdr.',
+      'sdr',
+      'sdri.',
+      'sdri',
+    };
+
+    if (titles.contains(tokens.first.toLowerCase())) {
+      int nextIdx = 1;
+      while (nextIdx < tokens.length &&
+          titles.contains(tokens[nextIdx].toLowerCase())) {
+        nextIdx++;
+      }
+      if (nextIdx < tokens.length) {
+        return '${tokens.first} ${tokens[nextIdx]}';
+      }
+      return tokens.first;
+    }
+
+    return tokens.first;
+  }
+
   bool get _isPengurus => const {
     'ADMIN_RT',
     'KETUA_RT',
@@ -240,13 +306,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButton: PulseSosButton(onPressed: _openPanicModal),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: const _SosFabLocation(),
       bottomNavigationBar: _bottomNav(),
     );
   }
 
   Widget _buildAppBar(double textScale) {
-    final name = _name.trim().split(' ').first;
+    final name = _formatDisplayName(_name);
     final expandedHeight = 254.0 + ((textScale - 1).clamp(0, 2) * 70);
     return SliverAppBar(
       pinned: true,
@@ -1594,3 +1660,16 @@ const _months = [
   'Nov',
   'Des',
 ];
+
+/// Positions the SOS floating action button comfortably above the glass bottom navigation bar.
+class _SosFabLocation extends FloatingActionButtonLocation {
+  const _SosFabLocation();
+
+  @override
+  Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
+    final Offset standard =
+        FloatingActionButtonLocation.endFloat.getOffset(scaffoldGeometry);
+    // Lift the SOS button by 84dp so it floats cleanly above the glass bottom nav bar
+    return Offset(standard.dx, standard.dy - 84.0);
+  }
+}

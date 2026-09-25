@@ -1,45 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rthub_mobile/features/lapak/lapak_models.dart';
+import 'package:rthub_mobile/features/lapak/lapak_repository.dart';
 import 'package:rthub_mobile/features/lapak/lapak_screen.dart';
 
-void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+class _FakeLapakRepository extends LapakRepository {
+  final products = <LapakProduct>[
+    LapakProduct.fromJson(const {
+      'id': 'p1',
+      'judul': 'Kue basah Ibu Siti',
+      'harga': 3500,
+      'kategori': 'Kuliner',
+      'sellerId': 'other',
+      'seller': {'profile': {'namaLengkap': 'Ibu Siti'}},
+      'isPromoted': true,
+      'fotoUrl': '',
+    }),
+    LapakProduct.fromJson(const {
+      'id': 'p2',
+      'judul': 'Service AC Pak Joko',
+      'harga': 65000,
+      'kategori': 'Jasa',
+      'sellerId': 'resident-1',
+      'seller': {'profile': {'namaLengkap': 'Pak Joko'}},
+    }),
+  ];
 
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
-  });
+  @override
+  Future<List<LapakProduct>> loadProducts() async => products;
 
-  Widget createLapakScreen() {
-    return const MaterialApp(
-      home: LapakScreen(),
+  @override
+  Future<Map<String, dynamic>> loadUser() async => {'id': 'resident-1', 'role': 'WARGA'};
+
+  @override
+  Future<void> save(Map<String, dynamic> fields, {String? id}) async {}
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<void> promote(String id, AdPackage package) async {}
+}
+
+Widget _host() => MediaQuery(
+      data: const MediaQueryData(disableAnimations: true),
+      child: MaterialApp(home: LapakScreen(repository: _FakeLapakRepository())),
     );
-  }
 
-  testWidgets('LapakScreen renders Appbar and 2 Tab navigation items', (WidgetTester tester) async {
-    await tester.pumpWidget(createLapakScreen());
-    await tester.pumpAndSettle();
-
-    expect(find.text('Lapak Warga & UMKM RT'), findsOneWidget);
-    expect(find.textContaining('Semua Lapak'), findsOneWidget);
-    expect(find.textContaining('Lapak Saya'), findsOneWidget);
+void main() {
+  testWidgets('Lapak renders sponsored showcase, catalog, and owner controls', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(_host());
+    await tester.pump();
+    expect(find.text('Lapak warga'), findsOneWidget);
+    expect(find.text('Sorotan lokal'), findsOneWidget);
+    expect(find.text('SPONSORED'), findsWidgets);
+    expect(find.text('Kue basah Ibu Siti'), findsWidgets);
+    await tester.scrollUntilVisible(find.text('Semua lapak'), 480,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.text('Semua lapak'), findsOneWidget);
+    expect(find.text('Lapak saya'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Promosikan'), 480,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.text('Promosikan'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('LapakScreen displays + Pasang Iklan floating action button', (WidgetTester tester) async {
-    await tester.pumpWidget(createLapakScreen());
-    await tester.pumpAndSettle();
-
-    expect(find.text('+ Pasang Iklan'), findsOneWidget);
-  });
-
-  testWidgets('LapakScreen can switch to Lapak Saya tab', (WidgetTester tester) async {
-    await tester.pumpWidget(createLapakScreen());
-    await tester.pumpAndSettle();
-
-    // Tap on Lapak Saya tab
-    await tester.tap(find.textContaining('Lapak Saya'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('Kelola Lapak'), findsOneWidget);
+  testWidgets('Lapak owner filter uses signed-in seller id', (tester) async {
+    await tester.pumpWidget(_host());
+    await tester.pump();
+    await tester.scrollUntilVisible(find.text('Lapak saya'), 500,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('Lapak saya'));
+    await tester.pump();
+    expect(find.text('Service AC Pak Joko'), findsWidgets);
+    expect(find.text('Kue basah Ibu Siti'), findsNothing);
   });
 }

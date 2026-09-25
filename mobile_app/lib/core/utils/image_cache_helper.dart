@@ -14,7 +14,9 @@ class ImageCacheHelper {
       return _base64BytesCache[hash];
     }
     try {
-      final clean = base64Str.contains(',') ? base64Str.split(',')[1] : base64Str;
+      final clean = base64Str.contains(',')
+          ? base64Str.split(',')[1]
+          : base64Str;
       final bytes = base64Decode(clean.trim());
       // Keep cache size bounded (max 100 images in memory)
       if (_base64BytesCache.length > 100) {
@@ -36,12 +38,16 @@ class ImageCacheHelper {
     Widget? placeholder,
   }) {
     if (urlOrBase64 == null || urlOrBase64.trim().isEmpty) {
-      return _wrapRadius(placeholder ?? _defaultPlaceholder(height, width), borderRadius);
+      return _wrapRadius(
+        placeholder ?? _defaultPlaceholder(height, width),
+        borderRadius,
+      );
     }
 
     final trimmed = urlOrBase64.trim();
 
-    if (trimmed.startsWith('data:image') || (trimmed.length > 200 && !trimmed.startsWith('http'))) {
+    if (trimmed.startsWith('data:image') ||
+        (trimmed.length > 200 && !trimmed.startsWith('http'))) {
       final bytes = getBytes(trimmed);
       if (bytes != null) {
         return _wrapRadius(
@@ -51,13 +57,20 @@ class ImageCacheHelper {
             width: width,
             fit: fit,
             gaplessPlayback: true,
+            cacheWidth: (width != null && width.isFinite)
+                ? (width * 2).clamp(1, 1440).toInt()
+                : 600,
             filterQuality: FilterQuality.low,
-            errorBuilder: (ctx, err, stack) => placeholder ?? _defaultPlaceholder(height, width),
+            errorBuilder: (ctx, err, stack) =>
+                placeholder ?? _defaultPlaceholder(height, width),
           ),
           borderRadius,
         );
       }
-      return _wrapRadius(placeholder ?? _defaultPlaceholder(height, width), borderRadius);
+      return _wrapRadius(
+        placeholder ?? _defaultPlaceholder(height, width),
+        borderRadius,
+      );
     }
 
     if (trimmed.startsWith('http')) {
@@ -68,9 +81,12 @@ class ImageCacheHelper {
           width: width,
           fit: fit,
           gaplessPlayback: true,
-          cacheWidth: (width != null && width.isFinite) ? (width * 2).toInt() : 600,
+          cacheWidth: (width != null && width.isFinite)
+              ? (width * 2).clamp(1, 1440).toInt()
+              : 600,
           filterQuality: FilterQuality.low,
-          errorBuilder: (ctx, err, stack) => placeholder ?? _defaultPlaceholder(height, width),
+          errorBuilder: (ctx, err, stack) =>
+              placeholder ?? _defaultPlaceholder(height, width),
           loadingBuilder: (ctx, child, progress) {
             if (progress == null) return child;
             return Container(
@@ -81,7 +97,10 @@ class ImageCacheHelper {
                 child: SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.electricBlue),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppTheme.electricBlue,
+                  ),
                 ),
               ),
             );
@@ -91,7 +110,10 @@ class ImageCacheHelper {
       );
     }
 
-    return _wrapRadius(placeholder ?? _defaultPlaceholder(height, width), borderRadius);
+    return _wrapRadius(
+      placeholder ?? _defaultPlaceholder(height, width),
+      borderRadius,
+    );
   }
 
   static Widget _wrapRadius(Widget child, BorderRadius? radius) {

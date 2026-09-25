@@ -39,7 +39,8 @@ class _LaporScreenState extends State<LaporScreen> {
           _laporanList = list;
         });
       }
-    } catch (_) {} finally {
+    } catch (_) {
+    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -59,7 +60,10 @@ class _LaporScreenState extends State<LaporScreen> {
         final t = l['tujuan']?.toString();
         final tipe = l['tipeLaporan']?.toString();
         final uid = l['userId']?.toString();
-        return t == 'SEKRETARIS_RT' || t == 'UMUM' || tipe != 'PENGADUAN' || (myUserId != null && uid == myUserId);
+        return t == 'SEKRETARIS_RT' ||
+            t == 'UMUM' ||
+            tipe != 'PENGADUAN' ||
+            (myUserId != null && uid == myUserId);
       }).toList();
     }
 
@@ -67,7 +71,9 @@ class _LaporScreenState extends State<LaporScreen> {
       return _laporanList.where((l) {
         final t = l['tujuan']?.toString();
         final uid = l['userId']?.toString();
-        return t == 'BENDAHARA_RT' || t == 'UMUM' || (myUserId != null && uid == myUserId);
+        return t == 'BENDAHARA_RT' ||
+            t == 'UMUM' ||
+            (myUserId != null && uid == myUserId);
       }).toList();
     }
 
@@ -75,7 +81,9 @@ class _LaporScreenState extends State<LaporScreen> {
       return _laporanList.where((l) {
         final t = l['tujuan']?.toString();
         final uid = l['userId']?.toString();
-        return t == 'KEAMANAN' || t == 'UMUM' || (myUserId != null && uid == myUserId);
+        return t == 'KEAMANAN' ||
+            t == 'UMUM' ||
+            (myUserId != null && uid == myUserId);
       }).toList();
     }
 
@@ -84,7 +92,10 @@ class _LaporScreenState extends State<LaporScreen> {
       final uid = l['userId']?.toString();
       if (myUserId != null && uid == myUserId) return true;
       final targetCustom = l['targetCustom']?.toString().toLowerCase();
-      if (myName != null && targetCustom != null && targetCustom.contains(myName)) return true;
+      if (myName != null &&
+          targetCustom != null &&
+          targetCustom.contains(myName))
+        return true;
       return false;
     }).toList();
   }
@@ -98,9 +109,14 @@ class _LaporScreenState extends State<LaporScreen> {
     final tujuan = item['tujuan']?.toString() ?? 'KETUA_RT';
     final tipe = item['tipeLaporan']?.toString() ?? 'PENGADUAN';
 
-    if (role == 'SEKRETARIS_RT' && (tujuan == 'SEKRETARIS_RT' || tujuan == 'UMUM' || tipe != 'PENGADUAN')) return true;
-    if (role == 'BENDAHARA_RT' && (tujuan == 'BENDAHARA_RT' || tujuan == 'UMUM')) return true;
-    if (role == 'SECURITY' && (tujuan == 'KEAMANAN' || tujuan == 'UMUM')) return true;
+    if (role == 'SEKRETARIS_RT' &&
+        (tujuan == 'SEKRETARIS_RT' || tujuan == 'UMUM' || tipe != 'PENGADUAN'))
+      return true;
+    if (role == 'BENDAHARA_RT' &&
+        (tujuan == 'BENDAHARA_RT' || tujuan == 'UMUM'))
+      return true;
+    if (role == 'SECURITY' && (tujuan == 'KEAMANAN' || tujuan == 'UMUM'))
+      return true;
     return false;
   }
 
@@ -122,12 +138,12 @@ class _LaporScreenState extends State<LaporScreen> {
     final initialTitle = tipeLaporan == 'SURAT_KEMATIAN'
         ? 'Permohonan Surat Keterangan Kematian'
         : tipeLaporan == 'SURAT_SKTM'
-            ? 'Permohonan Surat Keterangan Tidak Mampu (SKTM)'
-            : tipeLaporan == 'SURAT_DOMISILI'
-                ? 'Permohonan Surat Keterangan Domisili'
-                : tipeLaporan == 'SURAT_PENGANTAR'
-                    ? 'Permohonan Surat Pengantar Kelurahan'
-                    : '';
+        ? 'Permohonan Surat Keterangan Tidak Mampu (SKTM)'
+        : tipeLaporan == 'SURAT_DOMISILI'
+        ? 'Permohonan Surat Keterangan Domisili'
+        : tipeLaporan == 'SURAT_PENGANTAR'
+        ? 'Permohonan Surat Pengantar Kelurahan'
+        : '';
 
     final judulController = TextEditingController(text: initialTitle);
     final deskripsiController = TextEditingController();
@@ -140,12 +156,16 @@ class _LaporScreenState extends State<LaporScreen> {
     final hubunganController = TextEditingController(text: 'Anak Kandung');
 
     final pekerjaanController = TextEditingController();
-    final penghasilanController = TextEditingController(text: 'Rp 1.500.000 / bulan');
+    final penghasilanController = TextEditingController(
+      text: 'Rp 1.500.000 / bulan',
+    );
     final keperluanController = TextEditingController();
 
     final noRumahUser = _user?['profile']?['noRumah']?.toString() ?? '';
     final alamatDomisiliController = TextEditingController(
-      text: noRumahUser.isNotEmpty ? 'Rumah No. $noRumahUser, RT 03 / RW 05' : '',
+      text: noRumahUser.isNotEmpty
+          ? 'Rumah No. $noRumahUser, RT 03 / RW 05'
+          : '',
     );
     final lamaTinggalController = TextEditingController(text: '2 Tahun');
 
@@ -158,11 +178,15 @@ class _LaporScreenState extends State<LaporScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (modalContext) => StatefulBuilder(
         builder: (modalContext, setModalState) => Padding(
           padding: EdgeInsets.only(
-            left: 20, right: 20, top: 20,
+            left: 20,
+            right: 20,
+            top: 20,
             bottom: MediaQuery.of(modalContext).viewInsets.bottom + 20,
           ),
           child: SingleChildScrollView(
@@ -181,9 +205,14 @@ class _LaporScreenState extends State<LaporScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Form Layanan & Surat Resmi RT', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                const Text('Layanan permohonan surat RT & pengaduan lingkungan (100% Private & Terenkripsi)',
-                    style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                const Text(
+                  'Form Layanan & Surat Resmi RT',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                ),
+                const Text(
+                  'Layanan permohonan surat RT & pengaduan lingkungan (100% Private & Terenkripsi)',
+                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                ),
                 const SizedBox(height: 16),
 
                 // 1. Pilih Template
@@ -194,27 +223,46 @@ class _LaporScreenState extends State<LaporScreen> {
                     prefixIcon: Icon(Icons.description_outlined),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'PENGADUAN', child: Text('📢 Pengaduan Lingkungan & Fasilitas')),
-                    DropdownMenuItem(value: 'SURAT_PENGANTAR', child: Text('📑 Surat Pengantar Kelurahan (KTP/KK)')),
-                    DropdownMenuItem(value: 'SURAT_KEMATIAN', child: Text('📜 Surat Keterangan Kematian')),
-                    DropdownMenuItem(value: 'SURAT_SKTM', child: Text('📄 Surat Keterangan Tidak Mampu (SKTM)')),
-                    DropdownMenuItem(value: 'SURAT_DOMISILI', child: Text('🏡 Surat Keterangan Domisili Warga')),
+                    DropdownMenuItem(
+                      value: 'PENGADUAN',
+                      child: Text('📢 Pengaduan Lingkungan & Fasilitas'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'SURAT_PENGANTAR',
+                      child: Text('📑 Surat Pengantar Kelurahan (KTP/KK)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'SURAT_KEMATIAN',
+                      child: Text('📜 Surat Keterangan Kematian'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'SURAT_SKTM',
+                      child: Text('📄 Surat Keterangan Tidak Mampu (SKTM)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'SURAT_DOMISILI',
+                      child: Text('🏡 Surat Keterangan Domisili Warga'),
+                    ),
                   ],
                   onChanged: (val) {
                     if (val != null) {
                       setModalState(() {
                         tipeLaporan = val;
                         if (val == 'SURAT_KEMATIAN') {
-                          judulController.text = 'Permohonan Surat Keterangan Kematian';
+                          judulController.text =
+                              'Permohonan Surat Keterangan Kematian';
                           tujuan = 'SEKRETARIS_RT';
                         } else if (val == 'SURAT_SKTM') {
-                          judulController.text = 'Permohonan Surat Keterangan Tidak Mampu (SKTM)';
+                          judulController.text =
+                              'Permohonan Surat Keterangan Tidak Mampu (SKTM)';
                           tujuan = 'SEKRETARIS_RT';
                         } else if (val == 'SURAT_DOMISILI') {
-                          judulController.text = 'Permohonan Surat Keterangan Domisili';
+                          judulController.text =
+                              'Permohonan Surat Keterangan Domisili';
                           tujuan = 'SEKRETARIS_RT';
                         } else if (val == 'SURAT_PENGANTAR') {
-                          judulController.text = 'Permohonan Surat Pengantar Kelurahan';
+                          judulController.text =
+                              'Permohonan Surat Pengantar Kelurahan';
                           tujuan = 'SEKRETARIS_RT';
                         } else {
                           tujuan = 'KETUA_RT';
@@ -233,12 +281,30 @@ class _LaporScreenState extends State<LaporScreen> {
                     prefixIcon: Icon(Icons.person_pin_rounded),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'KETUA_RT', child: Text('👑 Ketua RT (Administrasi & Surat)')),
-                    DropdownMenuItem(value: 'SEKRETARIS_RT', child: Text('📝 Sekretaris RT')),
-                    DropdownMenuItem(value: 'BENDAHARA_RT', child: Text('💰 Bendahara RT')),
-                    DropdownMenuItem(value: 'KEAMANAN', child: Text('🛡️ Seksi Keamanan & Ronda')),
-                    DropdownMenuItem(value: 'KEBERSIHAN', child: Text('🧹 Seksi Kebersihan')),
-                    DropdownMenuItem(value: 'UMUM', child: Text('🏢 Pengurus RT Umum')),
+                    DropdownMenuItem(
+                      value: 'KETUA_RT',
+                      child: Text('👑 Ketua RT (Administrasi & Surat)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'SEKRETARIS_RT',
+                      child: Text('📝 Sekretaris RT'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'BENDAHARA_RT',
+                      child: Text('💰 Bendahara RT'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'KEAMANAN',
+                      child: Text('🛡️ Seksi Keamanan & Ronda'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'KEBERSIHAN',
+                      child: Text('🧹 Seksi Kebersihan'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'UMUM',
+                      child: Text('🏢 Pengurus RT Umum'),
+                    ),
                   ],
                   onChanged: (val) {
                     if (val != null) setModalState(() => tujuan = val);
@@ -251,7 +317,8 @@ class _LaporScreenState extends State<LaporScreen> {
                   controller: judulController,
                   decoration: const InputDecoration(
                     labelText: 'Judul Laporan / Permohonan *',
-                    hintText: 'Contoh: Permohonan Surat Keterangan Kematian Alm. Bpk. Fulan',
+                    hintText:
+                        'Contoh: Permohonan Surat Keterangan Kematian Alm. Bpk. Fulan',
                     prefixIcon: Icon(Icons.title_rounded),
                   ),
                 ),
@@ -264,32 +331,55 @@ class _LaporScreenState extends State<LaporScreen> {
                     decoration: BoxDecoration(
                       color: Colors.purple.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
+                      border: Border.all(
+                        color: Colors.purple.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Data Almarhum / Almarhumah:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.purple)),
+                        const Text(
+                          'Data Almarhum / Almarhumah:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                            color: Colors.purple,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: namaAlmController,
-                          decoration: const InputDecoration(labelText: 'Nama Lengkap Almarhum/ah *', isDense: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Nama Lengkap Almarhum/ah *',
+                            isDense: true,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: nikAlmController,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'NIK Almarhum/ah (16 Digit)', isDense: true),
+                          decoration: const InputDecoration(
+                            labelText: 'NIK Almarhum/ah (16 Digit)',
+                            isDense: true,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: tglMeninggalController,
-                          decoration: const InputDecoration(labelText: 'Hari / Tanggal / Waktu Wafat *', hintText: 'Contoh: 18 September 2026, 08:30 WIB', isDense: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Hari / Tanggal / Waktu Wafat *',
+                            hintText: 'Contoh: 18 September 2026, 08:30 WIB',
+                            isDense: true,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: tempatMeninggalController,
-                          decoration: const InputDecoration(labelText: 'Tempat Meninggal & Penyebab', hintText: 'Contoh: Rumah Duka / Sakit Tua', isDense: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Tempat Meninggal & Penyebab',
+                            hintText: 'Contoh: Rumah Duka / Sakit Tua',
+                            isDense: true,
+                          ),
                         ),
                       ],
                     ),
@@ -304,26 +394,46 @@ class _LaporScreenState extends State<LaporScreen> {
                     decoration: BoxDecoration(
                       color: Colors.amber.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Colors.amber.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Data Keterangan Ekonomi / SKTM:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF92400E))),
+                        const Text(
+                          'Data Keterangan Ekonomi / SKTM:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                            color: Color(0xFF92400E),
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: pekerjaanController,
-                          decoration: const InputDecoration(labelText: 'Pekerjaan Kepala Keluarga', hintText: 'Contoh: Buruh / Pedagang Kecil', isDense: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Pekerjaan Kepala Keluarga',
+                            hintText: 'Contoh: Buruh / Pedagang Kecil',
+                            isDense: true,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: penghasilanController,
-                          decoration: const InputDecoration(labelText: 'Rata-rata Penghasilan Bulanan', isDense: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Rata-rata Penghasilan Bulanan',
+                            isDense: true,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: keperluanController,
-                          decoration: const InputDecoration(labelText: 'Keperluan Surat SKTM *', hintText: 'Contoh: Beasiswa KIP Kuliah / BPJS PBI', isDense: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Keperluan Surat SKTM *',
+                            hintText: 'Contoh: Beasiswa KIP Kuliah / BPJS PBI',
+                            isDense: true,
+                          ),
                         ),
                       ],
                     ),
@@ -338,18 +448,27 @@ class _LaporScreenState extends State<LaporScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF059669).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF059669).withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: const Color(0xFF059669).withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Data Keterangan Tempat Tinggal / Domisili:',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF065F46))),
+                        const Text(
+                          'Data Keterangan Tempat Tinggal / Domisili:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                            color: Color(0xFF065F46),
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: alamatDomisiliController,
                           decoration: const InputDecoration(
-                            labelText: 'Alamat Lengkap Domisili di Lingkungan RT *',
+                            labelText:
+                                'Alamat Lengkap Domisili di Lingkungan RT *',
                             hintText: 'Contoh: Jl. Sukamaju No. 12 RT 03 RW 05',
                             isDense: true,
                           ),
@@ -368,7 +487,8 @@ class _LaporScreenState extends State<LaporScreen> {
                           controller: keperluanController,
                           decoration: const InputDecoration(
                             labelText: 'Keperluan Surat Domisili *',
-                            hintText: 'Contoh: Buka Rekening Bank / Melamar Kerja / Izin Usaha',
+                            hintText:
+                                'Contoh: Buka Rekening Bank / Melamar Kerja / Izin Usaha',
                             isDense: true,
                           ),
                         ),
@@ -385,19 +505,28 @@ class _LaporScreenState extends State<LaporScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF2563EB).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Data Permohonan Pengantar Kelurahan:',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF1E40AF))),
+                        const Text(
+                          'Data Permohonan Pengantar Kelurahan:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                            color: Color(0xFF1E40AF),
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: keperluanController,
                           decoration: const InputDecoration(
                             labelText: 'Maksud / Keperluan Pengantar *',
-                            hintText: 'Contoh: Pembuatan KTP Baru / Kartu Keluarga / Akta Kelahiran / Pindah Datang / SKCK',
+                            hintText:
+                                'Contoh: Pembuatan KTP Baru / Kartu Keluarga / Akta Kelahiran / Pindah Datang / SKCK',
                             isDense: true,
                           ),
                         ),
@@ -412,8 +541,11 @@ class _LaporScreenState extends State<LaporScreen> {
                   controller: deskripsiController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: tipeLaporan == 'PENGADUAN' ? 'Rincian Keluhan & Lokasi *' : 'Keterangan Pengantar Tambahan *',
-                    hintText: 'Jelaskan kronologi atau maksud permohonan secara lengkap...',
+                    labelText: tipeLaporan == 'PENGADUAN'
+                        ? 'Rincian Keluhan & Lokasi *'
+                        : 'Keterangan Pengantar Tambahan *',
+                    hintText:
+                        'Jelaskan kronologi atau maksud permohonan secara lengkap...',
                     prefixIcon: const Icon(Icons.notes_rounded),
                   ),
                 ),
@@ -421,14 +553,21 @@ class _LaporScreenState extends State<LaporScreen> {
 
                 // Foto Lampiran
                 if (tipeLaporan == 'PENGADUAN') ...[
-                  const Text('Foto Bukti (Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Foto Bukti (Opsional)',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 6),
                   if (fotoBase64 != null) ...[
                     Stack(
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: _buildImageWidget(fotoBase64!, height: 130, width: double.infinity),
+                          child: _buildImageWidget(
+                            fotoBase64!,
+                            height: 130,
+                            width: double.infinity,
+                          ),
                         ),
                         Positioned(
                           top: 6,
@@ -437,8 +576,15 @@ class _LaporScreenState extends State<LaporScreen> {
                             onTap: () => setModalState(() => fotoBase64 = null),
                             child: Container(
                               padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                              child: const Icon(Icons.close, color: Colors.white, size: 16),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                             ),
                           ),
                         ),
@@ -452,17 +598,33 @@ class _LaporScreenState extends State<LaporScreen> {
                           child: OutlinedButton.icon(
                             onPressed: () async {
                               try {
-                                final img = await _picker.pickImage(source: ImageSource.camera, imageQuality: 50, maxWidth: 600, maxHeight: 600);
+                                final img = await _picker.pickImage(
+                                  source: ImageSource.camera,
+                                  imageQuality: 50,
+                                  maxWidth: 600,
+                                  maxHeight: 600,
+                                );
                                 if (img != null) {
                                   final bytes = await img.readAsBytes();
-                                  setModalState(() => fotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}');
+                                  setModalState(
+                                    () => fotoBase64 =
+                                        'data:image/jpeg;base64,${base64Encode(bytes)}',
+                                  );
                                 }
                               } catch (e) {
-                                messenger.showSnackBar(SnackBar(content: Text('Gagal kamera: $e')));
+                                messenger.showSnackBar(
+                                  SnackBar(content: Text('Gagal kamera: $e')),
+                                );
                               }
                             },
-                            icon: const Icon(Icons.camera_alt_rounded, size: 16),
-                            label: const Text('Foto Kamera', style: TextStyle(fontSize: 12)),
+                            icon: const Icon(
+                              Icons.camera_alt_rounded,
+                              size: 16,
+                            ),
+                            label: const Text(
+                              'Foto Kamera',
+                              style: TextStyle(fontSize: 12),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -470,17 +632,33 @@ class _LaporScreenState extends State<LaporScreen> {
                           child: OutlinedButton.icon(
                             onPressed: () async {
                               try {
-                                final img = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50, maxWidth: 600, maxHeight: 600);
+                                final img = await _picker.pickImage(
+                                  source: ImageSource.gallery,
+                                  imageQuality: 50,
+                                  maxWidth: 600,
+                                  maxHeight: 600,
+                                );
                                 if (img != null) {
                                   final bytes = await img.readAsBytes();
-                                  setModalState(() => fotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}');
+                                  setModalState(
+                                    () => fotoBase64 =
+                                        'data:image/jpeg;base64,${base64Encode(bytes)}',
+                                  );
                                 }
                               } catch (e) {
-                                messenger.showSnackBar(SnackBar(content: Text('Gagal galeri: $e')));
+                                messenger.showSnackBar(
+                                  SnackBar(content: Text('Gagal galeri: $e')),
+                                );
                               }
                             },
-                            icon: const Icon(Icons.photo_library_rounded, size: 16),
-                            label: const Text('Pilih Galeri', style: TextStyle(fontSize: 12)),
+                            icon: const Icon(
+                              Icons.photo_library_rounded,
+                              size: 16,
+                            ),
+                            label: const Text(
+                              'Pilih Galeri',
+                              style: TextStyle(fontSize: 12),
+                            ),
                           ),
                         ),
                       ],
@@ -492,9 +670,13 @@ class _LaporScreenState extends State<LaporScreen> {
                     children: [
                       Checkbox(
                         value: isAnonymous,
-                        onChanged: (val) => setModalState(() => isAnonymous = val ?? false),
+                        onChanged: (val) =>
+                            setModalState(() => isAnonymous = val ?? false),
                       ),
-                      const Text('Kirim sebagai Warga Anonim (Rahasiakan Nama)', style: TextStyle(fontSize: 12)),
+                      const Text(
+                        'Kirim sebagai Warga Anonim (Rahasiakan Nama)',
+                        style: TextStyle(fontSize: 12),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -510,7 +692,10 @@ class _LaporScreenState extends State<LaporScreen> {
 
                       if (j.isEmpty || desc.isEmpty) {
                         messenger.showSnackBar(
-                          const SnackBar(content: Text('Judul dan rincian wajib diisi!'), backgroundColor: AppTheme.alertRed),
+                          const SnackBar(
+                            content: Text('Judul dan rincian wajib diisi!'),
+                            backgroundColor: AppTheme.alertRed,
+                          ),
                         );
                         return;
                       }
@@ -521,7 +706,8 @@ class _LaporScreenState extends State<LaporScreen> {
                         'namaAlmarhum': namaAlmController.text.trim(),
                         'nikAlmarhum': nikAlmController.text.trim(),
                         'tglMeninggal': tglMeninggalController.text.trim(),
-                        'tempatMeninggal': tempatMeninggalController.text.trim(),
+                        'tempatMeninggal': tempatMeninggalController.text
+                            .trim(),
                         'hubunganPelapor': hubunganController.text.trim(),
                         'pekerjaan': pekerjaanController.text.trim(),
                         'penghasilan': penghasilanController.text.trim(),
@@ -543,16 +729,26 @@ class _LaporScreenState extends State<LaporScreen> {
                         });
                         messenger.showSnackBar(
                           const SnackBar(
-                            content: Text('✅ Permohonan / Laporan berhasil dikirimkan secara privat!'),
+                            content: Text(
+                              '✅ Permohonan / Laporan berhasil dikirimkan secara privat!',
+                            ),
                             backgroundColor: AppTheme.successGreen,
                           ),
                         );
                         _loadLaporanFromDb();
                       } catch (e) {
-                        messenger.showSnackBar(SnackBar(content: Text('⚠️ Gagal mengirim: $e'), backgroundColor: AppTheme.alertRed));
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text('⚠️ Gagal mengirim: $e'),
+                            backgroundColor: AppTheme.alertRed,
+                          ),
+                        );
                       }
                     },
-                    child: const Text('Kirim Permohonan Sekarang', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Kirim Permohonan Sekarang',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -565,9 +761,12 @@ class _LaporScreenState extends State<LaporScreen> {
 
   void _showTindakLanjutModal(Map<String, dynamic> item) {
     final messenger = ScaffoldMessenger.of(context);
-    final tanggapanController = TextEditingController(text: item['tanggapanRT']?.toString() ?? '');
+    final tanggapanController = TextEditingController(
+      text: item['tanggapanRT']?.toString() ?? '',
+    );
     final handlerController = TextEditingController(
-      text: _user?['profile']?['namaLengkap'] ?? _user?['phone'] ?? 'Pengurus RT',
+      text:
+          _user?['profile']?['namaLengkap'] ?? _user?['phone'] ?? 'Pengurus RT',
     );
     String newStatus = 'SELESAI';
 
@@ -575,11 +774,15 @@ class _LaporScreenState extends State<LaporScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (modalCtx) => StatefulBuilder(
         builder: (modalCtx, setModalState) => Padding(
           padding: EdgeInsets.only(
-            left: 20, right: 20, top: 20,
+            left: 20,
+            right: 20,
+            top: 20,
             bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 20,
           ),
           child: SingleChildScrollView(
@@ -591,21 +794,45 @@ class _LaporScreenState extends State<LaporScreen> {
                   child: Container(
                     width: 40,
                     height: 4,
-                    decoration: BoxDecoration(color: AppTheme.slateBorder, borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(
+                      color: AppTheme.slateBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Tindak Lanjut & Verifikasi Resmi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text(item['judul'] ?? 'Laporan', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                const Text(
+                  'Tindak Lanjut & Verifikasi Resmi',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  item['judul'] ?? 'Laporan',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 16),
 
                 DropdownButtonFormField<String>(
                   initialValue: newStatus,
-                  decoration: const InputDecoration(labelText: 'Status Verifikasi *', prefixIcon: Icon(Icons.rule_folder_outlined)),
+                  decoration: const InputDecoration(
+                    labelText: 'Status Verifikasi *',
+                    prefixIcon: Icon(Icons.rule_folder_outlined),
+                  ),
                   items: const [
-                    DropdownMenuItem(value: 'SELESAI', child: Text('✓ Setujui & Selesaikan (Terbitkan Surat)')),
-                    DropdownMenuItem(value: 'DIPROSES', child: Text('🔄 Sedang Ditangani / Dalam Proses')),
-                    DropdownMenuItem(value: 'DITOLAK', child: Text('✗ Tolak Permohonan / Dibatalkan')),
+                    DropdownMenuItem(
+                      value: 'SELESAI',
+                      child: Text('✓ Setujui & Selesaikan (Terbitkan Surat)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'DIPROSES',
+                      child: Text('🔄 Sedang Ditangani / Dalam Proses'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'DITOLAK',
+                      child: Text('✗ Tolak Permohonan / Dibatalkan'),
+                    ),
                   ],
                   onChanged: (val) {
                     if (val != null) setModalState(() => newStatus = val);
@@ -627,7 +854,8 @@ class _LaporScreenState extends State<LaporScreen> {
                   maxLines: 3,
                   decoration: const InputDecoration(
                     labelText: 'Catatan Tanggapan & Solusi *',
-                    hintText: 'Tuliskan tindakan yang diambil atau verifikasi persetujuan...',
+                    hintText:
+                        'Tuliskan tindakan yang diambil atau verifikasi persetujuan...',
                     prefixIcon: Icon(Icons.comment_outlined),
                   ),
                 ),
@@ -638,9 +866,13 @@ class _LaporScreenState extends State<LaporScreen> {
                   height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: newStatus == 'SELESAI' ? AppTheme.successGreen : AppTheme.primaryNavy,
+                      backgroundColor: newStatus == 'SELESAI'
+                          ? AppTheme.successGreen
+                          : AppTheme.primaryNavy,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     onPressed: () async {
                       final tanggapan = tanggapanController.text.trim();
@@ -648,7 +880,10 @@ class _LaporScreenState extends State<LaporScreen> {
 
                       if (tanggapan.isEmpty) {
                         messenger.showSnackBar(
-                          const SnackBar(content: Text('Catatan tindak lanjut wajib diisi!'), backgroundColor: AppTheme.alertRed),
+                          const SnackBar(
+                            content: Text('Catatan tindak lanjut wajib diisi!'),
+                            backgroundColor: AppTheme.alertRed,
+                          ),
                         );
                         return;
                       }
@@ -665,19 +900,29 @@ class _LaporScreenState extends State<LaporScreen> {
 
                         messenger.showSnackBar(
                           SnackBar(
-                            content: Text(newStatus == 'SELESAI' ? '✅ Berhasil disetujui & diselesaikan!' : '✅ Status berhasil diperbarui!'),
+                            content: Text(
+                              newStatus == 'SELESAI'
+                                  ? '✅ Berhasil disetujui & diselesaikan!'
+                                  : '✅ Status berhasil diperbarui!',
+                            ),
                             backgroundColor: AppTheme.successGreen,
                           ),
                         );
                         _loadLaporanFromDb();
                       } catch (e) {
                         messenger.showSnackBar(
-                          SnackBar(content: Text('⚠️ Gagal update: $e'), backgroundColor: AppTheme.alertRed),
+                          SnackBar(
+                            content: Text('⚠️ Gagal update: $e'),
+                            backgroundColor: AppTheme.alertRed,
+                          ),
                         );
                       }
                     },
                     icon: const Icon(Icons.send_rounded, size: 18),
-                    label: const Text('Simpan Tanggapan Resmi', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'Simpan Tanggapan Resmi',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -692,13 +937,21 @@ class _LaporScreenState extends State<LaporScreen> {
   void _showCetakSuratModal(Map<String, dynamic> item) {
     final meta = _parseDataSurat(item);
     final tipe = item['tipeLaporan']?.toString() ?? 'SURAT_PENGANTAR';
-    final nomorSurat = item['nomorSurat']?.toString() ?? '470/108/RT.03-RW.05/2026';
-    final pelapor = item['user']?['profile']?['namaLengkap'] ?? item['pelapor'] ?? 'Warga RT';
-    final nik = item['user']?['profile']?['nik'] ?? meta['nikPemohon'] ?? '3201234567890001';
+    final nomorSurat =
+        item['nomorSurat']?.toString() ?? '470/108/RT.03-RW.05/2026';
+    final pelapor =
+        item['user']?['profile']?['namaLengkap'] ??
+        item['pelapor'] ??
+        'Warga RT';
+    final nik =
+        item['user']?['profile']?['nik'] ??
+        meta['nikPemohon'] ??
+        '3201234567890001';
 
     String judulSurat = 'SURAT PENGANTAR KELURAHAN';
     if (tipe == 'SURAT_KEMATIAN') judulSurat = 'SURAT KETERANGAN KEMATIAN';
-    if (tipe == 'SURAT_SKTM') judulSurat = 'SURAT KETERANGAN TIDAK MAMPU (SKTM)';
+    if (tipe == 'SURAT_SKTM')
+      judulSurat = 'SURAT KETERANGAN TIDAK MAMPU (SKTM)';
     if (tipe == 'SURAT_DOMISILI') judulSurat = 'SURAT KETERANGAN DOMISILI';
 
     showDialog(
@@ -719,9 +972,19 @@ class _LaporScreenState extends State<LaporScreen> {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.print_rounded, color: AppTheme.primaryNavy, size: 20),
+                        Icon(
+                          Icons.print_rounded,
+                          color: AppTheme.primaryNavy,
+                          size: 20,
+                        ),
                         SizedBox(width: 8),
-                        Text('Dokumen Resmi Siap Cetak', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(
+                          'Dokumen Resmi Siap Cetak',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ),
                     IconButton(
@@ -734,17 +997,43 @@ class _LaporScreenState extends State<LaporScreen> {
                 const SizedBox(height: 8),
 
                 // KOP SURAT RESMI
-                const Text('PEMERINTAH KOTA ADMINISTRASI LINGKUNGAN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                const Text('RUKUN TETANGGA 03 / RUKUN WARGA 05', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900)),
-                const Text('KELURAHAN SUKAMAJU ASRI', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                const Text('Sekretariat: Balai Warga RT 03 RW 05 • Sistem Terpadu RtHub', style: TextStyle(fontSize: 9, color: AppTheme.textMuted)),
+                const Text(
+                  'PEMERINTAH KOTA ADMINISTRASI LINGKUNGAN',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+                const Text(
+                  'RUKUN TETANGGA 03 / RUKUN WARGA 05',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+                ),
+                const Text(
+                  'KELURAHAN SUKAMAJU ASRI',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+                const Text(
+                  'Sekretariat: Balai Warga RT 03 RW 05 • Sistem Terpadu RtHub',
+                  style: TextStyle(fontSize: 9, color: AppTheme.textMuted),
+                ),
                 const SizedBox(height: 4),
                 const Divider(thickness: 2, color: Colors.black87),
                 const SizedBox(height: 8),
 
                 // JUDUL SURAT
-                Text(judulSurat, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
-                Text('Nomor: $nomorSurat', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                Text(
+                  judulSurat,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                Text(
+                  'Nomor: $nomorSurat',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 12),
 
                 // KETERANGAN
@@ -763,9 +1052,21 @@ class _LaporScreenState extends State<LaporScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('• Nama Lengkap : $pelapor', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
-                            Text('• NIK / KTP     : $nik', style: const TextStyle(fontSize: 10.5)),
-                            const Text('• Alamat        : Lingkungan RT 03 RW 05', style: TextStyle(fontSize: 10.5)),
+                            Text(
+                              '• Nama Lengkap : $pelapor',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '• NIK / KTP     : $nik',
+                              style: const TextStyle(fontSize: 10.5),
+                            ),
+                            const Text(
+                              '• Alamat        : Lingkungan RT 03 RW 05',
+                              style: TextStyle(fontSize: 10.5),
+                            ),
                           ],
                         ),
                       ),
@@ -775,42 +1076,96 @@ class _LaporScreenState extends State<LaporScreen> {
                       if (tipe == 'SURAT_KEMATIAN') ...[
                         Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: AppTheme.slateLight, borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(
+                            color: AppTheme.slateLight,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Menerangkan benar telah MENINGGAL DUNIA:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                              Text('Nama Almarhum : ${meta['namaAlmarhum'] ?? '-'}', style: const TextStyle(fontSize: 10)),
-                              Text('Waktu Wafat   : ${meta['tglMeninggal'] ?? '-'}', style: const TextStyle(fontSize: 10)),
-                              Text('Tempat/Penyebab: ${meta['tempatMeninggal'] ?? '-'}', style: const TextStyle(fontSize: 10)),
+                              const Text(
+                                'Menerangkan benar telah MENINGGAL DUNIA:',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Nama Almarhum : ${meta['namaAlmarhum'] ?? '-'}',
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                              Text(
+                                'Waktu Wafat   : ${meta['tglMeninggal'] ?? '-'}',
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                              Text(
+                                'Tempat/Penyebab: ${meta['tempatMeninggal'] ?? '-'}',
+                                style: const TextStyle(fontSize: 10),
+                              ),
                             ],
                           ),
                         ),
                       ] else if (tipe == 'SURAT_SKTM') ...[
                         Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: AppTheme.slateLight, borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(
+                            color: AppTheme.slateLight,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Keluarga PRA-SEJAHTERA / TIDAK MAMPU:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                              Text('Pekerjaan   : ${meta['pekerjaan'] ?? 'Buruh'}', style: const TextStyle(fontSize: 10)),
-                              Text('Penghasilan : ${meta['penghasilan'] ?? '-'}', style: const TextStyle(fontSize: 10)),
-                              Text('Keperluan   : ${meta['keperluan'] ?? item['deskripsi'] ?? '-'}', style: const TextStyle(fontSize: 10)),
+                              const Text(
+                                'Keluarga PRA-SEJAHTERA / TIDAK MAMPU:',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Pekerjaan   : ${meta['pekerjaan'] ?? 'Buruh'}',
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                              Text(
+                                'Penghasilan : ${meta['penghasilan'] ?? '-'}',
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                              Text(
+                                'Keperluan   : ${meta['keperluan'] ?? item['deskripsi'] ?? '-'}',
+                                style: const TextStyle(fontSize: 10),
+                              ),
                             ],
                           ),
                         ),
                       ] else if (tipe == 'SURAT_DOMISILI') ...[
                         Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: AppTheme.slateLight, borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(
+                            color: AppTheme.slateLight,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('KETERANGAN DOMISILI TEMPAT TINGGAL:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                              Text('Alamat Domisili : ${meta['alamatDomisili'] ?? 'Lingkungan RT 03 RW 05'}', style: const TextStyle(fontSize: 10)),
-                              Text('Lama Menetap    : ${meta['lamaTinggal'] ?? '2 Tahun'}', style: const TextStyle(fontSize: 10)),
-                              Text('Keperluan       : ${meta['keperluan'] ?? item['deskripsi'] ?? 'Administrasi Warga'}', style: const TextStyle(fontSize: 10)),
+                              const Text(
+                                'KETERANGAN DOMISILI TEMPAT TINGGAL:',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Alamat Domisili : ${meta['alamatDomisili'] ?? 'Lingkungan RT 03 RW 05'}',
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                              Text(
+                                'Lama Menetap    : ${meta['lamaTinggal'] ?? '2 Tahun'}',
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                              Text(
+                                'Keperluan       : ${meta['keperluan'] ?? item['deskripsi'] ?? 'Administrasi Warga'}',
+                                style: const TextStyle(fontSize: 10),
+                              ),
                             ],
                           ),
                         ),
@@ -836,31 +1191,76 @@ class _LaporScreenState extends State<LaporScreen> {
                   children: [
                     Column(
                       children: [
-                        const Text('Warga Pemohon,', style: TextStyle(fontSize: 9.5, color: AppTheme.textSecondary)),
+                        const Text(
+                          'Warga Pemohon,',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
                         const SizedBox(height: 36),
-                        Text(pelapor, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                        Text(
+                          pelapor,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
                       ],
                     ),
                     Column(
                       children: [
-                        const Text('Ketua RT 03,', style: TextStyle(fontSize: 9.5, color: AppTheme.textSecondary)),
+                        const Text(
+                          'Ketua RT 03,',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.electricBlue, width: 1),
+                            border: Border.all(
+                              color: AppTheme.electricBlue,
+                              width: 1,
+                            ),
                             borderRadius: BorderRadius.circular(6),
-                            color: AppTheme.electricBlue.withValues(alpha: 0.05),
+                            color: AppTheme.electricBlue.withValues(
+                              alpha: 0.05,
+                            ),
                           ),
                           child: const Column(
                             children: [
-                              Icon(Icons.verified_rounded, color: AppTheme.electricBlue, size: 16),
-                              Text('TERVALIDASI RTHUB', style: TextStyle(fontSize: 7.5, fontWeight: FontWeight.bold, color: AppTheme.electricBlue)),
+                              Icon(
+                                Icons.verified_rounded,
+                                color: AppTheme.electricBlue,
+                                size: 16,
+                              ),
+                              Text(
+                                'TERVALIDASI RTHUB',
+                                style: TextStyle(
+                                  fontSize: 7.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.electricBlue,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(item['tanggapanBy'] ?? 'Ketua RT', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                        Text(
+                          item['tanggapanBy'] ?? 'Ketua RT',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -875,13 +1275,18 @@ class _LaporScreenState extends State<LaporScreen> {
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('🖨️ Dokumen Surat siap dicetak / disimpan sebagai file PDF resmi!'),
+                          content: Text(
+                            '🖨️ Dokumen Surat siap dicetak / disimpan sebagai file PDF resmi!',
+                          ),
                           backgroundColor: AppTheme.successGreen,
                         ),
                       );
                     },
                     icon: const Icon(Icons.print_rounded, size: 18),
-                    label: const Text('Cetak / Simpan Dokumen PDF', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'Cetak / Simpan Dokumen PDF',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -892,7 +1297,11 @@ class _LaporScreenState extends State<LaporScreen> {
     );
   }
 
-  static Widget _buildImageWidget(String urlOrBase64, {double height = 150, double width = double.infinity}) {
+  static Widget _buildImageWidget(
+    String urlOrBase64, {
+    double height = 150,
+    double width = double.infinity,
+  }) {
     return ImageCacheHelper.buildImage(
       urlOrBase64,
       height: height,
@@ -961,11 +1370,19 @@ class _LaporScreenState extends State<LaporScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.dashboard_customize_outlined, size: 18, color: AppTheme.primaryNavy),
+                  Icon(
+                    Icons.dashboard_customize_outlined,
+                    size: 18,
+                    color: AppTheme.primaryNavy,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     'Pilih Layanan & Template Surat RT',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: AppTheme.textPrimary,
+                    ),
                   ),
                 ],
               ),
@@ -977,7 +1394,11 @@ class _LaporScreenState extends State<LaporScreen> {
                 ),
                 child: const Text(
                   '100% Private',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.electricBlue),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.electricBlue,
+                  ),
                 ),
               ),
             ],
@@ -1001,14 +1422,18 @@ class _LaporScreenState extends State<LaporScreen> {
                 final icon = t['icon'] as IconData;
 
                 return GestureDetector(
-                  onTap: () => _showBuatLaporanModal(initialTemplate: t['id'] as String),
+                  onTap: () =>
+                      _showBuatLaporanModal(initialTemplate: t['id'] as String),
                   child: Container(
                     width: 175,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: color.withValues(alpha: 0.3), width: 1.2),
+                      border: Border.all(
+                        color: color.withValues(alpha: 0.3),
+                        width: 1.2,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: color.withValues(alpha: 0.06),
@@ -1032,15 +1457,30 @@ class _LaporScreenState extends State<LaporScreen> {
                               ),
                               child: Icon(icon, color: color, size: 18),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                t['badge'] as String,
-                                style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: color),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: color.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    t['badge'] as String,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: color,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -1050,14 +1490,21 @@ class _LaporScreenState extends State<LaporScreen> {
                           children: [
                             Text(
                               t['title'] as String,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
                             Text(
                               t['desc'] as String,
-                              style: const TextStyle(fontSize: 9.5, color: AppTheme.textSecondary, height: 1.2),
+                              style: const TextStyle(
+                                fontSize: 9.5,
+                                color: AppTheme.textSecondary,
+                                height: 1.2,
+                              ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1095,7 +1542,10 @@ class _LaporScreenState extends State<LaporScreen> {
         onPressed: () => _showBuatLaporanModal(),
         backgroundColor: AppTheme.primaryNavy,
         icon: const Icon(Icons.add_task_rounded, color: Colors.white),
-        label: const Text('Buat Surat / Laporan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text(
+          'Buat Surat / Laporan',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -1111,22 +1561,39 @@ class _LaporScreenState extends State<LaporScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
                         children: [
-                          const Icon(Icons.history_rounded, size: 18, color: AppTheme.primaryNavy),
+                          const Icon(
+                            Icons.history_rounded,
+                            size: 18,
+                            color: AppTheme.primaryNavy,
+                          ),
                           const SizedBox(width: 8),
                           const Text(
                             'Riwayat Permohonan & Laporan Saya',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textPrimary),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: AppTheme.textPrimary,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryNavy.withValues(alpha: 0.08),
+                              color: AppTheme.primaryNavy.withValues(
+                                alpha: 0.08,
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               '${list.length}',
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryNavy,
+                              ),
                             ),
                           ),
                         ],
@@ -1137,7 +1604,10 @@ class _LaporScreenState extends State<LaporScreen> {
                       Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 32,
+                            horizontal: 20,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(18),
@@ -1146,14 +1616,28 @@ class _LaporScreenState extends State<LaporScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.lock_outline_rounded, size: 40, color: AppTheme.textMuted),
+                              const Icon(
+                                Icons.lock_outline_rounded,
+                                size: 40,
+                                color: AppTheme.textMuted,
+                              ),
                               const SizedBox(height: 10),
-                              const Text('Belum Ada Riwayat Permohonan Surat Anda',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              const Text(
+                                'Belum Ada Riwayat Permohonan Surat Anda',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
                               const SizedBox(height: 4),
-                              const Text('Laporan bersifat 100% private. Silakan pilih salah satu template layanan di atas untuk mengajukan surat atau pengaduan.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                              const Text(
+                                'Laporan bersifat 100% private. Silakan pilih salah satu template layanan di atas untuk mengajukan surat atau pengaduan.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1162,7 +1646,9 @@ class _LaporScreenState extends State<LaporScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Column(
-                          children: list.map((l) => _buildLaporanItemCard(l)).toList(),
+                          children: list
+                              .map((l) => _buildLaporanItemCard(l))
+                              .toList(),
                         ),
                       ),
                     const SizedBox(height: 80),
@@ -1199,204 +1685,320 @@ class _LaporScreenState extends State<LaporScreen> {
     if (l['createdAt'] != null) {
       final date = DateTime.tryParse(l['createdAt'].toString());
       if (date != null) {
-        final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        final months = [
+          '',
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'Mei',
+          'Jun',
+          'Jul',
+          'Agu',
+          'Sep',
+          'Okt',
+          'Nov',
+          'Des',
+        ];
         createdAtStr = '${date.day} ${months[date.month]} ${date.year}';
       }
     }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: AppTheme.slateBorder),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.slateBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isResolved
+                      ? AppTheme.successGreen.withValues(alpha: 0.12)
+                      : isInProgress
+                      ? AppTheme.electricBlue.withValues(alpha: 0.12)
+                      : isRejected
+                      ? AppTheme.alertRed.withValues(alpha: 0.12)
+                      : AppTheme.warningAmber.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  isResolved
+                      ? '✓ Disetujui / Selesai'
+                      : isInProgress
+                      ? '⏳ Sedang Diproses'
+                      : isRejected
+                      ? '✗ Ditolak'
+                      : '🕒 Menunggu Respon',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isResolved
+                        ? AppTheme.successGreen
+                        : isInProgress
+                        ? AppTheme.electricBlue
+                        : isRejected
+                        ? AppTheme.alertRed
+                        : AppTheme.warningAmber,
+                  ),
+                ),
+              ),
+              Text(
+                createdAtStr,
+                style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Target & Template Badges
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 2.5,
+                ),
+                decoration: BoxDecoration(
+                  color: isSurat
+                      ? Colors.purple.withValues(alpha: 0.08)
+                      : AppTheme.electricBlue.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isSurat
+                        ? Colors.purple.withValues(alpha: 0.25)
+                        : AppTheme.electricBlue.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Text(
+                  isSurat ? '📜 $tipe' : '📢 PENGADUAN',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isSurat ? Colors.purple : AppTheme.electricBlue,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 2.5,
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.slateLight,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '🎯 Ditujukan: $targetLabel',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 2.5,
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.slateLight,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '👤 $pelaporName',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          Text(
+            l['judul'] ?? '-',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l['deskripsi'] ?? '-',
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppTheme.textSecondary,
+              height: 1.35,
+            ),
+          ),
+
+          if (fotoUrl != null && fotoUrl.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: _buildImageWidget(
+                fotoUrl,
+                height: 140,
+                width: double.infinity,
+              ),
+            ),
+          ],
+
+          if (l['tanggapanRT'] != null &&
+              l['tanggapanRT'].toString().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color:
+                    (isResolved ? AppTheme.successGreen : AppTheme.electricBlue)
+                        .withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      (isResolved
+                              ? AppTheme.successGreen
+                              : AppTheme.electricBlue)
+                          .withValues(alpha: 0.25),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        isResolved
+                            ? Icons.check_circle_rounded
+                            : Icons.info_outline_rounded,
+                        color: isResolved
+                            ? AppTheme.successGreen
+                            : AppTheme.electricBlue,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Tanggapan Resmi (${l['tanggapanBy'] ?? targetLabel}):',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isResolved
+                                ? const Color(0xFF166534)
+                                : AppTheme.primaryNavy,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: isResolved
-                                          ? AppTheme.successGreen.withValues(alpha: 0.12)
-                                          : isInProgress
-                                              ? AppTheme.electricBlue.withValues(alpha: 0.12)
-                                              : isRejected
-                                                  ? AppTheme.alertRed.withValues(alpha: 0.12)
-                                                  : AppTheme.warningAmber.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      isResolved
-                                          ? '✓ Disetujui / Selesai'
-                                          : isInProgress
-                                              ? '⏳ Sedang Diproses'
-                                              : isRejected
-                                                  ? '✗ Ditolak'
-                                                  : '🕒 Menunggu Respon',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: isResolved
-                                            ? AppTheme.successGreen
-                                            : isInProgress
-                                                ? AppTheme.electricBlue
-                                                : isRejected
-                                                    ? AppTheme.alertRed
-                                                    : AppTheme.warningAmber,
-                                      ),
-                                    ),
-                                  ),
-                                  Text(createdAtStr, style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${l['tanggapanRT']}',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: AppTheme.textPrimary,
+                      height: 1.3,
+                    ),
+                  ),
+                  if (l['nomorSurat'] != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'No. Registrasi: ${l['nomorSurat']}',
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF166534),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
 
-                              // Target & Template Badges
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                    decoration: BoxDecoration(
-                                      color: isSurat ? Colors.purple.withValues(alpha: 0.08) : AppTheme.electricBlue.withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: isSurat ? Colors.purple.withValues(alpha: 0.25) : AppTheme.electricBlue.withValues(alpha: 0.2)),
-                                    ),
-                                    child: Text(
-                                      isSurat ? '📜 $tipe' : '📢 PENGADUAN',
-                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSurat ? Colors.purple : AppTheme.electricBlue),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.slateLight,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text('🎯 Ditujukan: $targetLabel',
-                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.slateLight,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text('👤 $pelaporName',
-                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
 
-                              Text(l['judul'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5)),
-                              const SizedBox(height: 4),
-                              Text(l['deskripsi'] ?? '-', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35)),
-                              
-                              if (fotoUrl != null && fotoUrl.isNotEmpty) ...[
-                                const SizedBox(height: 10),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: _buildImageWidget(fotoUrl, height: 140, width: double.infinity),
-                                ),
-                              ],
+          // Actions Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Print Button for Approved Letters
+              if (isSurat && isResolved) ...[
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.successGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () => _showCetakSuratModal(l),
+                  icon: const Icon(Icons.print_rounded, size: 14),
+                  label: const Text(
+                    '🖨️ Cetak Surat Resmi',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ] else ...[
+                Text(
+                  'Kategori: ${l['kategori'] ?? 'Umum'}',
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              ],
 
-                              if (l['tanggapanRT'] != null && l['tanggapanRT'].toString().isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: (isResolved ? AppTheme.successGreen : AppTheme.electricBlue).withValues(alpha: 0.07),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: (isResolved ? AppTheme.successGreen : AppTheme.electricBlue).withValues(alpha: 0.25)),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            isResolved ? Icons.check_circle_rounded : Icons.info_outline_rounded,
-                                            color: isResolved ? AppTheme.successGreen : AppTheme.electricBlue,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Expanded(
-                                            child: Text(
-                                              'Tanggapan Resmi (${l['tanggapanBy'] ?? targetLabel}):',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: isResolved ? const Color(0xFF166534) : AppTheme.primaryNavy,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${l['tanggapanRT']}',
-                                        style: const TextStyle(fontSize: 11.5, color: AppTheme.textPrimary, height: 1.3),
-                                      ),
-                                      if (l['nomorSurat'] != null) ...[
-                                        const SizedBox(height: 4),
-                                        Text('No. Registrasi: ${l['nomorSurat']}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ],
-
-                              const SizedBox(height: 12),
-                              const Divider(height: 1),
-                              const SizedBox(height: 8),
-
-                              // Actions Row
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Print Button for Approved Letters
-                                  if (isSurat && isResolved) ...[
-                                    ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppTheme.successGreen,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      ),
-                                      onPressed: () => _showCetakSuratModal(l),
-                                      icon: const Icon(Icons.print_rounded, size: 14),
-                                      label: const Text('🖨️ Cetak Surat Resmi', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                    ),
-                                  ] else ...[
-                                    Text('Kategori: ${l['kategori'] ?? 'Umum'}', style: const TextStyle(fontSize: 10.5, color: AppTheme.textMuted)),
-                                  ],
-
-                                  // Follow up / Respond Button: STRICT AUTHORIZATION
-                                  if (!isResolved && canRespond) ...[
-                                    OutlinedButton.icon(
-                                      onPressed: () => _showTindakLanjutModal(l),
-                                      icon: const Icon(Icons.handyman_outlined, size: 14, color: AppTheme.electricBlue),
-                                      label: const Text('🛠️ Tindak Lanjuti', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                    ),
-                                  ] else if (!isResolved && !canRespond) ...[
-                                    Text('(Menunggu $targetLabel)', style: const TextStyle(fontSize: 10, color: AppTheme.textMuted, fontStyle: FontStyle.italic)),
-                                  ],
-                                ],
-                              ),
+              // Follow up / Respond Button: STRICT AUTHORIZATION
+              if (!isResolved && canRespond) ...[
+                OutlinedButton.icon(
+                  onPressed: () => _showTindakLanjutModal(l),
+                  icon: const Icon(
+                    Icons.handyman_outlined,
+                    size: 14,
+                    color: AppTheme.electricBlue,
+                  ),
+                  label: const Text(
+                    '🛠️ Tindak Lanjuti',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ] else if (!isResolved && !canRespond) ...[
+                Text(
+                  '(Menunggu $targetLabel)',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppTheme.textMuted,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );

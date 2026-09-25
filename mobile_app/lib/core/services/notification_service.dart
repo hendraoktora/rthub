@@ -7,18 +7,23 @@ import 'package:flutter/services.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  developer.log('Handling background message: ${message.messageId} - Type: ${message.data['type']}', name: 'FCM');
+  developer.log(
+    'Handling background message: ${message.messageId} - Type: ${message.data['type']}',
+    name: 'FCM',
+  );
   if (message.data['type'] == 'PANIC') {
     if (!NotificationService.isSelfTriggered(message.data)) {
       try {
-        const MethodChannel('com.rthub.rthub_mobile/widget').invokeMethod('playPanicAlarm');
+        await const MethodChannel(
+          'com.rthub.rthub_mobile/widget',
+        ).invokeMethod('playPanicAlarm');
       } catch (_) {}
     }
   }
 }
 
 class NotificationService {
-  static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  static FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   static String? cachedToken;
 
   static DateTime? lastSelfTriggeredAlertTime;
@@ -27,22 +32,41 @@ class NotificationService {
   static String? currentUserPhone;
 
   static bool isSelfTriggered(Map<String, dynamic> data) {
-    if (lastSelfTriggeredAlertTime != null) {
-      final diff = DateTime.now().difference(lastSelfTriggeredAlertTime!).inSeconds;
-      if (diff < 120) {
-        return true;
-      }
-    }
-    if (lastSelfTriggeredAlertId != null && data['alertId'] == lastSelfTriggeredAlertId) {
+    final alertId = _identifier(data['alertId']);
+    final senderId = _identifier(data['senderUserId']);
+    final senderPhone = _normalizedPhone(data['senderPhone']);
+    if (alertId != null && alertId == _identifier(lastSelfTriggeredAlertId)) {
       return true;
     }
-    if (currentUserId != null && data['senderUserId'] == currentUserId) {
+    if (senderId != null && senderId == _identifier(currentUserId)) {
       return true;
     }
-    if (currentUserPhone != null && data['senderPhone'] == currentUserPhone) {
+    if (senderPhone != null &&
+        senderPhone == _normalizedPhone(currentUserPhone)) {
       return true;
+    }
+    // A recent local SOS must not hide another resident's identifiable alert.
+    // Time-only suppression is retained for legacy payloads without identifiers.
+    if (alertId != null || senderId != null || senderPhone != null)
+      return false;
+    final triggeredAt = lastSelfTriggeredAlertTime;
+    if (triggeredAt != null) {
+      final elapsed = DateTime.now().difference(triggeredAt);
+      return !elapsed.isNegative && elapsed < const Duration(seconds: 120);
     }
     return false;
+  }
+
+  static String? _identifier(Object? value) {
+    final text = value?.toString().trim();
+    return text == null || text.isEmpty ? null : text;
+  }
+
+  static String? _normalizedPhone(Object? value) {
+    var digits = value?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '';
+    if (digits.isEmpty) return null;
+    if (digits.startsWith('0')) digits = '62${digits.substring(1)}';
+    return digits;
   }
 
   /// Callbacks for Emergency Panic Alert
@@ -58,7 +82,9 @@ class NotificationService {
     Function(RemoteMessage message)? onMessageOpenedApp,
   }) async {
     try {
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler,
+      );
 
       // Request permissions (especially for Android 13+ and iOS)
       NotificationSettings settings = await _messaging.requestPermission(
@@ -79,7 +105,10 @@ class NotificationService {
       );
 
       if (kDebugMode) {
-        developer.log('User granted permission: ${settings.authorizationStatus}', name: 'FCM');
+        developer.log(
+          'User granted permission: ${settings.authorizationStatus}',
+          name: 'FCM',
+        );
       }
 
       // Get device FCM Token
@@ -90,8 +119,11 @@ class NotificationService {
 
       // Foreground message stream
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        developer.log('Foreground message received: ${message.notification?.title}', name: 'FCM');
-        
+        developer.log(
+          'Foreground message received: ${message.notification?.title}',
+          name: 'FCM',
+        );
+
         if (message.data['type'] == 'PANIC') {
           onPanicAlertReceived?.call(message.data);
         } else if (message.data['type'] == 'GEMPA') {
@@ -105,8 +137,11 @@ class NotificationService {
 
       // App opened from background message
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        developer.log('App opened from notification: ${message.notification?.title}', name: 'FCM');
-        
+        developer.log(
+          'App opened from notification: ${message.notification?.title}',
+          name: 'FCM',
+        );
+
         if (message.data['type'] == 'PANIC') {
           onPanicAlertOpened?.call(message.data);
         } else if (message.data['type'] == 'GEMPA') {
@@ -121,7 +156,10 @@ class NotificationService {
       // Subscribe to general RT broadcast topic
       await _messaging.subscribeToTopic('rthub_broadcast');
     } catch (e) {
-      developer.log('NotificationService initialization error: $e', name: 'FCM');
+      developer.log(
+        'NotificationService initialization error: $e',
+        name: 'FCM',
+      );
     }
   }
 

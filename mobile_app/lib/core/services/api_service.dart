@@ -1,11 +1,75 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String defaultUrl = 'https://api.rthub.id/api';
 
-  static final http.Client _client = http.Client();
+  static http.Client _client = http.Client();
+
+  @visibleForTesting
+  static void setClientForTesting(http.Client client) {
+    _client = client;
+  }
+
+  // The redesigned screens opt into verified responses. Existing legacy
+  // consumers retain their fallback contract until migrated independently.
+  static Future<dynamic> _getVerified(
+    String path, {
+    bool authenticated = true,
+  }) async {
+    final token = await getToken();
+    if (authenticated && token == null)
+      throw Exception('Silakan masuk untuk memuat data warga.');
+    final response = await _getWithFallback(path, token: token);
+    if (response.statusCode != 200)
+      throw Exception('Data belum dapat dimuat (${response.statusCode}).');
+    return jsonDecode(response.body);
+  }
+
+  static Future<List<dynamic>> _getVerifiedList(String path) async {
+    final data = await _getVerified(path);
+    if (data is! List)
+      throw const FormatException('Format daftar dari server tidak sesuai.');
+    return data;
+  }
+
+  static Future<http.Response> _lapakMutation(
+    String method,
+    String path, [
+    Map<String, dynamic>? data,
+  ]) async {
+    final token = await getToken();
+    if (token == null) throw Exception('Silakan masuk untuk mengelola lapak.');
+    final base = await getBaseUrl();
+    final request = http.Request(method, Uri.parse('$base$path'))
+      ..headers.addAll({
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+    if (data != null) request.body = jsonEncode(data);
+    final response = await http.Response.fromStream(
+      await _client.send(request).timeout(const Duration(seconds: 15)),
+    ).timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (method == 'PATCH' &&
+          (response.statusCode == 404 || response.statusCode == 405)) {
+        throw Exception(
+          'Server belum mendukung perubahan produk. Produk Anda tetap tersimpan.',
+        );
+      }
+      String message =
+          'Perubahan belum tersimpan (${response.statusCode}). Coba lagi.';
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['message'] is String) message = body['message'];
+      } catch (_) {}
+      throw Exception(message);
+    }
+    return response;
+  }
+
   static String? _cachedBaseUrl;
   static String? _cachedToken;
   static Map<String, dynamic>? _cachedUserData;
@@ -89,52 +153,68 @@ class ApiService {
   }
 
   /// Send request with fast fallback, connection reuse, and cloud serverless timeout tolerance (25s)
-  static Future<http.Response> _postWithFallback(String path, Map<String, dynamic> body) async {
+  static Future<http.Response> _postWithFallback(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
     final configuredUrl = await getBaseUrl();
     try {
-      final res = await _client.post(
-        Uri.parse('$configuredUrl$path'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 25));
+      final res = await _client
+          .post(
+            Uri.parse('$configuredUrl$path'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 25));
       return res;
     } catch (e) {
       if (configuredUrl != defaultUrl) {
         try {
-          final res = await _client.post(
-            Uri.parse('$defaultUrl$path'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(body),
-          ).timeout(const Duration(seconds: 25));
+          final res = await _client
+              .post(
+                Uri.parse('$defaultUrl$path'),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode(body),
+              )
+              .timeout(const Duration(seconds: 25));
           await setBaseUrl(defaultUrl);
           return res;
         } catch (_) {}
       }
-      throw Exception('Gagal menghubungi server backend. Pastikan koneksi internet aktif: $e');
+      throw Exception(
+        'Gagal menghubungi server backend. Pastikan koneksi internet aktif: $e',
+      );
     }
   }
 
-  static Future<http.Response> _getWithFallback(String path, {String? token}) async {
+  static Future<http.Response> _getWithFallback(
+    String path, {
+    String? token,
+  }) async {
     final configuredUrl = await getBaseUrl();
     try {
-      final res = await _client.get(
-        Uri.parse('$configuredUrl$path'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 20));
-      return res;
-    } catch (e) {
-      if (configuredUrl != defaultUrl) {
-        try {
-          final res = await _client.get(
-            Uri.parse('$defaultUrl$path'),
+      final res = await _client
+          .get(
+            Uri.parse('$configuredUrl$path'),
             headers: {
               'Content-Type': 'application/json',
               if (token != null) 'Authorization': 'Bearer $token',
             },
-          ).timeout(const Duration(seconds: 20));
+          )
+          .timeout(const Duration(seconds: 20));
+      return res;
+    } catch (e) {
+      if (configuredUrl != defaultUrl) {
+        try {
+          final res = await _client
+              .get(
+                Uri.parse('$defaultUrl$path'),
+                headers: {
+                  'Content-Type': 'application/json',
+                  if (token != null) 'Authorization': 'Bearer $token',
+                },
+              )
+              .timeout(const Duration(seconds: 20));
           await setBaseUrl(defaultUrl);
           return res;
         } catch (_) {}
@@ -144,12 +224,18 @@ class ApiService {
   }
 
   /// Real Live Database Login
-  static Future<Map<String, dynamic>> login(String username, String password) async {
-    final cleanUsername = username.trim().replaceAll(' ', '').replaceAll('-', '');
-    final response = await _postWithFallback(
-      '/auth/login',
-      {'username': cleanUsername, 'password': password.trim()},
-    );
+  static Future<Map<String, dynamic>> login(
+    String username,
+    String password,
+  ) async {
+    final cleanUsername = username
+        .trim()
+        .replaceAll(' ', '')
+        .replaceAll('-', '');
+    final response = await _postWithFallback('/auth/login', {
+      'username': cleanUsername,
+      'password': password.trim(),
+    });
 
     final data = jsonDecode(response.body);
 
@@ -163,12 +249,17 @@ class ApiService {
       return data;
     } else {
       // Server returned an error (e.g. 401 Unauthorized, 400 Bad Request)
-      final errorMsg = data['message'] ?? 'Nomor WhatsApp atau kata sandi salah.';
-      throw Exception(errorMsg is List ? errorMsg.join(', ') : errorMsg.toString());
+      final errorMsg =
+          data['message'] ?? 'Nomor WhatsApp atau kata sandi salah.';
+      throw Exception(
+        errorMsg is List ? errorMsg.join(', ') : errorMsg.toString(),
+      );
     }
   }
 
-  static Future<Map<String, dynamic>> registerRT(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> registerRT(
+    Map<String, dynamic> data,
+  ) async {
     final response = await _postWithFallback('/auth/register-rt', data);
     final body = jsonDecode(response.body);
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -179,7 +270,9 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> registerWarga(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> registerWarga(
+    Map<String, dynamic> data,
+  ) async {
     final response = await _postWithFallback('/auth/register-warga', data);
     final body = jsonDecode(response.body);
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -190,7 +283,11 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> sendOtp(String target, {String channel = 'WHATSAPP', String purpose = 'REGISTRASI'}) async {
+  static Future<Map<String, dynamic>> sendOtp(
+    String target, {
+    String channel = 'WHATSAPP',
+    String purpose = 'REGISTRASI',
+  }) async {
     final response = await _postWithFallback('/auth/send-otp', {
       'target': target.trim(),
       'channel': channel,
@@ -205,7 +302,10 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> verifyOtp(String target, String code) async {
+  static Future<Map<String, dynamic>> verifyOtp(
+    String target,
+    String code,
+  ) async {
     final response = await _postWithFallback('/auth/verify-otp', {
       'target': target.trim(),
       'code': code.trim(),
@@ -219,7 +319,9 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> verifyDocument(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> verifyDocument(
+    Map<String, dynamic> data,
+  ) async {
     final response = await _postWithFallback('/auth/verify-document', data);
     final body = jsonDecode(response.body);
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -240,7 +342,16 @@ class ApiService {
     return [];
   }
 
-  static Future<Map<String, dynamic>> getKasSummary() async {
+  static Future<Map<String, dynamic>> getKasSummary({
+    bool allowFallback = true,
+  }) async {
+    if (!allowFallback) {
+      final data = await _getVerified('/kas/summary');
+      if (data is! Map<String, dynamic> || data['saldoKas'] is! num) {
+        throw const FormatException('Format kas dari server tidak sesuai.');
+      }
+      return data;
+    }
     try {
       final token = await getToken();
       if (token != null) {
@@ -308,17 +419,21 @@ class ApiService {
     };
   }
 
-  static Future<Map<String, dynamic>> createMutasiKas(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createMutasiKas(
+    Map<String, dynamic> data,
+  ) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
-    final res = await http.post(
-      Uri.parse('$configuredUrl/kas'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    ).timeout(const Duration(seconds: 10));
+    final res = await http
+        .post(
+          Uri.parse('$configuredUrl/kas'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(data),
+        )
+        .timeout(const Duration(seconds: 10));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
@@ -326,7 +441,10 @@ class ApiService {
     throw Exception('Gagal mencatat mutasi kas ke database');
   }
 
-  static Future<List<dynamic>> getTagihanSaya() async {
+  static Future<List<dynamic>> getTagihanSaya({
+    bool allowFallback = true,
+  }) async {
+    if (!allowFallback) return _getVerifiedList('/tagihan/saya');
     try {
       final token = await getToken();
       if (token != null) {
@@ -354,12 +472,15 @@ class ApiService {
         'jatuhTempo': '2026-09-10T00:00:00.000Z',
         'metodePembayaran': 'QRIS',
         'paidAt': '2026-09-08T14:20:00.000Z',
-      }
+      },
     ];
   }
 
   // Real Database Agenda API
-  static Future<List<dynamic>> getAgendaList() async {
+  static Future<List<dynamic>> getAgendaList({
+    bool allowFallback = true,
+  }) async {
+    if (!allowFallback) return _getVerifiedList('/agenda');
     try {
       final token = await getToken();
       if (token != null) {
@@ -386,7 +507,8 @@ class ApiService {
       {
         'id': 'agenda_demo_2',
         'judul': 'Rapat Pleno Warga & Laporan Kas Triwulan',
-        'deskripsi': 'Pemaparan laporan keuangan kas RT dan persiapan peringatan hari pahlawan.',
+        'deskripsi':
+            'Pemaparan laporan keuangan kas RT dan persiapan peringatan hari pahlawan.',
         'lokasi': 'Balai Pertemuan Warga',
         'tanggal': '2026-09-19T19:30:00.000Z',
         'kategori': 'RAPAT_WARGA',
@@ -394,7 +516,8 @@ class ApiService {
       {
         'id': 'agenda_demo_3',
         'judul': 'Posyandu Balita & Lansia Sehat',
-        'deskripsi': 'Pemeriksaan tensi, penimbangan balita, dan pemberian vitamin gratis.',
+        'deskripsi':
+            'Pemeriksaan tensi, penimbangan balita, dan pemberian vitamin gratis.',
         'lokasi': 'Posyandu Mawar RT 05',
         'tanggal': '2026-09-24T08:30:00.000Z',
         'kategori': 'POSYANDU',
@@ -402,17 +525,21 @@ class ApiService {
     ];
   }
 
-  static Future<Map<String, dynamic>> createAgenda(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createAgenda(
+    Map<String, dynamic> data,
+  ) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
-    final res = await http.post(
-      Uri.parse('$configuredUrl/agenda'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    ).timeout(const Duration(seconds: 5));
+    final res = await http
+        .post(
+          Uri.parse('$configuredUrl/agenda'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(data),
+        )
+        .timeout(const Duration(seconds: 5));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
@@ -424,13 +551,15 @@ class ApiService {
   static Future<void> deleteAgenda(String id) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
-    final res = await http.delete(
-      Uri.parse('$configuredUrl/agenda/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    ).timeout(const Duration(seconds: 5));
+    final res = await http
+        .delete(
+          Uri.parse('$configuredUrl/agenda/$id'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 5));
 
     if (res.statusCode != 200 && res.statusCode != 204) {
       throw Exception('Gagal menghapus agenda');
@@ -438,7 +567,10 @@ class ApiService {
   }
 
   // Real Database Berita / Pengumuman API
-  static Future<List<dynamic>> getBeritaFeed() async {
+  static Future<List<dynamic>> getBeritaFeed({
+    bool allowFallback = true,
+  }) async {
+    if (!allowFallback) return _getVerifiedList('/berita/feed');
     try {
       final token = await getToken();
       if (token != null) {
@@ -457,31 +589,37 @@ class ApiService {
       {
         'id': 'berita_demo_1',
         'judul': 'Himbauan Kewaspadaan Keamanan & Penutupan Portal',
-        'konten': 'Diberitahukan kepada seluruh warga bahwa portal barat akan ditutup mulai pukul 22.00 WIB untuk menjaga keamanan lingkungan.',
+        'konten':
+            'Diberitahukan kepada seluruh warga bahwa portal barat akan ditutup mulai pukul 22.00 WIB untuk menjaga keamanan lingkungan.',
         'kategori': 'PENGUMUMAN',
         'createdAt': '2026-09-10T09:00:00.000Z',
       },
       {
         'id': 'berita_demo_2',
         'judul': 'Jadwal Pengambilan Sampah Anorganik & Daur Ulang',
-        'konten': 'Bank Sampah RT akan beroperasi setiap hari Minggu pagi di Balai Warga. Silakan kumpulkan botol dan kardus bekas.',
+        'konten':
+            'Bank Sampah RT akan beroperasi setiap hari Minggu pagi di Balai Warga. Silakan kumpulkan botol dan kardus bekas.',
         'kategori': 'INFO',
         'createdAt': '2026-09-08T13:00:00.000Z',
       },
     ];
   }
 
-  static Future<Map<String, dynamic>> createBerita(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createBerita(
+    Map<String, dynamic> data,
+  ) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
-    final res = await http.post(
-      Uri.parse('$configuredUrl/berita'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    ).timeout(const Duration(seconds: 5));
+    final res = await http
+        .post(
+          Uri.parse('$configuredUrl/berita'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(data),
+        )
+        .timeout(const Duration(seconds: 5));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
@@ -493,13 +631,15 @@ class ApiService {
   static Future<void> deleteBerita(String id) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
-    final res = await http.delete(
-      Uri.parse('$configuredUrl/berita/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    ).timeout(const Duration(seconds: 5));
+    final res = await http
+        .delete(
+          Uri.parse('$configuredUrl/berita/$id'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 5));
 
     if (res.statusCode != 200 && res.statusCode != 204) {
       throw Exception('Gagal menghapus pengumuman');
@@ -507,7 +647,19 @@ class ApiService {
   }
 
   // Real Database Lapak UMKM API
-  static Future<List<dynamic>> getLapakList() async {
+  static Future<List<dynamic>> getLapakList({bool allowFallback = true}) async {
+    if (!allowFallback) {
+      final list = await _getVerifiedList('/lapak');
+      final user = await getCurrentUser();
+      return list.map((item) {
+        final product = Map<String, dynamic>.from(item as Map);
+        final sellerId = product['sellerId'] ?? product['seller']?['id'];
+        product['isOwner'] =
+            user?['id'] != null &&
+            sellerId?.toString() == user!['id'].toString();
+        return product;
+      }).toList();
+    }
     List<dynamic> liveList = [];
     final currentUser = await getCurrentUser();
     final currentUserId = currentUser?['id']?.toString();
@@ -521,7 +673,9 @@ class ApiService {
           liveList = list.map((item) {
             final m = Map<String, dynamic>.from(item as Map);
             final sellerId = (m['sellerId'] ?? m['seller']?['id'])?.toString();
-            if (currentUserId != null && sellerId != null && sellerId == currentUserId) {
+            if (currentUserId != null &&
+                sellerId != null &&
+                sellerId == currentUserId) {
               m['isOwner'] = true;
             }
             return m;
@@ -542,18 +696,23 @@ class ApiService {
 
     // Deduplicate against server items:
     // If a server item has the same title as a local custom dummy, merge promotion tags to server item and discard local dummy
-    final liveTitles = liveList.map((e) => (e['judul'] ?? '').toString().toLowerCase().trim()).toSet();
+    final liveTitles = liveList
+        .map((e) => (e['judul'] ?? '').toString().toLowerCase().trim())
+        .toSet();
     final filteredLocal = <dynamic>[];
 
     for (final loc in localCustomList) {
       final locTitle = (loc['judul'] ?? '').toString().toLowerCase().trim();
       if (liveTitles.contains(locTitle)) {
         // Find matching server item and copy promotion fields if promoted locally
-        final matchIdx = liveList.indexWhere((e) => (e['judul'] ?? '').toString().toLowerCase().trim() == locTitle);
+        final matchIdx = liveList.indexWhere(
+          (e) => (e['judul'] ?? '').toString().toLowerCase().trim() == locTitle,
+        );
         if (matchIdx != -1) {
           if (loc['isPromoted'] == true) {
             liveList[matchIdx]['isPromoted'] = true;
-            liveList[matchIdx]['promotedBadge'] = loc['promotedBadge'] ?? 'SPONSORED';
+            liveList[matchIdx]['promotedBadge'] =
+                loc['promotedBadge'] ?? 'SPONSORED';
             liveList[matchIdx]['promotedPackage'] = loc['promotedPackage'];
             liveList[matchIdx]['paketIklan'] = loc['paketIklan'] ?? 'RT';
             liveList[matchIdx]['promotedUntil'] = loc['promotedUntil'];
@@ -583,19 +742,24 @@ class ApiService {
       {
         'id': 'lapak_demo_1',
         'judul': 'Nasi Uduk Betawi Komplit & Sambal Terasi',
-        'deskripsi': 'Nasi uduk gurih dengan bihun goreng, tempe orek, telur balado/ayam goreng dan kerupuk renyah.',
+        'deskripsi':
+            'Nasi uduk gurih dengan bihun goreng, tempe orek, telur balado/ayam goreng dan kerupuk renyah.',
         'harga': 18000,
         'kategori': 'Kuliner',
         'kontakWa': '081234567890',
         'sellerId': 'seller_mpok_siti',
-        'seller': {'profile': {'namaLengkap': 'Mpok Siti', 'noRumah': 'Blok A3 No. 5'}},
-        'fotoUrl': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&fit=crop&q=80',
+        'seller': {
+          'profile': {'namaLengkap': 'Mpok Siti', 'noRumah': 'Blok A3 No. 5'},
+        },
+        'fotoUrl':
+            'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&fit=crop&q=80',
         'createdAt': '2026-09-10T08:00:00.000Z',
       },
       {
         'id': 'lapak_demo_3',
         'judul': 'Aneka Kue Basah & Snack Box Arisan RT',
-        'deskripsi': 'Lemper ayam, risoles mayo, dadar gulung, lapis legit, dan pastel renyah. Siap pesan untuk arisan, pengajian, dan rapat RT.',
+        'deskripsi':
+            'Lemper ayam, risoles mayo, dadar gulung, lapis legit, dan pastel renyah. Siap pesan untuk arisan, pengajian, dan rapat RT.',
         'harga': 3500,
         'kategori': 'Kuliner',
         'kontakWa': '085712345678',
@@ -603,32 +767,46 @@ class ApiService {
         'isPromoted': true,
         'promotedBadge': 'SPONSORED',
         'paketIklan': 'RT',
-        'seller': {'profile': {'namaLengkap': 'Ibu Siti Aminah (Bendahara RT)', 'noRumah': 'Blok A2 No. 05'}},
-        'fotoUrl': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&fit=crop&q=80',
+        'seller': {
+          'profile': {
+            'namaLengkap': 'Ibu Siti Aminah (Bendahara RT)',
+            'noRumah': 'Blok A2 No. 05',
+          },
+        },
+        'fotoUrl':
+            'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&fit=crop&q=80',
         'createdAt': '2026-09-08T06:00:00.000Z',
       },
       {
         'id': 'lapak_demo_2',
         'judul': 'Jasa Cuci AC & Service Elektronik Pak Joko',
-        'deskripsi': 'Melayani cuci AC split, tambah freon R32/R410, perbaikan mesin cuci dan kulkas bergaransi 30 hari.',
+        'deskripsi':
+            'Melayani cuci AC split, tambah freon R32/R410, perbaikan mesin cuci dan kulkas bergaransi 30 hari.',
         'harga': 65000,
         'kategori': 'Jasa',
         'kontakWa': '081298765432',
         'sellerId': 'seller_pak_joko',
-        'seller': {'profile': {'namaLengkap': 'Pak Joko', 'noRumah': 'Blok B1 No. 12'}},
-        'fotoUrl': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&fit=crop&q=80',
+        'seller': {
+          'profile': {'namaLengkap': 'Pak Joko', 'noRumah': 'Blok B1 No. 12'},
+        },
+        'fotoUrl':
+            'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&fit=crop&q=80',
         'createdAt': '2026-09-09T14:30:00.000Z',
       },
       {
         'id': 'lapak_demo_4',
         'judul': 'Kopi Susu Gula Aren & Teh Tarik RT05',
-        'deskripsi': 'Racikan espresso biji kopi robusta Lampung pilihan dipadu susu creamy dan gula aren organik asli.',
+        'deskripsi':
+            'Racikan espresso biji kopi robusta Lampung pilihan dipadu susu creamy dan gula aren organik asli.',
         'harga': 15000,
         'kategori': 'Minuman',
         'kontakWa': '087811223344',
         'sellerId': 'seller_andi',
-        'seller': {'profile': {'namaLengkap': 'Mas Andi', 'noRumah': 'Blok A1 No. 02'}},
-        'fotoUrl': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&fit=crop&q=80',
+        'seller': {
+          'profile': {'namaLengkap': 'Mas Andi', 'noRumah': 'Blok A1 No. 02'},
+        },
+        'fotoUrl':
+            'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&fit=crop&q=80',
         'createdAt': '2026-09-07T16:00:00.000Z',
       },
     ];
@@ -654,181 +832,40 @@ class ApiService {
     String? scope,
     String? paymentMethod,
   }) async {
-    final expireDate = DateTime.now().add(Duration(days: durationDays)).toIso8601String();
-    final finalScope = (scope != null && scope.isNotEmpty) ? scope : 'RT';
-
-    // 1. Send boost directly to backend so ALL accounts/devices see the boosted product
-    try {
-      final token = await getToken();
-      final configuredUrl = await getBaseUrl();
-      await http.post(
-        Uri.parse('$configuredUrl/lapak/$id/boost'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'packageType': packageType,
-          'scope': finalScope,
-          'durationDays': durationDays,
-          'price': price,
-          'paymentMethod': paymentMethod,
-          'promotedUntil': expireDate,
-        }),
-      ).timeout(const Duration(seconds: 7));
-    } catch (_) {}
-
-    // 2. Also update local cache for zero-latency instant offline feedback
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedStr = prefs.getString('local_custom_lapak');
-      List<dynamic> list = savedStr != null ? jsonDecode(savedStr) : [];
-
-      final index = list.indexWhere((e) => (e['id'] ?? '').toString() == id);
-
-      if (index != -1) {
-        list[index]['isPromoted'] = true;
-        list[index]['promotedBadge'] = 'SPONSORED';
-        list[index]['promotedPackage'] = packageType;
-        list[index]['paketIklan'] = finalScope;
-        list[index]['promotedUntil'] = expireDate;
-        final item = list.removeAt(index);
-        list.insert(0, item);
-      } else {
-        final allLapak = await getLapakList();
-        final found = allLapak.firstWhere((e) => (e['id'] ?? '').toString() == id, orElse: () => null);
-        if (found != null) {
-          final updated = {
-            ...found,
-            'isPromoted': true,
-            'promotedBadge': 'SPONSORED',
-            'promotedPackage': packageType,
-            'paketIklan': finalScope,
-            'promotedUntil': expireDate,
-          };
-          list.insert(0, updated);
-        }
-      }
-      await prefs.setString('local_custom_lapak', jsonEncode(list));
-    } catch (_) {}
+    await _lapakMutation('POST', '/lapak/${Uri.encodeComponent(id)}/boost', {
+      'packageType': packageType,
+      'scope': scope ?? 'RT',
+      'durationDays': durationDays,
+      'price': price,
+      'paymentMethod': ?paymentMethod,
+    });
+    invalidateCache('lapak');
   }
 
-  static Future<Map<String, dynamic>> createLapak(Map<String, dynamic> data) async {
-    final currentUser = await getCurrentUser();
-
-    // 1. Try sending directly to backend first
-    try {
-      final token = await getToken();
-      final configuredUrl = await getBaseUrl();
-      final res = await http.post(
-        Uri.parse('$configuredUrl/lapak'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(data),
-      ).timeout(const Duration(seconds: 7));
-
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        final decoded = jsonDecode(res.body);
-        if (decoded is Map<String, dynamic>) {
-          // If server succeeds, clean up any local cache dummy with same title
-          try {
-            final prefs = await SharedPreferences.getInstance();
-            final savedStr = prefs.getString('local_custom_lapak');
-            if (savedStr != null) {
-              List<dynamic> list = jsonDecode(savedStr);
-              list.removeWhere((e) =>
-                  (e['id'] ?? '').toString().startsWith('lapak_local_') &&
-                  (e['judul'] ?? '').toString().toLowerCase().trim() ==
-                      (data['judul'] ?? '').toString().toLowerCase().trim());
-              await prefs.setString('local_custom_lapak', jsonEncode(list));
-            }
-          } catch (_) {}
-          return decoded;
-        }
-      }
-    } catch (_) {}
-
-    // 2. Offline / fallback only: save local dummy
-    final localItem = {
-      ...data,
-      'id': 'lapak_local_${DateTime.now().millisecondsSinceEpoch}',
-      'sellerId': currentUser?['id'] ?? 'my_user_id',
-      'isOwner': true,
-      'seller': {
-        'profile': {
-          'namaLengkap': currentUser?['profile']?['namaLengkap'] ?? currentUser?['phone'] ?? 'Saya',
-          'noRumah': currentUser?['profile']?['noRumah'] ?? 'Rumah Saya',
-        }
-      },
-      'createdAt': DateTime.now().toIso8601String(),
-    };
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedStr = prefs.getString('local_custom_lapak');
-      List<dynamic> list = savedStr != null ? jsonDecode(savedStr) : [];
-      list.insert(0, localItem);
-      await prefs.setString('local_custom_lapak', jsonEncode(list));
-    } catch (_) {}
-
-    return localItem;
+  static Future<Map<String, dynamic>> createLapak(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _lapakMutation('POST', '/lapak', data);
+    final body = jsonDecode(response.body);
+    if (body is! Map<String, dynamic> || body['id'] == null) {
+      throw const FormatException(
+        'Server belum mengonfirmasi produk. Muat ulang lapak sebelum mencoba lagi.',
+      );
+    }
+    invalidateCache('lapak');
+    return body;
   }
 
   static Future<void> updateLapak(String id, Map<String, dynamic> data) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedStr = prefs.getString('local_custom_lapak');
-      if (savedStr != null) {
-        List<dynamic> list = jsonDecode(savedStr);
-        final index = list.indexWhere((e) => (e['id'] ?? '').toString() == id);
-        if (index != -1) {
-          list[index] = {...list[index], ...data};
-          await prefs.setString('local_custom_lapak', jsonEncode(list));
-        }
-      }
-    } catch (_) {}
-
-    try {
-      final token = await getToken();
-      final configuredUrl = await getBaseUrl();
-      await http.patch(
-        Uri.parse('$configuredUrl/lapak/$id'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(data),
-      ).timeout(const Duration(seconds: 5));
-    } catch (_) {}
+    await _lapakMutation('PATCH', '/lapak/${Uri.encodeComponent(id)}', data);
+    invalidateCache('lapak');
   }
 
   static Future<void> deleteLapak(String id) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedStr = prefs.getString('local_custom_lapak');
-      if (savedStr != null) {
-        List<dynamic> list = jsonDecode(savedStr);
-        list.removeWhere((e) => (e['id'] ?? '').toString() == id);
-        await prefs.setString('local_custom_lapak', jsonEncode(list));
-      }
-    } catch (_) {}
-
-    try {
-      final token = await getToken();
-      final configuredUrl = await getBaseUrl();
-      await http.delete(
-        Uri.parse('$configuredUrl/lapak/$id'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 5));
-    } catch (_) {}
+    await _lapakMutation('DELETE', '/lapak/${Uri.encodeComponent(id)}');
+    invalidateCache('lapak');
   }
 
-  // Real Database Laporan / Keluhan RT API
   static Future<List<dynamic>> getLaporanList() async {
     List<dynamic> liveList = [];
     try {
@@ -870,40 +907,53 @@ class ApiService {
       {
         'id': 'lapor_demo_1',
         'judul': '[Fasilitas Umum] Lampu Penerangan Jalan Gang 3 Mati Total',
-        'deskripsi': 'Lampu tiang listrik di depan rumah No. 14 padam sejak kemarin malam sehingga gang sangat gelap saat ronda.',
+        'deskripsi':
+            'Lampu tiang listrik di depan rumah No. 14 padam sejak kemarin malam sehingga gang sangat gelap saat ronda.',
         'kategori': 'FASILITAS_UMUM',
         'status': 'DIPROSES',
         'isAnonymous': false,
         'tujuan': 'Seksi Keamanan & Ronda',
-        'user': {'profile': {'namaLengkap': 'Pak Rahmat', 'noRumah': 'Blok B2 No. 14'}},
-        'tanggapanRT': 'Sudah dikoordinasikan dengan teknisi PLN dan tim ronda RT. Bohlam LED pengganti sedang dipasang sore ini.',
+        'user': {
+          'profile': {'namaLengkap': 'Pak Rahmat', 'noRumah': 'Blok B2 No. 14'},
+        },
+        'tanggapanRT':
+            'Sudah dikoordinasikan dengan teknisi PLN dan tim ronda RT. Bohlam LED pengganti sedang dipasang sore ini.',
         'tanggapanBy': 'Ketua RT (Bpk. Hendra)',
         'tanggapanAt': '2026-09-11T14:30:00.000Z',
         'createdAt': '2026-09-10T20:15:00.000Z',
       },
       {
         'id': 'lapor_demo_2',
-        'judul': '[Kebersihan] Tumpukan Sampah Ranting Pohon di Lapangan Belum Diangkut',
-        'deskripsi': 'Pembersihan dahan pohon kemarin menyisakan tumpukan ranting di sudut taman bermain anak.',
+        'judul':
+            '[Kebersihan] Tumpukan Sampah Ranting Pohon di Lapangan Belum Diangkut',
+        'deskripsi':
+            'Pembersihan dahan pohon kemarin menyisakan tumpukan ranting di sudut taman bermain anak.',
         'kategori': 'KEBERSIHAN',
         'status': 'SELESAI',
         'isAnonymous': false,
         'tujuan': 'Seksi Kebersihan Lingkungan',
-        'user': {'profile': {'namaLengkap': 'Ibu Ratna', 'noRumah': 'Blok A4 No. 03'}},
-        'tanggapanRT': 'Truk pengangkut sampah dinas kebersihan sudah mengangkut seluruh ranting pada jam 09:30 pagi ini.',
+        'user': {
+          'profile': {'namaLengkap': 'Ibu Ratna', 'noRumah': 'Blok A4 No. 03'},
+        },
+        'tanggapanRT':
+            'Truk pengangkut sampah dinas kebersihan sudah mengangkut seluruh ranting pada jam 09:30 pagi ini.',
         'tanggapanBy': 'Seksi Kebersihan (Pak Joko)',
         'tanggapanAt': '2026-09-11T10:00:00.000Z',
         'createdAt': '2026-09-09T11:20:00.000Z',
       },
       {
         'id': 'lapor_demo_3',
-        'judul': '[Keamanan] Pintu Gerbang Portal Malam Belum Digembok Jam 23:00',
-        'deskripsi': 'Mohon petugas pos jaga lebih disiplin menutup portal timur tepat jam 22.00 untuk keamanan warga.',
+        'judul':
+            '[Keamanan] Pintu Gerbang Portal Malam Belum Digembok Jam 23:00',
+        'deskripsi':
+            'Mohon petugas pos jaga lebih disiplin menutup portal timur tepat jam 22.00 untuk keamanan warga.',
         'kategori': 'KEAMANAN',
         'status': 'PENDING',
         'isAnonymous': true,
         'tujuan': 'Ketua RT (Bpk. Hendra)',
-        'user': {'profile': {'namaLengkap': 'Warga Anonim', 'noRumah': 'RT 05'}},
+        'user': {
+          'profile': {'namaLengkap': 'Warga Anonim', 'noRumah': 'RT 05'},
+        },
         'tanggapanRT': null,
         'createdAt': '2026-09-11T07:45:00.000Z',
       },
@@ -922,7 +972,9 @@ class ApiService {
     return uniqueList;
   }
 
-  static Future<Map<String, dynamic>> createLaporan(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createLaporan(
+    Map<String, dynamic> data,
+  ) async {
     final currentUser = await getCurrentUser();
     final localItem = {
       ...data,
@@ -933,9 +985,11 @@ class ApiService {
         'profile': {
           'namaLengkap': data['isAnonymous'] == true
               ? 'Warga Anonim'
-              : (currentUser?['profile']?['namaLengkap'] ?? currentUser?['phone'] ?? 'Saya'),
+              : (currentUser?['profile']?['namaLengkap'] ??
+                    currentUser?['phone'] ??
+                    'Saya'),
           'noRumah': currentUser?['profile']?['noRumah'] ?? 'Blok RT',
-        }
+        },
       },
       'tanggapanRT': null,
       'createdAt': DateTime.now().toIso8601String(),
@@ -952,14 +1006,16 @@ class ApiService {
     try {
       final token = await getToken();
       final configuredUrl = await getBaseUrl();
-      final res = await http.post(
-        Uri.parse('$configuredUrl/laporan'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(data),
-      ).timeout(const Duration(seconds: 5));
+      final res = await http
+          .post(
+            Uri.parse('$configuredUrl/laporan'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(data),
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         return jsonDecode(res.body);
@@ -977,9 +1033,25 @@ class ApiService {
     String? nomorSurat,
   }) async {
     final currentYear = DateTime.now().year;
-    final romanMonths = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    final romanMonths = [
+      '',
+      'I',
+      'II',
+      'III',
+      'IV',
+      'V',
+      'VI',
+      'VII',
+      'VIII',
+      'IX',
+      'X',
+      'XI',
+      'XII',
+    ];
     final romanMonth = romanMonths[DateTime.now().month];
-    final autoNo = nomorSurat ?? '470/${100 + (DateTime.now().millisecond % 899)}/RT.03-RW.05/$romanMonth/$currentYear';
+    final autoNo =
+        nomorSurat ??
+        '470/${100 + (DateTime.now().millisecond % 899)}/RT.03-RW.05/$romanMonth/$currentYear';
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -990,19 +1062,24 @@ class ApiService {
         list[idx]['status'] = status;
         if (tanggapanRT != null) list[idx]['tanggapanRT'] = tanggapanRT;
         if (tanggapanBy != null) list[idx]['tanggapanBy'] = tanggapanBy;
-        if (list[idx]['nomorSurat'] == null && list[idx]['tipeLaporan'] != 'PENGADUAN') {
+        if (list[idx]['nomorSurat'] == null &&
+            list[idx]['tipeLaporan'] != 'PENGADUAN') {
           list[idx]['nomorSurat'] = autoNo;
         }
         list[idx]['tanggapanAt'] = DateTime.now().toIso8601String();
       } else {
         final allLaporan = await getLaporanList();
-        final found = allLaporan.firstWhere((e) => (e['id'] ?? '').toString() == id, orElse: () => null);
+        final found = allLaporan.firstWhere(
+          (e) => (e['id'] ?? '').toString() == id,
+          orElse: () => null,
+        );
         if (found != null) {
           final updated = Map<String, dynamic>.from(found);
           updated['status'] = status;
           if (tanggapanRT != null) updated['tanggapanRT'] = tanggapanRT;
           if (tanggapanBy != null) updated['tanggapanBy'] = tanggapanBy;
-          if (found['nomorSurat'] == null && found['tipeLaporan'] != 'PENGADUAN') {
+          if (found['nomorSurat'] == null &&
+              found['tipeLaporan'] != 'PENGADUAN') {
             updated['nomorSurat'] = autoNo;
           }
           updated['tanggapanAt'] = DateTime.now().toIso8601String();
@@ -1015,24 +1092,29 @@ class ApiService {
     try {
       final token = await getToken();
       final configuredUrl = await getBaseUrl();
-      await http.patch(
-        Uri.parse('$configuredUrl/laporan/$id/status'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'status': status,
-          'tanggapanRT': tanggapanRT,
-          'tanggapanBy': tanggapanBy,
-          'nomorSurat': autoNo,
-        }),
-      ).timeout(const Duration(seconds: 5));
+      await http
+          .patch(
+            Uri.parse('$configuredUrl/laporan/$id/status'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'status': status,
+              'tanggapanRT': tanggapanRT,
+              'tanggapanBy': tanggapanBy,
+              'nomorSurat': autoNo,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
     } catch (_) {}
   }
 
   // Real Database Payment Tagihan IPL
-  static Future<Map<String, dynamic>> payTagihan(String tagihanId, String paymentMethod) async {
+  static Future<Map<String, dynamic>> payTagihan(
+    String tagihanId,
+    String paymentMethod,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('tagihan_is_paid_sep2026', true);
@@ -1041,14 +1123,16 @@ class ApiService {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
     try {
-      final res = await http.post(
-        Uri.parse('$configuredUrl/tagihan/$tagihanId/bayar'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({'paymentMethod': paymentMethod}),
-      ).timeout(const Duration(seconds: 6));
+      final res = await http
+          .post(
+            Uri.parse('$configuredUrl/tagihan/$tagihanId/bayar'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'paymentMethod': paymentMethod}),
+          )
+          .timeout(const Duration(seconds: 6));
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         return jsonDecode(res.body);
@@ -1056,7 +1140,10 @@ class ApiService {
       final body = jsonDecode(res.body);
       return body;
     } catch (_) {
-      return {'status': 'SUCCESS', 'message': 'Pembayaran berhasil diverifikasi'};
+      return {
+        'status': 'SUCCESS',
+        'message': 'Pembayaran berhasil diverifikasi',
+      };
     }
   }
 
@@ -1071,7 +1158,10 @@ class ApiService {
         targetRtId = user?['rtId'];
       }
       if (targetRtId != null && targetRtId.isNotEmpty) {
-        final response = await _getWithFallback('/wilayah/rt/$targetRtId/pengurus', token: token);
+        final response = await _getWithFallback(
+          '/wilayah/rt/$targetRtId/pengurus',
+          token: token,
+        );
         if (response.statusCode == 200) {
           final list = jsonDecode(response.body);
           if (list is List && list.isNotEmpty) liveList = list;
@@ -1091,7 +1181,8 @@ class ApiService {
         'role': 'ADMIN_RT',
         'phone': '081234567890',
         'noRumah': 'Blok A1 No. 01',
-        'avatarUrl': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80',
+        'avatarUrl':
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80',
         'status': 'AKTIF',
         'periode': '2024 - 2027',
       },
@@ -1103,7 +1194,8 @@ class ApiService {
         'role': 'SEKRETARIS_RT',
         'phone': '081298765432',
         'noRumah': 'Blok A1 No. 04',
-        'avatarUrl': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&fit=crop&q=80',
+        'avatarUrl':
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&fit=crop&q=80',
         'status': 'AKTIF',
         'periode': '2024 - 2027',
       },
@@ -1115,7 +1207,8 @@ class ApiService {
         'role': 'BENDAHARA_RT',
         'phone': '085712345678',
         'noRumah': 'Blok A2 No. 05',
-        'avatarUrl': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&fit=crop&q=80',
+        'avatarUrl':
+            'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&fit=crop&q=80',
         'status': 'AKTIF',
         'periode': '2024 - 2027',
       },
@@ -1127,7 +1220,8 @@ class ApiService {
         'role': 'WARGA',
         'phone': '087811223344',
         'noRumah': 'Blok B1 No. 08',
-        'avatarUrl': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&fit=crop&q=80',
+        'avatarUrl':
+            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&fit=crop&q=80',
         'status': 'AKTIF',
         'periode': '2024 - 2027',
       },
@@ -1139,7 +1233,8 @@ class ApiService {
         'role': 'WARGA',
         'phone': '081399887766',
         'noRumah': 'Blok B2 No. 12',
-        'avatarUrl': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&fit=crop&q=80',
+        'avatarUrl':
+            'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&fit=crop&q=80',
         'status': 'AKTIF',
         'periode': '2024 - 2027',
       },
@@ -1151,14 +1246,18 @@ class ApiService {
         'role': 'WARGA',
         'phone': '081955443322',
         'noRumah': 'Blok C1 No. 03',
-        'avatarUrl': 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&fit=crop&q=80',
+        'avatarUrl':
+            'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&fit=crop&q=80',
         'status': 'AKTIF',
         'periode': '2024 - 2027',
       },
     ];
   }
 
-  static Future<Map<String, dynamic>> addOrUpdatePengurus(Map<String, dynamic> data, {String? rtId}) async {
+  static Future<Map<String, dynamic>> addOrUpdatePengurus(
+    Map<String, dynamic> data, {
+    String? rtId,
+  }) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
     String? targetRtId = rtId;
@@ -1167,14 +1266,16 @@ class ApiService {
       targetRtId = user?['rtId'] ?? 'rt-sukamaju-03';
     }
 
-    final res = await http.post(
-      Uri.parse('$configuredUrl/wilayah/rt/$targetRtId/pengurus'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    ).timeout(const Duration(seconds: 6));
+    final res = await http
+        .post(
+          Uri.parse('$configuredUrl/wilayah/rt/$targetRtId/pengurus'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(data),
+        )
+        .timeout(const Duration(seconds: 6));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
@@ -1192,13 +1293,15 @@ class ApiService {
       targetRtId = user?['rtId'] ?? 'rt-sukamaju-03';
     }
 
-    final res = await http.delete(
-      Uri.parse('$configuredUrl/wilayah/rt/$targetRtId/pengurus/$userId'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    ).timeout(const Duration(seconds: 6));
+    final res = await http
+        .delete(
+          Uri.parse('$configuredUrl/wilayah/rt/$targetRtId/pengurus/$userId'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 6));
 
     if (res.statusCode != 200 && res.statusCode != 204) {
       throw Exception('Gagal menghapus pengurus');
@@ -1215,7 +1318,10 @@ class ApiService {
         targetRtId = user?['rtId'];
       }
       if (targetRtId != null && targetRtId.isNotEmpty) {
-        final response = await _getWithFallback('/wilayah/rt/$targetRtId/warga', token: token);
+        final response = await _getWithFallback(
+          '/wilayah/rt/$targetRtId/warga',
+          token: token,
+        );
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           if (data is Map<String, dynamic>) return data;
@@ -1499,10 +1605,13 @@ class ApiService {
   }
 
   // Transparansi Status Pembayaran Seluruh Warga (Buku Iuran RT)
-  static Future<Map<String, dynamic>> getTransparansiIuranWarga({int? bulan, int? tahun}) async {
+  static Future<Map<String, dynamic>> getTransparansiIuranWarga({
+    int? bulan,
+    int? tahun,
+  }) async {
     final wargaData = await getWargaList();
     final list = (wargaData['rumahList'] as List<dynamic>?) ?? [];
-    
+
     int lunasCount = 0;
     int belumCount = 0;
     num totalNominalTerkumpul = 0;
@@ -1529,7 +1638,10 @@ class ApiService {
     };
   }
 
-  static Future<Map<String, dynamic>> addWarga(Map<String, dynamic> data, {String? rtId}) async {
+  static Future<Map<String, dynamic>> addWarga(
+    Map<String, dynamic> data, {
+    String? rtId,
+  }) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
     String? targetRtId = rtId;
@@ -1538,14 +1650,16 @@ class ApiService {
       targetRtId = user?['rtId'] ?? 'rt-sukamaju-03';
     }
 
-    final res = await http.post(
-      Uri.parse('$configuredUrl/wilayah/rt/$targetRtId/warga'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    ).timeout(const Duration(seconds: 6));
+    final res = await http
+        .post(
+          Uri.parse('$configuredUrl/wilayah/rt/$targetRtId/warga'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(data),
+        )
+        .timeout(const Duration(seconds: 6));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
@@ -1555,17 +1669,21 @@ class ApiService {
   }
 
   // Real Database Update Profile & Foto Profil
-  static Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateProfile(
+    Map<String, dynamic> data,
+  ) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
-    final res = await http.post(
-      Uri.parse('$configuredUrl/auth/profile'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    ).timeout(const Duration(seconds: 6));
+    final res = await http
+        .post(
+          Uri.parse('$configuredUrl/auth/profile'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(data),
+        )
+        .timeout(const Duration(seconds: 6));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       final body = jsonDecode(res.body);
@@ -1591,20 +1709,24 @@ class ApiService {
     if (longitude != null) payload['longitude'] = longitude;
     if (catatan != null) payload['catatan'] = catatan;
 
-    final res = await http.post(
-      Uri.parse('$configuredUrl/alert/panic'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(payload),
-    ).timeout(const Duration(seconds: 5));
+    final res = await http
+        .post(
+          Uri.parse('$configuredUrl/alert/panic'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(payload),
+        )
+        .timeout(const Duration(seconds: 5));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
     }
     final body = jsonDecode(res.body);
-    throw Exception(body['message'] ?? 'Gagal mengaktifkan tombol panik darurat');
+    throw Exception(
+      body['message'] ?? 'Gagal mengaktifkan tombol panik darurat',
+    );
   }
 
   // Real Database Master Tagihan & Iuran Bulanan
@@ -1619,17 +1741,21 @@ class ApiService {
     return [];
   }
 
-  static Future<Map<String, dynamic>> setMasterTagihan(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> setMasterTagihan(
+    Map<String, dynamic> data,
+  ) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
-    final res = await http.post(
-      Uri.parse('$configuredUrl/tagihan/master'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    ).timeout(const Duration(seconds: 6));
+    final res = await http
+        .post(
+          Uri.parse('$configuredUrl/tagihan/master'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(data),
+        )
+        .timeout(const Duration(seconds: 6));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
@@ -1638,17 +1764,21 @@ class ApiService {
     throw Exception(body['message'] ?? 'Gagal menyimpan tarif iuran bulanan');
   }
 
-  static Future<Map<String, dynamic>> generateTagihanBulanan(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> generateTagihanBulanan(
+    Map<String, dynamic> data,
+  ) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
-    final res = await http.post(
-      Uri.parse('$configuredUrl/tagihan/generate-bulanan'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    ).timeout(const Duration(seconds: 8));
+    final res = await http
+        .post(
+          Uri.parse('$configuredUrl/tagihan/generate-bulanan'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(data),
+        )
+        .timeout(const Duration(seconds: 8));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
@@ -1660,11 +1790,17 @@ class ApiService {
   static Future<Map<String, dynamic>> checkNikAvailability(String nik) async {
     final cleanNik = nik.replaceAll(RegExp(r'[^0-9]'), '');
     if (cleanNik.length != 16) {
-      return {'available': true, 'valid': false, 'message': 'Panjang NIK harus 16 digit'};
+      return {
+        'available': true,
+        'valid': false,
+        'message': 'Panjang NIK harus 16 digit',
+      };
     }
     try {
       final configuredUrl = await getBaseUrl();
-      final res = await http.get(Uri.parse('$configuredUrl/auth/check-nik/$cleanNik')).timeout(const Duration(seconds: 15));
+      final res = await http
+          .get(Uri.parse('$configuredUrl/auth/check-nik/$cleanNik'))
+          .timeout(const Duration(seconds: 15));
       if (res.statusCode == 200) {
         return jsonDecode(res.body);
       }
@@ -1684,17 +1820,21 @@ class ApiService {
     return [];
   }
 
-  static Future<Map<String, dynamic>> createCctv(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createCctv(
+    Map<String, dynamic> data,
+  ) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
-    final res = await http.post(
-      Uri.parse('$configuredUrl/cctv'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    ).timeout(const Duration(seconds: 6));
+    final res = await http
+        .post(
+          Uri.parse('$configuredUrl/cctv'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(data),
+        )
+        .timeout(const Duration(seconds: 6));
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
@@ -1706,20 +1846,37 @@ class ApiService {
   static Future<void> deleteCctv(String id) async {
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
-    final res = await http.delete(
-      Uri.parse('$configuredUrl/cctv/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    ).timeout(const Duration(seconds: 6));
+    final res = await http
+        .delete(
+          Uri.parse('$configuredUrl/cctv/$id'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 6));
 
     if (res.statusCode != 200 && res.statusCode != 204) {
       throw Exception('Gagal menghapus CCTV');
     }
   }
 
-  static Future<Map<String, dynamic>?> getGempaTerkini() async {
+  static Future<Map<String, dynamic>?> getGempaTerkini({
+    bool allowFallback = true,
+  }) async {
+    if (!allowFallback) {
+      try {
+        final response = await _getVerified(
+          '/gempa/terkini',
+          authenticated: false,
+        );
+        final data = response is Map ? response['data'] : null;
+        if (data is Map<String, dynamic>) return data;
+      } catch (_) {
+        // Use the official BMKG feed below when the RT Hub proxy is unavailable.
+      }
+      return _getOfficialBmkg();
+    }
     try {
       final res = await _getWithFallback('/gempa/terkini');
       if (res.statusCode == 200) {
@@ -1730,7 +1887,10 @@ class ApiService {
       }
     } catch (_) {}
 
-    // Fallback langsung ke Open Data resmi BMKG
+    return _getOfficialBmkg();
+  }
+
+  static Future<Map<String, dynamic>?> _getOfficialBmkg() async {
     try {
       final directRes = await http
           .get(Uri.parse('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json'))
@@ -1739,7 +1899,8 @@ class ApiService {
         final json = jsonDecode(directRes.body);
         final gempa = json['Infogempa']?['gempa'];
         if (gempa != null && gempa['Shakemap'] != null) {
-          gempa['ShakemapUrl'] = 'https://data.bmkg.go.id/DataMKG/TEWS/${gempa['Shakemap']}';
+          gempa['ShakemapUrl'] =
+              'https://data.bmkg.go.id/DataMKG/TEWS/${gempa['Shakemap']}';
         }
         return gempa;
       }
@@ -1751,19 +1912,19 @@ class ApiService {
     try {
       final token = await getToken();
       final configuredUrl = await getBaseUrl();
-      final res = await http.post(
-        Uri.parse('$configuredUrl/gempa/broadcast'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(data),
-      ).timeout(const Duration(seconds: 8));
+      final res = await http
+          .post(
+            Uri.parse('$configuredUrl/gempa/broadcast'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(data),
+          )
+          .timeout(const Duration(seconds: 8));
       return res.statusCode == 200 || res.statusCode == 201;
     } catch (_) {
       return false;
     }
   }
 }
-
-

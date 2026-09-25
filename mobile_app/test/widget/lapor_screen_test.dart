@@ -11,24 +11,27 @@ void main() {
   });
 
   Widget createLaporScreen() {
-    return const MaterialApp(
-      home: LaporScreen(),
-    );
+    return const MaterialApp(home: LaporScreen());
   }
 
-  testWidgets('LaporScreen renders title and new report action button', (WidgetTester tester) async {
+  testWidgets('LaporScreen renders title and new report action button', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(createLaporScreen());
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Lapor & Pengaduan Warga'), findsOneWidget);
-    expect(find.text('Buat Laporan'), findsOneWidget);
+    expect(find.text('Lapor & Layanan Surat RT'), findsOneWidget);
+    expect(find.text('Buat Surat / Laporan'), findsOneWidget);
   });
 
-  testWidgets('LaporScreen displays floating action button and refresh option', (WidgetTester tester) async {
-    await tester.pumpWidget(createLaporScreen());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'LaporScreen displays floating action button and refresh option',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(createLaporScreen());
+      await tester.pumpAndSettle();
 
-    expect(find.byType(FloatingActionButton), findsOneWidget);
-    expect(find.byIcon(Icons.refresh_rounded), findsOneWidget);
-  });
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.byIcon(Icons.refresh_rounded), findsOneWidget);
+    },
+  );
 }

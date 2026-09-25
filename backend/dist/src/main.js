@@ -71,12 +71,16 @@ async function handler(req, res) {
     }
 }
 if (!process.env.VERCEL) {
-    bootstrap().then(() => {
+    bootstrap()
+        .then(() => {
         const port = process.env.PORT || 3000;
         server.listen(port, () => {
             console.log(`🚀 RtHub Backend running on: http://0.0.0.0:${port}`);
             console.log(`📑 Swagger Documentation available at: http://0.0.0.0:${port}/api/docs`);
         });
+    })
+        .catch((err) => {
+        console.error('CRITICAL BOOTSTRAP ERROR:', err);
     });
 }
 //# sourceMappingURL=main.js.map

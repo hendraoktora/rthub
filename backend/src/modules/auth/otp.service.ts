@@ -1,7 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 
-import * as nodemailer from 'nodemailer';
-
 interface OtpRecord {
   code: string;
   target: string;
@@ -14,7 +12,7 @@ interface OtpRecord {
 export class OtpService {
   private readonly logger = new Logger(OtpService.name);
   private readonly otpStore = new Map<string, OtpRecord>();
-  private mailTransporter: nodemailer.Transporter | null = null;
+  private mailTransporter: any = null;
 
   constructor() {
     this.initMailTransporter();
@@ -22,6 +20,14 @@ export class OtpService {
 
   private initMailTransporter() {
     try {
+      let nodemailer: any;
+      try {
+        nodemailer = require('nodemailer');
+      } catch (e) {
+        this.logger.warn('Module nodemailer belum terpasang di node_modules.');
+        return;
+      }
+
       const host = process.env.SMTP_HOST || 'mail.rthub.id';
       const port = Number(process.env.SMTP_PORT) || 465;
       const user = process.env.SMTP_USER || 'no-reply@rthub.id';

@@ -1,10 +1,16 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TipeKas } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
-export class KasService {
+export class KasService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
+
+  onModuleInit() {
+    KasService.loadFromDisk();
+  }
 
   async getKasSummary(rtId?: string) {
     if (!rtId) {
@@ -174,10 +180,54 @@ export class KasService {
       KasService.platformFeeConfig.biayaAddonBulanan = Number(data.biayaAddonBulanan);
     }
     KasService.platformFeeConfig.updatedAt = new Date().toISOString();
+    KasService.saveToDisk();
     return {
       message: 'Konfigurasi tarif fee platform berhasil diperbarui.',
       config: KasService.platformFeeConfig,
     };
+  }
+
+  private static getStoragePath(fileName: string): string {
+    const dataDir = path.resolve(process.cwd(), 'data');
+    if (!fs.existsSync(dataDir)) {
+      try { fs.mkdirSync(dataDir, { recursive: true }); } catch (_) {}
+    }
+    return path.join(dataDir, fileName);
+  }
+
+  static loadFromDisk() {
+    try {
+      const wdPath = KasService.getStoragePath('penarikan_requests.json');
+      if (fs.existsSync(wdPath)) {
+        const raw = fs.readFileSync(wdPath, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          KasService.withdrawalRequests = parsed;
+        }
+      }
+      const feePath = KasService.getStoragePath('platform_fee_config.json');
+      if (fs.existsSync(feePath)) {
+        const rawFee = fs.readFileSync(feePath, 'utf-8');
+        const parsedFee = JSON.parse(rawFee);
+        if (parsedFee && typeof parsedFee === 'object') {
+          KasService.platformFeeConfig = { ...KasService.platformFeeConfig, ...parsedFee };
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load data from disk:', e);
+    }
+  }
+
+  static saveToDisk() {
+    try {
+      const wdPath = KasService.getStoragePath('penarikan_requests.json');
+      fs.writeFileSync(wdPath, JSON.stringify(KasService.withdrawalRequests, null, 2), 'utf-8');
+
+      const feePath = KasService.getStoragePath('platform_fee_config.json');
+      fs.writeFileSync(feePath, JSON.stringify(KasService.platformFeeConfig, null, 2), 'utf-8');
+    } catch (e) {
+      console.error('Failed to save data to disk:', e);
+    }
   }
 
   // Pengajuan Penarikan Kas RT oleh Bendahara
@@ -232,6 +282,7 @@ export class KasService {
     };
 
     KasService.withdrawalRequests.unshift(newRequest);
+    KasService.saveToDisk();
 
     return {
       message: 'Pengajuan penarikan dana kas RT berhasil dikirim! Menunggu verifikasi & pencairan oleh Superadmin.',
@@ -241,11 +292,13 @@ export class KasService {
 
   // Riwayat Penarikan untuk RT Tertentu
   async getRiwayatPenarikan(rtId: string) {
+    KasService.loadFromDisk();
     return KasService.withdrawalRequests.filter((r) => r.rtId === rtId);
   }
 
   // Daftar Semua Penarikan Kas untuk Dashboard Superadmin dengan Verifikasi Otomatis
   async getAllPenarikanSuperadmin() {
+    KasService.loadFromDisk();
     // Estimasi total saldo di Payment Gateway yang valid masuk dari iuran dan iklan
     const paidBills = await this.prisma.tagihanWarga.aggregate({
       where: { status: 'PAID' },
@@ -292,6 +345,7 @@ export class KasService {
 
   // Superadmin Menyetujui & Mencairkan Penarikan Kas
   async approvePenarikan(penarikanId: string, adminUserId: string) {
+    KasService.loadFromDisk();
     const item = KasService.withdrawalRequests.find((r) => r.id === penarikanId);
     if (!item) {
       throw new BadRequestException('Pengajuan penarikan tidak ditemukan.');
@@ -306,12 +360,13 @@ export class KasService {
       tipe: TipeKas.PENGELUARAN,
       kategori: 'Penarikan Kas RT',
       nominal: item.totalDipotong,
-      keterangan: `Pencairan Kas RT ke rekening ${item.bankName} ${item.nomorRekening} a/n ${item.namaPemilik} (Nominal: Rp ${item.nominalTarik.toLocaleString('id-ID')} + Biaya Platform: Rp 6.000) - Approved by Superadmin`,
+      keterangan: `Pencairan Kas RT ke rekening ${item.bankName} ${item.nomorRekening} a/n ${item.namaPemilik} (Nominal: Rp ${item.nominalTarik.toLocaleString('id-ID')} + Biaya Platform: Rp ${item.biayaAdmin.toLocaleString('id-ID')}) - Approved by Superadmin`,
     });
 
     item.status = 'APPROVED';
     item.catatanApproval = 'Pencairan disetujui & dieksekusi oleh Superadmin. Dana telah diteruskan ke rekening RT.';
     item.approvedAt = new Date().toISOString();
+    KasService.saveToDisk();
 
     return {
       message: 'Pencairan kas RT berhasil disetujui! Saldo kas RT telah disesuaikan dan dana diteruskan.',
@@ -321,6 +376,7 @@ export class KasService {
 
   // Superadmin Menolak Penarikan Kas
   async rejectPenarikan(penarikanId: string, alasan?: string) {
+    KasService.loadFromDisk();
     const item = KasService.withdrawalRequests.find((r) => r.id === penarikanId);
     if (!item) {
       throw new BadRequestException('Pengajuan penarikan tidak ditemukan.');
@@ -328,6 +384,7 @@ export class KasService {
 
     item.status = 'REJECTED';
     item.catatanApproval = alasan || 'Pengajuan penarikan ditolak oleh Superadmin karena ketidaksesuaian data rekening atau saldo.';
+    KasService.saveToDisk();
 
     return {
       message: 'Pengajuan penarikan kas RT telah ditolak. Saldo kas RT tetap utuh.',

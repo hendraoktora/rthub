@@ -98,7 +98,7 @@ function handleGoToLogin() {
   <!-- NAVBAR -->
   <header id="navbar"><div class="container nav-inner"><a class="logo" href="#beranda" aria-label="RtHub" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
       <img src="/rthub_logo.png" alt="RtHub" style="height:36px;width:auto;object-fit:contain;" onerror="this.onerror=null;this.src='rthub_logo.png';" />
-    </a><nav id="nav-menu" aria-label="Navigasi utama"><a href="#beranda">Beranda</a><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a><a href="#cerita-warga">Cerita Warga</a></nav><div class="nav-actions"><a class="nav-login" href="javascript:void(0)" onclick="handleGoToLogin()">Portal Pengurus ↗</a><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><button id="menu-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Buka menu"><svg class="icon"><use href="#i-menu"/></svg></button></div></div></header>
+    </a><nav id="nav-menu" aria-label="Navigasi utama"><a href="#beranda">Beranda</a><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a><a href="#cerita-warga">Cerita Warga</a><a href="#harga">Paket & Biaya</a></nav><div class="nav-actions"><a class="nav-login" href="javascript:void(0)" onclick="handleGoToLogin()">Portal Pengurus ↗</a><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><button id="menu-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Buka menu"><svg class="icon"><use href="#i-menu"/></svg></button></div></div></header>
   <main id="main">
     <!-- HERO -->
     <section class="hero" id="beranda"><div class="container hero-inner"><div class="hero-copy"><div class="pill hero-tag"><span class="dot"></span> RUANG DIGITAL UNTUK HIDUP BERTETANGGA <span>RT Hub</span></div><h1 data-split>Satu kampung.<br><span class="green">Banyak cerita.</span></h1><p class="hero-description">Urusan RT, sekarang lebih sederhana. Dari kas warga sampai lapak tetangga, semuanya terhubung. Jadi, ada lebih banyak waktu untuk saling sapa.</p><div class="hero-buttons"><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><a class="btn btn-secondary magnetic" href="/rthub-mobile.apk" target="_blank" rel="noopener noreferrer"><svg class="icon"><use href="#i-download"/></svg> Unduh Android</a></div><div class="hero-proof"><div class="avatar-stack" aria-hidden="true"><span class="avatar">BS</span><span class="avatar">SR</span><span class="avatar">DP</span><span class="avatar">+</span></div><div><strong>Untuk setiap peran di kampung.</strong><br>Ketua RT, pengurus, warga, dan pemilik usaha.</div></div></div>
@@ -127,7 +127,81 @@ function handleGoToLogin() {
     <section class="section how-section" id="cara-kerja"><div class="container"><div class="center-head" data-reveal><div class="eyebrow">Mulainya gampang, manfaatnya panjang</div><h2 data-split>Bukan ribet.<br>Cuma tiga langkah.</h2><p>Tak perlu jago teknologi. Cukup semangat untuk bikin lingkungan jadi lebih baik.</p></div><div class="steps"><div class="timeline" aria-hidden="true"><div class="timeline-progress"></div></div><article class="step" data-reveal><div class="step-number">01</div><h3>Daftarkan RT Anda</h3><p>Buat ruang digital untuk lingkungan Anda. Isi nama RT dan mulai dari hal yang paling dibutuhkan.</p><span class="step-time">MULAI DARI INFORMASI DASAR</span></article><article class="step" data-reveal><div class="step-number">02</div><h3>Ajak tetangga bergabung</h3><p>Bagikan undangan ke warga dan pengurus. Setiap orang punya peran, semua punya tempat.</p><span class="step-time">BAGIKAN TAUTAN UNDANGAN</span></article><article class="step" data-reveal><div class="step-number">03</div><h3>Kelola, tinggal klik saja</h3><p>Catat iuran, terbitkan surat, buka lapak. Lebih sedikit administrasi, lebih banyak silaturahmi.</p><span class="step-time">NIKMATI KAMPUNG YANG LEBIH RAPI</span></article></div><div class="steps-foot"><a href="javascript:handleGoToLogin()">Daftarkan & Kelola RT Anda Sekarang <svg class="icon"><use href="#i-arrow"/></svg></a></div></div></section>
     <!-- TESTIMONIALS -->
     <section class="section testimonials" id="cerita-warga"><div class="container"><div class="section-head" data-reveal><div><div class="eyebrow">Beda peran, sama-sama terbantu</div><h2 data-split>Cerita kecil.<br>Perubahan yang terasa.</h2></div><span class="story-label">PENGALAMAN WARGA</span></div></div><div class="testimonial-marquee" tabindex="0" aria-label="Empat contoh cerita warga. Arahkan penunjuk atau fokus untuk menjeda."><div class="testimonial-track" id="testimonial-track"><article class="quote-card"><div class="quote-stars" aria-label="Ilustrasi 5 bintang">★★★★★</div><blockquote>“Dulu cari data satu warga bisa seharian. Sekarang urusan surat dan data rapi, saya punya lebih banyak waktu buat warga.”</blockquote><div class="quote-person"><span class="avatar">BS</span><div><b>Pak Budi Santoso</b><p>Ketua RT</p></div><span class="quote-mark">“</span></div></article><article class="quote-card"><div class="quote-stars" aria-label="Ilustrasi 5 bintang">★★★★★</div><blockquote>“Paling lega waktu laporan kas tinggal dibuka. Warga bisa lihat, saya juga nggak perlu rekap buku sampai malam.”</blockquote><div class="quote-person"><span class="avatar" style="background:#d8bca0">SW</span><div><b>Bu Sari Wulandari</b><p>Bendahara RT</p></div><span class="quote-mark">“</span></div></article><article class="quote-card"><div class="quote-stars" aria-label="Ilustrasi 5 bintang">★★★★★</div><blockquote>“Ajukan surat sambil berangkat kerja. Pulang-pulang sudah disetujui. Tetap dekat dengan pengurus, tanpa harus bolak-balik.”</blockquote><div class="quote-person"><span class="avatar" style="background:#acc9da">DP</span><div><b>Dimas Pratama</b><p>Warga</p></div><span class="quote-mark">“</span></div></article><article class="quote-card"><div class="quote-stars" aria-label="Ilustrasi 5 bintang">★★★★★</div><blockquote>“Sejak ada Lapak Kampung, keripik saya laku 3x lipat. Ternyata tetangga baru tahu kalau saya jualan. Senangnya!”</blockquote><div class="quote-person"><span class="avatar" style="background:#c5b7d4">RP</span><div><b>Bu Ratna Puspita</b><p>Pemilik lapak UMKM</p></div><span class="quote-mark">“</span></div></article></div></div></section>
-    <!-- PRICING — EDIT THESE ILLUSTRATIVE PRICES BEFORE PUBLICATION -->
+    <!-- PRICING SECTION -->
+    <section class="section" id="harga">
+      <div class="container">
+        <div class="center-head" data-reveal>
+          <div class="eyebrow">TRANSPARAN TANPA BIAYA TERSEMBUNYI</div>
+          <h2 data-split>Pilihan Paket Sesuai Kebutuhan RT Anda</h2>
+          <p>Mulai gratis sekarang. Kas pokok RT 100% utuh tanpa potongan, dengan sistem monetisasi yang adil dan transparan.</p>
+        </div>
+        <div class="pricing-caption">BIAYA LAYANAN DIBAYAR PER TRANSAKSI OLEH WARGA ATAU PAKET ADD-ON RT</div>
+        <div class="pricing-grid">
+          <!-- Card 1: RT Basic (Komunitas) -->
+          <article class="price-card" data-reveal>
+            <div class="plan-name">RT Basic (Komunitas)</div>
+            <p class="plan-description">Aplikasi manajemen RT digital gratis selamanya untuk seluruh RT se-Indonesia.</p>
+            <div class="price">Rp 0 <small>/ selamanya</small></div>
+            <div class="price-period">Fee Layanan Rp 1.500 / transaksi iuran warga</div>
+            <ul class="plan-features">
+              <li>Dashboard Buku Kas &amp; Mutasi RT Transparan</li>
+              <li>Data Warga, Rumah &amp; Kartu Keluarga (KK)</li>
+              <li>Tagihan Iuran IPL Otomatis (QRIS &amp; VA)</li>
+              <li>Marketplace Lapak UMKM Tetangga Warga</li>
+              <li>Jadwal Ronda Siskamling Bergilir Digital</li>
+              <li>Siskamling Panic SOS Darurat ke Seluruh HP</li>
+              <li>Siaran Peringatan Gempa Realtime BMKG</li>
+              <li>Streaming Pantauan CCTV Lingkungan Multi-Pos</li>
+              <li>Penarikan Kas RT ke Bank (Biaya Transfer Rp 6.000)</li>
+              <li class="unavailable">Pelayanan Surat Pengantar RT/RW Digital</li>
+              <li class="unavailable">Pembayaran Tunai Resi Barcode Digital Warga</li>
+              <li class="unavailable">Ekspor Buku Kas Akuntansi LPJ Excel &amp; PDF</li>
+            </ul>
+            <button class="btn btn-secondary magnetic" onclick="handleGoToLogin()">Mulai Gratis Sekarang</button>
+          </article>
+
+          <!-- Card 2: RT Pro (Add-On Unggulan) -->
+          <article class="price-card pro" data-reveal>
+            <span class="popular">★ REKOMENDASI UNGGULAN RT</span>
+            <div class="plan-name">RT Pro (Paket Add-Ons)</div>
+            <p class="plan-description">Paket fitur tambahan premium untuk pelayanan surat digital resmi &amp; akuntansi RT modern.</p>
+            <div class="price">Rp 49.000 <small>/ bulan / RT</small></div>
+            <div class="price-period">Hanya Rp 1.600/hari untuk kemudahan seluruh warga</div>
+            <ul class="plan-features">
+              <li><strong>Semua fitur di Paket RT Basic</strong></li>
+              <li><strong>Pelayanan E-Surat Pengantar RT/RW Digital</strong> (Domisili, SKCK, Usaha dengan Tanda Tangan Digital &amp; QR Barcode)</li>
+              <li><strong>Pencatatan Iuran Tunai / Kas Manual</strong> (Bendahara terima cash, sistem otomatis terbitkan kwitansi barcode ke HP warga)</li>
+              <li><strong>Ekspor Pembukuan Akuntansi RT Otomatis</strong> (Download laporan kas bulanan &amp; neraca keuangan format Excel/PDF)</li>
+              <li><strong>Prioritas Verifikasi &amp; Pencairan Kas RT</strong></li>
+              <li>Bebas biaya langganan bulanan bagi warga</li>
+            </ul>
+            <button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Aktifkan Paket RT Pro <svg class="icon"><use href="#i-arrow"/></svg></button>
+          </article>
+
+          <!-- Card 3: Kelurahan / RW Mandiri -->
+          <article class="price-card" data-reveal>
+            <div class="plan-name">Kelurahan &amp; RW Mandiri</div>
+            <p class="plan-description">Solusi terpadu multi-RT untuk pemantauan terpusat tingkat RW dan Kelurahan.</p>
+            <div class="price custom">Kustom <small>/ wilayah</small></div>
+            <div class="price-period">Sesuai cakupan jumlah RT &amp; RW setempat</div>
+            <ul class="plan-features">
+              <li><strong>Semua fitur Paket RT Pro untuk seluruh RT</strong></li>
+              <li>Dashboard Terpadu Multi-RT untuk Ketua RW &amp; Lurah</li>
+              <li>Pemantauan Agregat Kependudukan &amp; Kas Lintas RT</li>
+              <li>Broadcast Pengumuman Resmi Kelurahan Serentak</li>
+              <li>Pelatihan &amp; Onboarding Khusus Pengurus RT/RW</li>
+              <li>Dukungan Teknis &amp; Dedicated Account Manager 24/7</li>
+            </ul>
+            <a class="btn btn-secondary magnetic" href="https://wa.me/6285280039433?text=Halo%20tim%20RT%20Hub%2C%20saya%20tertarik%20konsultasi%20paket%20Kelurahan%2FRW%20Mandiri." target="_blank" rel="noopener noreferrer">Konsultasi Wilayah</a>
+          </article>
+        </div>
+        <div class="pricing-note">
+          <span><svg class="icon"><use href="#i-check"/></svg> Kas RT Pokok 100% utuh tanpa potongan</span>
+          <span><svg class="icon"><use href="#i-check"/></svg> Biaya layanan iuran Rp 1.500 dibayar transparan oleh warga</span>
+          <span><svg class="icon"><use href="#i-check"/></svg> Penarikan dana kas RT flat Rp 6.000 ke rekening bank manapun</span>
+        </div>
+      </div>
+    </section>
     <!-- FINAL CTA WITH SECOND PROCEDURAL THREE.JS SCENE -->
     <section class="cta-section"><div class="container"><div class="cta-panel" data-reveal><div class="cta-grid"></div><div class="cta-copy"><div class="eyebrow">Kampung baik dimulai dari kita</div><h2 data-split>Waktunya RT Anda<br><span class="green">Naik Kelas.</span></h2><p>Lebih rapi administrasinya. Lebih hidup usahanya.<br>Lebih akrab warganya. Yuk, mulai dari RT Anda.</p><div class="cta-buttons"><button class="btn btn-primary magnetic" id="final-cta" onclick="handleGoToLogin()">Coba Gratis Sekarang <svg class="icon"><use href="#i-arrow"/></svg></button><a class="btn btn-secondary magnetic"  href="https://wa.me/6285280039433?text=Halo%20tim%20RT%20Hub%2C%20saya%20ingin%20tahu%20lebih%20lanjut%20tentang%20RT%20Hub%20untuk%20lingkungan%20saya." target="_blank" rel="noopener noreferrer">Hubungi Kami</a></div></div><div class="community-scene"><canvas id="community-canvas" aria-label="Rumah-rumah berkumpul menjadi satu komunitas"></canvas></div></div></div></section>
   </main>

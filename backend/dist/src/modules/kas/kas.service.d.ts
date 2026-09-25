@@ -1,8 +1,10 @@
+import { OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TipeKas } from '@prisma/client';
-export declare class KasService {
+export declare class KasService implements OnModuleInit {
     private prisma;
     constructor(prisma: PrismaService);
+    onModuleInit(): void;
     getKasSummary(rtId?: string): Promise<{
         saldoKas: number;
         totalPemasukan: number;
@@ -62,6 +64,9 @@ export declare class KasService {
             updatedAt: string;
         };
     };
+    private static getStoragePath;
+    static loadFromDisk(): void;
+    static saveToDisk(): void;
     ajukanPenarikanKas(rtId: string, userId: string, data: {
         bankName: string;
         nomorRekening: string;

@@ -41,14 +41,21 @@ class _TarikKasScreenState extends State<TarikKasScreen> {
     _loadData();
   }
 
+  bool _isBendahara = true;
+
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
+      final userData = await ApiService.getUserData();
+      final role = userData?['role']?.toString().toUpperCase() ?? '';
+      final isBendahara = role == 'BENDAHARA_RT' || role == 'BENDAHARA';
+
       final kasData = await ApiService.getKasSummary();
       final history = await ApiService.getRiwayatPenarikan();
 
       if (mounted) {
         setState(() {
+          _isBendahara = isBendahara;
           _saldoKas = (kasData['saldoKas'] as num?)?.toDouble() ?? 0.0;
           _riwayat = history;
           _isLoading = false;
@@ -66,6 +73,16 @@ class _TarikKasScreenState extends State<TarikKasScreen> {
   }
 
   void _handleSubmit() async {
+    if (!_isBendahara) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Akses Ditolak: Hanya Bendahara RT yang berwenang mengajukan penarikan dana kas.'),
+          backgroundColor: AppTheme.alertRed,
+        ),
+      );
+      return;
+    }
+
     final nominal = double.tryParse(_nominalController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0.0;
     final noRek = _noRekController.text.trim();
     final nama = _namaPemilikController.text.trim();
@@ -270,6 +287,42 @@ class _TarikKasScreenState extends State<TarikKasScreen> {
                     ),
                     const SizedBox(height: 24),
 
+                    if (!_isBendahara) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFFECACA)),
+                        ),
+                        child: const Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.lock_person_rounded, color: AppTheme.alertRed, size: 22),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Akses Terbatas: Khusus Bendahara RT',
+                                    style: TextStyle(color: AppTheme.alertRed, fontSize: 13, fontWeight: FontWeight.bold),
+                                  ),
+                                  SizedBox(height: 3),
+                                  Text(
+                                    'Akun Anda saat ini bukan sebagai Bendahara RT. Formulir pengajuan pencairan saldo kas RT dinonaktifkan.',
+                                    style: TextStyle(color: Color(0xFF991B1B), fontSize: 11, height: 1.3),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+
                     // Form Penarikan
                     const Text('Formulir Permohonan Pencairan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
@@ -402,12 +455,15 @@ class _TarikKasScreenState extends State<TarikKasScreen> {
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               ),
-                              onPressed: (_isSubmitting || nominalVal < 20000 || isExceed || _noRekController.text.trim().isEmpty || _namaPemilikController.text.trim().isEmpty)
+                              onPressed: (_isSubmitting || !_isBendahara || nominalVal < 20000 || isExceed || _noRekController.text.trim().isEmpty || _namaPemilikController.text.trim().isEmpty)
                                   ? null
                                   : _handleSubmit,
                               child: _isSubmitting
                                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                  : const Text('Kirim Pengajuan Pencairan Kas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                  : Text(
+                                      !_isBendahara ? 'Hanya Bendahara RT yang Berhak Menarik' : 'Kirim Pengajuan Pencairan Kas',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
                             ),
                           ),
                         ],

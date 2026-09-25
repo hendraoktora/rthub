@@ -140,14 +140,16 @@ class _PengurusPanelScreenState extends State<PengurusPanelScreen> {
                       subtitle: 'Input pemasukan, donasi, atau pengeluaran operasional RT',
                       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CatatKasScreen())),
                     ),
-                    const SizedBox(height: 10),
-                    _buildMenuTile(
-                      icon: Icons.payments_rounded,
-                      color: const Color(0xFF0F5132),
-                      title: 'Pencairan / Tarik Kas RT',
-                      subtitle: 'Cairkan kas RT ke rekening bank resmi pengurus (Biaya Rp 6.000)',
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const TarikKasScreen())),
-                    ),
+                    if (role == 'BENDAHARA_RT' || role == 'BENDAHARA') ...[
+                      const SizedBox(height: 10),
+                      _buildMenuTile(
+                        icon: Icons.payments_rounded,
+                        color: const Color(0xFF0F5132),
+                        title: 'Pencairan / Tarik Kas RT (Bendahara)',
+                        subtitle: 'Cairkan kas RT ke rekening bank resmi pengurus (Biaya Rp 6.000)',
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const TarikKasScreen())),
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     _buildMenuTile(
                       icon: Icons.receipt_long_rounded,

@@ -43,15 +43,15 @@ export class KasController {
   // ================= PENARIKAN KAS RT (BENDAHARA) =================
 
   @Get('penarikan/riwayat')
-  @Roles(Role.BENDAHARA_RT, Role.ADMIN_RT, Role.SUPERADMIN)
-  @ApiOperation({ summary: 'Melihat riwayat pengajuan penarikan dana kas RT' })
+  @Roles(Role.BENDAHARA_RT, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Melihat riwayat pengajuan penarikan dana kas RT (Khusus Bendahara RT & Superadmin)' })
   async getRiwayatPenarikan(@CurrentUser() user: any) {
     return this.kasService.getRiwayatPenarikan(user.rtId);
   }
 
   @Post('penarikan/ajukan')
-  @Roles(Role.BENDAHARA_RT, Role.ADMIN_RT, Role.SUPERADMIN)
-  @ApiOperation({ summary: 'Mengajukan pencairan dana kas RT ke rekening bank pengurus (Biaya Rp 6.000)' })
+  @Roles(Role.BENDAHARA_RT)
+  @ApiOperation({ summary: 'Mengajukan pencairan dana kas RT ke rekening bank (Khusus Bendahara RT)' })
   async ajukanPenarikan(
     @CurrentUser() user: any,
     @Body() body: { bankName: string; nomorRekening: string; namaPemilik: string; nominalTarik: number },

@@ -11,6 +11,7 @@ import '../invoice/invoice_screen.dart';
 import '../panic/panic_screen.dart';
 import '../panic/emergency_alert_dialog.dart';
 import '../pengurus/pengurus_panel_screen.dart';
+import '../pengurus/tarik_kas_screen.dart';
 import '../lapor/lapor_screen.dart';
 import '../lapak/lapak_screen.dart';
 import '../agenda/agenda_screen.dart';
@@ -118,6 +119,11 @@ class _HomeScreenState extends State<HomeScreen> {
     'SEKRETARIS',
     'SECURITY',
     'SUPERADMIN',
+  }.contains(_data.user?['role']?.toString().toUpperCase());
+
+  bool get _isBendahara => const {
+    'BENDAHARA_RT',
+    'BENDAHARA',
   }.contains(_data.user?['role']?.toString().toUpperCase());
 
   @override
@@ -1535,14 +1541,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
-                        if (_isPengurus) ...[
+                        if (_isBendahara) ...[
                           const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.pop(context);
-                                _showTarikKasModal();
+                                _navigate(const TarikKasScreen(), refresh: true);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF087252),
@@ -1551,9 +1557,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              icon: const Icon(Icons.account_balance_wallet_outlined, size: 16),
+                              icon: const Icon(Icons.payments_outlined, size: 16),
                               label: const Text(
-                                'Tarik Kas RT (Biaya Layanan Rp 6.000)',
+                                'Pencairan / Tarik Kas RT (Khusus Bendahara)',
                                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                               ),
                             ),

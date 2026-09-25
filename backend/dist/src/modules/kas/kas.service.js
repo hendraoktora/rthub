@@ -1,10 +1,43 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -14,9 +47,14 @@ exports.KasService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const client_1 = require("@prisma/client");
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 let KasService = KasService_1 = class KasService {
     constructor(prisma) {
         this.prisma = prisma;
+    }
+    onModuleInit() {
+        KasService_1.loadFromDisk();
     }
     async getKasSummary(rtId) {
         if (!rtId) {
@@ -93,10 +131,55 @@ let KasService = KasService_1 = class KasService {
             KasService_1.platformFeeConfig.biayaAddonBulanan = Number(data.biayaAddonBulanan);
         }
         KasService_1.platformFeeConfig.updatedAt = new Date().toISOString();
+        KasService_1.saveToDisk();
         return {
             message: 'Konfigurasi tarif fee platform berhasil diperbarui.',
             config: KasService_1.platformFeeConfig,
         };
+    }
+    static getStoragePath(fileName) {
+        const dataDir = path.resolve(process.cwd(), 'data');
+        if (!fs.existsSync(dataDir)) {
+            try {
+                fs.mkdirSync(dataDir, { recursive: true });
+            }
+            catch (_) { }
+        }
+        return path.join(dataDir, fileName);
+    }
+    static loadFromDisk() {
+        try {
+            const wdPath = KasService_1.getStoragePath('penarikan_requests.json');
+            if (fs.existsSync(wdPath)) {
+                const raw = fs.readFileSync(wdPath, 'utf-8');
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    KasService_1.withdrawalRequests = parsed;
+                }
+            }
+            const feePath = KasService_1.getStoragePath('platform_fee_config.json');
+            if (fs.existsSync(feePath)) {
+                const rawFee = fs.readFileSync(feePath, 'utf-8');
+                const parsedFee = JSON.parse(rawFee);
+                if (parsedFee && typeof parsedFee === 'object') {
+                    KasService_1.platformFeeConfig = { ...KasService_1.platformFeeConfig, ...parsedFee };
+                }
+            }
+        }
+        catch (e) {
+            console.error('Failed to load data from disk:', e);
+        }
+    }
+    static saveToDisk() {
+        try {
+            const wdPath = KasService_1.getStoragePath('penarikan_requests.json');
+            fs.writeFileSync(wdPath, JSON.stringify(KasService_1.withdrawalRequests, null, 2), 'utf-8');
+            const feePath = KasService_1.getStoragePath('platform_fee_config.json');
+            fs.writeFileSync(feePath, JSON.stringify(KasService_1.platformFeeConfig, null, 2), 'utf-8');
+        }
+        catch (e) {
+            console.error('Failed to save data to disk:', e);
+        }
     }
     async ajukanPenarikanKas(rtId, userId, data) {
         const nominalTarik = Number(data.nominalTarik);
@@ -136,15 +219,18 @@ let KasService = KasService_1 = class KasService {
             createdAt: new Date().toISOString(),
         };
         KasService_1.withdrawalRequests.unshift(newRequest);
+        KasService_1.saveToDisk();
         return {
             message: 'Pengajuan penarikan dana kas RT berhasil dikirim! Menunggu verifikasi & pencairan oleh Superadmin.',
             penarikan: newRequest,
         };
     }
     async getRiwayatPenarikan(rtId) {
+        KasService_1.loadFromDisk();
         return KasService_1.withdrawalRequests.filter((r) => r.rtId === rtId);
     }
     async getAllPenarikanSuperadmin() {
+        KasService_1.loadFromDisk();
         const paidBills = await this.prisma.tagihanWarga.aggregate({
             where: { status: 'PAID' },
             _sum: { totalBayar: true },
@@ -174,6 +260,7 @@ let KasService = KasService_1 = class KasService {
         return results;
     }
     async approvePenarikan(penarikanId, adminUserId) {
+        KasService_1.loadFromDisk();
         const item = KasService_1.withdrawalRequests.find((r) => r.id === penarikanId);
         if (!item) {
             throw new common_1.BadRequestException('Pengajuan penarikan tidak ditemukan.');
@@ -185,23 +272,26 @@ let KasService = KasService_1 = class KasService {
             tipe: client_1.TipeKas.PENGELUARAN,
             kategori: 'Penarikan Kas RT',
             nominal: item.totalDipotong,
-            keterangan: `Pencairan Kas RT ke rekening ${item.bankName} ${item.nomorRekening} a/n ${item.namaPemilik} (Nominal: Rp ${item.nominalTarik.toLocaleString('id-ID')} + Biaya Platform: Rp 6.000) - Approved by Superadmin`,
+            keterangan: `Pencairan Kas RT ke rekening ${item.bankName} ${item.nomorRekening} a/n ${item.namaPemilik} (Nominal: Rp ${item.nominalTarik.toLocaleString('id-ID')} + Biaya Platform: Rp ${item.biayaAdmin.toLocaleString('id-ID')}) - Approved by Superadmin`,
         });
         item.status = 'APPROVED';
         item.catatanApproval = 'Pencairan disetujui & dieksekusi oleh Superadmin. Dana telah diteruskan ke rekening RT.';
         item.approvedAt = new Date().toISOString();
+        KasService_1.saveToDisk();
         return {
             message: 'Pencairan kas RT berhasil disetujui! Saldo kas RT telah disesuaikan dan dana diteruskan.',
             penarikan: item,
         };
     }
     async rejectPenarikan(penarikanId, alasan) {
+        KasService_1.loadFromDisk();
         const item = KasService_1.withdrawalRequests.find((r) => r.id === penarikanId);
         if (!item) {
             throw new common_1.BadRequestException('Pengajuan penarikan tidak ditemukan.');
         }
         item.status = 'REJECTED';
         item.catatanApproval = alasan || 'Pengajuan penarikan ditolak oleh Superadmin karena ketidaksesuaian data rekening atau saldo.';
+        KasService_1.saveToDisk();
         return {
             message: 'Pengajuan penarikan kas RT telah ditolak. Saldo kas RT tetap utuh.',
             penarikan: item,

@@ -90,8 +90,8 @@ __decorate([
 ], KasController.prototype, "createKasAlias", null);
 __decorate([
     (0, common_1.Get)('penarikan/riwayat'),
-    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.ADMIN_RT, client_1.Role.SUPERADMIN),
-    (0, swagger_1.ApiOperation)({ summary: 'Melihat riwayat pengajuan penarikan dana kas RT' }),
+    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Melihat riwayat pengajuan penarikan dana kas RT (Khusus Bendahara RT & Superadmin)' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -99,8 +99,8 @@ __decorate([
 ], KasController.prototype, "getRiwayatPenarikan", null);
 __decorate([
     (0, common_1.Post)('penarikan/ajukan'),
-    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.ADMIN_RT, client_1.Role.SUPERADMIN),
-    (0, swagger_1.ApiOperation)({ summary: 'Mengajukan pencairan dana kas RT ke rekening bank pengurus (Biaya Rp 6.000)' }),
+    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT),
+    (0, swagger_1.ApiOperation)({ summary: 'Mengajukan pencairan dana kas RT ke rekening bank (Khusus Bendahara RT)' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

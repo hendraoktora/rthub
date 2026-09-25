@@ -1,48 +1,157 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
 var OtpService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OtpService = void 0;
 const common_1 = require("@nestjs/common");
+const nodemailer = __importStar(require("nodemailer"));
 let OtpService = OtpService_1 = class OtpService {
     constructor() {
         this.logger = new common_1.Logger(OtpService_1.name);
         this.otpStore = new Map();
+        this.mailTransporter = null;
+        this.initMailTransporter();
+    }
+    initMailTransporter() {
+        try {
+            const host = process.env.SMTP_HOST || 'mail.rthub.id';
+            const port = Number(process.env.SMTP_PORT) || 465;
+            const user = process.env.SMTP_USER || 'no-reply@rthub.id';
+            const pass = process.env.SMTP_PASS || 'M@!LrTHu8!';
+            this.mailTransporter = nodemailer.createTransport({
+                host,
+                port,
+                secure: port === 465,
+                auth: { user, pass },
+                tls: { rejectUnauthorized: false },
+            });
+            this.logger.log(`📧 SMTP Transporter initialized on ${host}:${port} (${user})`);
+        }
+        catch (err) {
+            this.logger.error('Failed to initialize SMTP Transporter:', err);
+        }
     }
     async sendOtp(target, channel = 'WHATSAPP', purpose = 'REGISTRASI') {
         const cleanTarget = target.trim();
         if (!cleanTarget) {
             throw new common_1.BadRequestException('Nomor WhatsApp atau Email tujuan wajib diisi.');
         }
+        const effectiveChannel = cleanTarget.includes('@') ? 'EMAIL' : channel;
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
         this.otpStore.set(cleanTarget, {
             code,
             target: cleanTarget,
-            channel,
+            channel: effectiveChannel,
             expiresAt,
             attempts: 0,
         });
-        const masked = this.maskTarget(cleanTarget, channel);
-        if (channel === 'WHATSAPP') {
-            this.logger.log(`📱 [WHATSAPP OTP GATEWAY] Mengirim OTP [${code}] ke ${cleanTarget} untuk keperluan ${purpose}`);
+        const masked = this.maskTarget(cleanTarget, effectiveChannel);
+        if (effectiveChannel === 'EMAIL') {
+            try {
+                await this.sendEmailOtp(cleanTarget, code, purpose);
+                this.logger.log(`✉️ [EMAIL OTP GATEWAY] OTP [${code}] berhasil terkirim ke ${cleanTarget} via SMTP`);
+            }
+            catch (err) {
+                this.logger.error(`❌ [EMAIL OTP ERROR] Gagal mengirim email ke ${cleanTarget}: ${err?.message || err}`);
+            }
         }
         else {
-            this.logger.log(`✉️ [EMAIL OTP GATEWAY] Mengirim OTP [${code}] ke ${cleanTarget} untuk keperluan ${purpose}`);
+            this.logger.log(`📱 [WHATSAPP OTP GATEWAY] Mengirim OTP [${code}] ke ${cleanTarget} untuk keperluan ${purpose}`);
         }
         return {
             success: true,
-            message: `Kode OTP 6-digit berhasil dikirim ke ${channel === 'WHATSAPP' ? 'nomor WhatsApp' : 'email'} ${masked}.`,
+            message: `Kode OTP 6-digit berhasil dikirim ke ${effectiveChannel === 'WHATSAPP' ? 'nomor WhatsApp' : 'email'} ${masked}.`,
             targetMasked: masked,
-            channel,
+            channel: effectiveChannel,
             expiresInSeconds: 300,
             demoOtp: code,
         };
+    }
+    async sendEmailOtp(to, code, purpose) {
+        if (!this.mailTransporter) {
+            this.initMailTransporter();
+        }
+        if (!this.mailTransporter) {
+            throw new Error('SMTP mailer belum terkonfigurasi');
+        }
+        const fromName = process.env.SMTP_FROM_NAME || 'RtHub Indonesia';
+        const fromEmail = process.env.SMTP_FROM_EMAIL || 'no-reply@rthub.id';
+        const purposeTitle = purpose === 'RESET_PASSWORD'
+            ? 'Reset Kata Sandi Akun'
+            : purpose === 'VERIFIKASI_RT'
+                ? 'Verifikasi Pendaftaran RT Baru'
+                : 'Verifikasi Pendaftaran Akun RtHub';
+        const mailOptions = {
+            from: `"${fromName}" <${fromEmail}>`,
+            to,
+            subject: `Kode Verifikasi RtHub: ${code}`,
+            html: `
+        <div style="font-family: 'Plus Jakarta Sans', Arial, -apple-system, BlinkMacSystemFont, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+          <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 32px 24px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">RtHub</h1>
+            <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Platform Digital Manajemen Rukun Tetangga</p>
+          </div>
+          <div style="padding: 32px 24px; text-align: center;">
+            <h2 style="color: #0f172a; margin: 0 0 12px; font-size: 18px; font-weight: 700;">${purposeTitle}</h2>
+            <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
+              Gunakan kode OTP berikut untuk menyelesaikan proses verifikasi di aplikasi RtHub. Kode ini hanya berlaku selama <strong>5 menit</strong>.
+            </p>
+            <div style="background: #f0fdf4; border: 2px dashed #22c55e; border-radius: 12px; padding: 18px 24px; display: inline-block; margin: 0 auto 24px;">
+              <span style="font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #15803d; font-family: monospace;">${code}</span>
+            </div>
+            <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 0;">
+              Demi keamanan, <strong>jangan bagikan kode ini</strong> kepada siapa pun termasuk pengurus RT. Jika Anda tidak merasa meminta kode ini, abaikan email ini.
+            </p>
+          </div>
+          <div style="background: #f8fafc; padding: 16px 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="color: #94a3b8; font-size: 11px; margin: 0;">© 2026 RtHub Indonesia · Smart Neighborhood Ecosystem</p>
+          </div>
+        </div>
+      `,
+        };
+        return this.mailTransporter.sendMail(mailOptions);
     }
     async verifyOtp(target, code) {
         const cleanTarget = target.trim();
@@ -85,6 +194,7 @@ let OtpService = OtpService_1 = class OtpService {
 };
 exports.OtpService = OtpService;
 exports.OtpService = OtpService = OtpService_1 = __decorate([
-    (0, common_1.Injectable)()
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [])
 ], OtpService);
 //# sourceMappingURL=otp.service.js.map

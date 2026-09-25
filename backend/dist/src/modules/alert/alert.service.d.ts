@@ -21,6 +21,8 @@ export declare class AlertService {
         } & {
             rtId: string;
             id: string;
+            kelurahanId: string | null;
+            rwId: string | null;
             userId: string;
             status: import(".prisma/client").$Enums.StatusAlert;
             rumahId: string | null;
@@ -31,7 +33,7 @@ export declare class AlertService {
             resolvedAt: Date | null;
         };
     }>;
-    getActiveAlerts(rtId: string): Promise<({
+    getActiveAlerts(user: any, userLat?: number, userLng?: number): Promise<({
         user: {
             profile: {
                 namaLengkap: string;
@@ -39,9 +41,14 @@ export declare class AlertService {
             };
             phone: string;
         };
+        rt: {
+            nomor: string;
+        };
     } & {
         rtId: string;
         id: string;
+        kelurahanId: string | null;
+        rwId: string | null;
         userId: string;
         status: import(".prisma/client").$Enums.StatusAlert;
         rumahId: string | null;
@@ -54,6 +61,8 @@ export declare class AlertService {
     resolveAlert(alertId: string): Promise<{
         rtId: string;
         id: string;
+        kelurahanId: string | null;
+        rwId: string | null;
         userId: string;
         status: import(".prisma/client").$Enums.StatusAlert;
         rumahId: string | null;

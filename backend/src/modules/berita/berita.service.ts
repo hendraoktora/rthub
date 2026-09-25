@@ -11,14 +11,30 @@ export class BeritaService {
   ) {}
 
   async getFeed(user: any) {
-    const rtId = user?.rtId;
-    const rwId = user?.rwId || user?.rt?.rwId;
-    const kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: { rt: { include: { rw: true } } },
+    });
+    const rtId = dbUser?.rtId || user?.rtId;
+    const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+    const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
 
     const orConditions: any[] = [];
-    if (rtId) orConditions.push({ scope: ScopeWilayah.RT, rtId });
-    if (rwId) orConditions.push({ scope: ScopeWilayah.RW, rwId });
-    if (kelurahanId) orConditions.push({ scope: ScopeWilayah.KELURAHAN, kelurahanId });
+    if (rtId && rwId && kelurahanId) {
+      orConditions.push({ scope: ScopeWilayah.RT, rtId, rwId, kelurahanId });
+    } else if (rtId) {
+      orConditions.push({ scope: ScopeWilayah.RT, rtId });
+    }
+
+    if (rwId && kelurahanId) {
+      orConditions.push({ scope: ScopeWilayah.RW, rwId, kelurahanId });
+    } else if (rwId) {
+      orConditions.push({ scope: ScopeWilayah.RW, rwId });
+    }
+
+    if (kelurahanId) {
+      orConditions.push({ scope: ScopeWilayah.KELURAHAN, kelurahanId });
+    }
 
     if (orConditions.length === 0) {
       return [];
@@ -34,15 +50,23 @@ export class BeritaService {
   }
 
   async createBerita(user: any, data: { judul: string; konten: string; scope: ScopeWilayah; coverUrl?: string; isPinned?: boolean }) {
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: { rt: { include: { rw: true } } },
+    });
+    const rtId = dbUser?.rtId || user?.rtId;
+    const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+    const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
+
     const berita = await this.prisma.berita.create({
       data: {
         authorId: user.id,
         judul: data.judul,
         konten: data.konten,
         scope: data.scope,
-        rtId: data.scope === ScopeWilayah.RT ? user.rtId : null,
-        rwId: data.scope === ScopeWilayah.RW ? user.rwId : null,
-        kelurahanId: data.scope === ScopeWilayah.KELURAHAN ? user.kelurahanId : null,
+        rtId: rtId || null,
+        rwId: rwId || null,
+        kelurahanId: kelurahanId || null,
         coverUrl: data.coverUrl || null,
         isPinned: data.isPinned ?? false,
       },

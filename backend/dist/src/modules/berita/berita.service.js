@@ -20,16 +20,29 @@ let BeritaService = class BeritaService {
         this.notificationService = notificationService;
     }
     async getFeed(user) {
-        const rtId = user?.rtId;
-        const rwId = user?.rwId || user?.rt?.rwId;
-        const kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
+        const dbUser = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            include: { rt: { include: { rw: true } } },
+        });
+        const rtId = dbUser?.rtId || user?.rtId;
+        const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+        const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
         const orConditions = [];
-        if (rtId)
+        if (rtId && rwId && kelurahanId) {
+            orConditions.push({ scope: client_1.ScopeWilayah.RT, rtId, rwId, kelurahanId });
+        }
+        else if (rtId) {
             orConditions.push({ scope: client_1.ScopeWilayah.RT, rtId });
-        if (rwId)
+        }
+        if (rwId && kelurahanId) {
+            orConditions.push({ scope: client_1.ScopeWilayah.RW, rwId, kelurahanId });
+        }
+        else if (rwId) {
             orConditions.push({ scope: client_1.ScopeWilayah.RW, rwId });
-        if (kelurahanId)
+        }
+        if (kelurahanId) {
             orConditions.push({ scope: client_1.ScopeWilayah.KELURAHAN, kelurahanId });
+        }
         if (orConditions.length === 0) {
             return [];
         }
@@ -42,15 +55,22 @@ let BeritaService = class BeritaService {
         });
     }
     async createBerita(user, data) {
+        const dbUser = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            include: { rt: { include: { rw: true } } },
+        });
+        const rtId = dbUser?.rtId || user?.rtId;
+        const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+        const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
         const berita = await this.prisma.berita.create({
             data: {
                 authorId: user.id,
                 judul: data.judul,
                 konten: data.konten,
                 scope: data.scope,
-                rtId: data.scope === client_1.ScopeWilayah.RT ? user.rtId : null,
-                rwId: data.scope === client_1.ScopeWilayah.RW ? user.rwId : null,
-                kelurahanId: data.scope === client_1.ScopeWilayah.KELURAHAN ? user.kelurahanId : null,
+                rtId: rtId || null,
+                rwId: rwId || null,
+                kelurahanId: kelurahanId || null,
                 coverUrl: data.coverUrl || null,
                 isPinned: data.isPinned ?? false,
             },

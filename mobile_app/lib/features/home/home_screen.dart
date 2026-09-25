@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/notification_service.dart';
@@ -188,10 +189,43 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _handleEmergencyAlert(Map<String, dynamic> data) {
+  Future<void> _handleEmergencyAlert(Map<String, dynamic> data) async {
     if (!mounted || NotificationService.isSelfTriggered(data)) return;
+
+    // Filter proximity broadcast lintas RT (radius 500 meter)
+    if (data['isProximityBroadcast'] == 'true') {
+      final alertLat = double.tryParse('${data['latitude'] ?? ''}');
+      final alertLng = double.tryParse('${data['longitude'] ?? ''}');
+      final myRtId = _data.user?['rtId']?.toString();
+      final alertRtId = data['rtId']?.toString();
+
+      final isSameRt = myRtId != null && alertRtId != null && myRtId == alertRtId;
+
+      if (!isSameRt && alertLat != null && alertLng != null) {
+        try {
+          final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium,
+            timeLimit: const Duration(seconds: 4),
+          );
+          final dist = Geolocator.distanceBetween(
+            pos.latitude,
+            pos.longitude,
+            alertLat,
+            alertLng,
+          );
+          // Abaikan jika penerima berada di luar radius 500 meter
+          if (dist > 500) return;
+        } catch (_) {
+          // Abaikan jika GPS pengguna tidak aktif untuk siaran broadcast umum
+          return;
+        }
+      }
+    }
+
     _refresh();
-    showEmergencyAlertDialog(context, data);
+    if (mounted) {
+      showEmergencyAlertDialog(context, data);
+    }
   }
 
   void _openGempa(Map<String, dynamic> data) {
@@ -747,42 +781,37 @@ class _HomeScreenState extends State<HomeScreen> {
           final userRtId = (user?['rtId'] ?? user?['rt']?['id'])?.toString();
           final userRwId = (user?['rwId'] ?? user?['rt']?['rwId'] ?? user?['rw']?['id'])?.toString();
           final userKelId = (user?['kelurahanId'] ?? user?['rt']?['rw']?['kelurahanId'] ?? user?['kelurahan']?['id'])?.toString();
-
           final userRtNomor = (user?['rt']?['nomor'])?.toString().trim();
           final userRwNomor = (user?['rw']?['nomor'] ?? user?['rt']?['rw']?['nomor'])?.toString().trim();
+          final userKelNama = (user?['kelurahan']?['nama'] ?? user?['rt']?['rw']?['kelurahan']?['nama'])?.toString().trim().toLowerCase();
 
-          // Area IDs and numbers from Item
+          // Area IDs, numbers, and names from Item
           final itemRtId = (item['rtId'] ?? item['rt']?['id'] ?? item['seller']?['rtId'])?.toString();
           final itemRwId = (item['rwId'] ?? item['rw']?['id'] ?? item['rt']?['rwId'] ?? item['rt']?['rw']?['id'] ?? item['seller']?['rwId'])?.toString();
           final itemKelId = (item['kelurahanId'] ?? item['kelurahan']?['id'] ?? item['rt']?['rw']?['kelurahanId'] ?? item['seller']?['kelurahanId'])?.toString();
-
           final itemRtNomor = (item['rt']?['nomor'])?.toString().trim();
           final itemRwNomor = (item['rw']?['nomor'] ?? item['rt']?['rw']?['nomor'])?.toString().trim();
+          final itemKelNama = (item['kelurahan']?['nama'] ?? item['rt']?['rw']?['kelurahan']?['nama'])?.toString().trim().toLowerCase();
 
-          // 2. Kelurahan Scope: Visible to everyone in the same Kelurahan
+          final sameKel = (itemKelId != null && userKelId != null && itemKelId == userKelId) ||
+              (itemKelNama != null && userKelNama != null && itemKelNama == userKelNama);
+          final sameRw = (itemRwId != null && userRwId != null && itemRwId == userRwId) ||
+              (itemRwNomor != null && userRwNomor != null && itemRwNomor == userRwNomor);
+          final sameRt = (itemRtId != null && userRtId != null && itemRtId == userRtId) ||
+              (itemRtNomor != null && userRtNomor != null && itemRtNomor == userRtNomor);
+
+          // 2. Kelurahan Scope: Visible to everyone whose Kelurahan matches
           if (rawScope.contains('KELURAHAN') || rawScope.contains('LURAH')) {
-            if (itemKelId != null && userKelId != null) {
-              return itemKelId == userKelId;
-            }
-            return true;
+            return sameKel;
           }
 
-          // 3. RW Scope: Visible to everyone in the same RW
+          // 3. RW Scope: Visible to everyone whose RW AND Kelurahan match
           if (rawScope.contains('RW')) {
-            if (itemRwId != null && userRwId != null && itemRwId == userRwId) return true;
-            if (itemRwNomor != null && userRwNomor != null && itemRwNomor == userRwNomor) return true;
-            return itemRwId == null || userRwId == null;
+            return sameRw && (sameKel || itemKelId == null || userKelId == null);
           }
 
-          // 4. RT Scope: Visible to everyone in the same RT & RW
-          final sameRtId = itemRtId != null && userRtId != null && itemRtId == userRtId;
-          final sameRtNomor = itemRtNomor != null && userRtNomor != null && itemRtNomor == userRtNomor;
-          final sameRwNomor = itemRwNomor == null || userRwNomor == null || itemRwNomor == userRwNomor;
-
-          if (sameRtId) return true;
-          if (sameRtNomor && sameRwNomor) return true;
-
-          return itemRtId == null || userRtId == null;
+          // 4. RT Scope: Visible ONLY to everyone whose RT, RW, and Kelurahan match
+          return sameRt && sameRw && (sameKel || itemKelId == null || userKelId == null);
         })
         .toList();
   }

@@ -16,14 +16,16 @@ export class LaporanService {
     tipeLaporan?: string;
     dataSurat?: any;
   }) {
-    let rtId = user?.rtId;
-    if (!rtId) {
-      const defaultRt = await this.prisma.rT.findFirst();
-      rtId = defaultRt?.id;
-    }
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: { rt: { include: { rw: true } } },
+    });
+    const rtId = dbUser?.rtId || user?.rtId;
+    const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+    const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
 
     if (!rtId) {
-      throw new BadRequestException('Unit RT tidak ditemukan.');
+      throw new BadRequestException('Akun Anda belum terdaftar dalam unit RT manapun.');
     }
 
     const dataSuratString = data.dataSurat
@@ -36,6 +38,8 @@ export class LaporanService {
       data: {
         userId: user.id,
         rtId: rtId,
+        rwId: rwId || null,
+        kelurahanId: kelurahanId || null,
         judul: data.judul,
         deskripsi: data.deskripsi || '',
         kategori: data.kategori || 'FASILITAS_UMUM',

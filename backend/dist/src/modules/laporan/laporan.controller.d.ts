@@ -25,6 +25,8 @@ export declare class LaporanController {
     } & {
         rtId: string;
         id: string;
+        kelurahanId: string | null;
+        rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
@@ -64,6 +66,8 @@ export declare class LaporanController {
     } & {
         rtId: string;
         id: string;
+        kelurahanId: string | null;
+        rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
@@ -108,6 +112,8 @@ export declare class LaporanController {
     } & {
         rtId: string;
         id: string;
+        kelurahanId: string | null;
+        rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
         userId: string;

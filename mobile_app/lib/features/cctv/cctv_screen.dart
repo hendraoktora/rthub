@@ -29,7 +29,7 @@ class _CctvScreenState extends State<CctvScreen> {
       list = await ApiService.getCctvList();
     } catch (_) {}
 
-    if (list.isEmpty) {
+    if (list.isEmpty && user == null) {
       list = [
         {
           'id': 'cctv-1',

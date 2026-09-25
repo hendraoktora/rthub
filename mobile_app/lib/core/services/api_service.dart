@@ -885,17 +885,21 @@ class ApiService {
   }
 
   static Future<List<dynamic>> getLaporanList() async {
-    List<dynamic> liveList = [];
-    try {
-      final token = await getToken();
-      final response = await _getWithFallback('/laporan', token: token);
-      if (response.statusCode == 200) {
-        final list = jsonDecode(response.body);
-        if (list is List && list.isNotEmpty) {
-          liveList = list;
+    final token = await getToken();
+    if (token != null) {
+      try {
+        final response = await _getWithFallback('/laporan', token: token);
+        if (response.statusCode == 200) {
+          final list = jsonDecode(response.body);
+          if (list is List) {
+            // Live server list obtained! Clear old local custom cache to avoid duplicates
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('local_custom_laporan');
+            return list;
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     List<dynamic> localCustomList = [];
     try {
@@ -906,19 +910,8 @@ class ApiService {
       }
     } catch (_) {}
 
-    final token = await getToken();
-    if (token != null || liveList.isNotEmpty) {
-      final combined = [...localCustomList, ...liveList];
-      final seenIds = <String>{};
-      final uniqueList = <dynamic>[];
-      for (final item in combined) {
-        final id = (item['id'] ?? '').toString();
-        if (id.isNotEmpty && !seenIds.contains(id)) {
-          seenIds.add(id);
-          uniqueList.add(item);
-        }
-      }
-      return uniqueList;
+    if (token != null) {
+      return localCustomList;
     }
 
     final defaultLaporan = [
@@ -993,6 +986,29 @@ class ApiService {
   static Future<Map<String, dynamic>> createLaporan(
     Map<String, dynamic> data,
   ) async {
+    final token = await getToken();
+    final configuredUrl = await getBaseUrl();
+
+    // Prioritaskan kirim langsung ke server jika user sedang login
+    if (token != null) {
+      try {
+        final res = await http
+            .post(
+              Uri.parse('$configuredUrl/laporan'),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $token',
+              },
+              body: jsonEncode(data),
+            )
+            .timeout(const Duration(seconds: 10));
+
+        if (res.statusCode == 200 || res.statusCode == 201) {
+          return jsonDecode(res.body);
+        }
+      } catch (_) {}
+    }
+
     final currentUser = await getCurrentUser();
     final localItem = {
       ...data,
@@ -1019,25 +1035,6 @@ class ApiService {
       List<dynamic> list = savedStr != null ? jsonDecode(savedStr) : [];
       list.insert(0, localItem);
       await prefs.setString('local_custom_laporan', jsonEncode(list));
-    } catch (_) {}
-
-    try {
-      final token = await getToken();
-      final configuredUrl = await getBaseUrl();
-      final res = await http
-          .post(
-            Uri.parse('$configuredUrl/laporan'),
-            headers: {
-              'Content-Type': 'application/json',
-              if (token != null) 'Authorization': 'Bearer $token',
-            },
-            body: jsonEncode(data),
-          )
-          .timeout(const Duration(seconds: 5));
-
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        return jsonDecode(res.body);
-      }
     } catch (_) {}
 
     return localItem;

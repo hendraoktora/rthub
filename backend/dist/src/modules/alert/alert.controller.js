@@ -25,8 +25,8 @@ let AlertController = class AlertController {
     async triggerPanic(user, body) {
         return this.alertService.triggerPanic(user, body);
     }
-    async getActive(user) {
-        return this.alertService.getActiveAlerts(user.rtId);
+    async getActive(user, lat, lng) {
+        return this.alertService.getActiveAlerts(user, lat ? parseFloat(lat) : undefined, lng ? parseFloat(lng) : undefined);
     }
     async resolve(id) {
         return this.alertService.resolveAlert(id);
@@ -44,10 +44,12 @@ __decorate([
 ], AlertController.prototype, "triggerPanic", null);
 __decorate([
     (0, common_1.Get)('active'),
-    (0, swagger_1.ApiOperation)({ summary: 'Mendapatkan daftar alarm darurat yang sedang aktif di RT' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Mendapatkan daftar alarm darurat aktif di RT atau radius 500m' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('lat')),
+    __param(2, (0, common_1.Query)('lng')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], AlertController.prototype, "getActive", null);
 __decorate([

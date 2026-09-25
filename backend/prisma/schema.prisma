@@ -359,6 +359,7 @@ model LapakProduk {
   isPromoted    Boolean   @default(false)
   promotedBadge String?   @db.VarChar(50)
   paketIklan    String?   @db.VarChar(50)
+  promotedAt    DateTime?
   promotedUntil DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -420,6 +421,8 @@ model AlertPanic {
   id          String      @id @default(uuid())
   userId      String
   rtId        String
+  rwId        String?
+  kelurahanId String?
   rumahId     String?
   latitude    Float?
   longitude   Float?
@@ -452,6 +455,7 @@ model CCTV {
   id          String   @id @default(uuid())
   rtId        String?
   rwId        String?
+  kelurahanId String?
   namaTitik   String   @db.VarChar(100) // "Gerbang Masuk RT 03"
   streamUrl   String   @db.VarChar(255) // RTSP / HLS / Embed link
   thumbnailUrl String? @db.VarChar(255)
@@ -466,6 +470,8 @@ model LaporanWarga {
   id          String        @id @default(uuid())
   userId      String
   rtId        String
+  rwId        String?
+  kelurahanId String?
   judul       String        @db.VarChar(150)
   deskripsi   String        @db.Text
   kategori    String        @db.VarChar(50) // KEAMANAN, KEBERSIHAN, FASILITAS, DLL

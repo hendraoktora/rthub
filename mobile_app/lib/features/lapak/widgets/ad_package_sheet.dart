@@ -9,9 +9,13 @@ class AdPackageSheet extends StatefulWidget {
   const AdPackageSheet({
     super.key,
     required this.productTitle,
+    this.currentExpiry,
+    this.sisaDurasiHari,
     required this.onActivate,
   });
   final String productTitle;
+  final DateTime? currentExpiry;
+  final int? sisaDurasiHari;
   final Future<void> Function(AdPackage package) onActivate;
   @override
   State<AdPackageSheet> createState() => _AdPackageSheetState();
@@ -21,6 +25,10 @@ class _AdPackageSheetState extends State<AdPackageSheet> {
   AdPackage _selected = AdPackage.catalogue.first;
   bool _busy = false;
   String? _error;
+
+  bool get _isExtending =>
+      widget.currentExpiry != null &&
+      widget.currentExpiry!.isAfter(DateTime.now());
 
   Future<void> _activate() async {
     setState(() {
@@ -95,6 +103,34 @@ class _AdPackageSheetState extends State<AdPackageSheet> {
                 height: 1.5,
               ),
             ),
+            if (_isExtending) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  border: Border.all(color: const Color(0xFFA7F3D0)),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.av_timer_rounded, color: Color(0xFF059669), size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Iklan aktif tersisa ${widget.sisaDurasiHari ?? 0} hari. Durasi paket pilihan (+${_selected.days} hari) akan otomatis ditambahkan ke sisa hari saat ini.',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF065F46),
+                          fontWeight: FontWeight.w600,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             _ReachPreview(package: _selected),
             const SizedBox(height: 22),
@@ -189,7 +225,11 @@ class _AdPackageSheetState extends State<AdPackageSheet> {
                       )
                     : const Icon(Icons.bolt_rounded),
                 label: Text(
-                  _busy ? 'Memproses…' : 'Aktifkan iklan ${_selected.label}',
+                  _busy
+                      ? 'Memproses…'
+                      : (_isExtending
+                          ? 'Perpanjang Durasi (+${_selected.days} Hari) - ${_selected.label}'
+                          : 'Aktifkan Iklan ${_selected.label} (${_selected.days} Hari)'),
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),

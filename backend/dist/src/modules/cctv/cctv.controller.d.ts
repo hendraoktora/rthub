@@ -6,6 +6,7 @@ export declare class CctvController {
         rtId: string | null;
         id: string;
         isActive: boolean;
+        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         namaTitik: string;
@@ -20,6 +21,7 @@ export declare class CctvController {
         rtId: string | null;
         id: string;
         isActive: boolean;
+        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         namaTitik: string;

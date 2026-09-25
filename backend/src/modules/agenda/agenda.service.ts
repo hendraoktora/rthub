@@ -7,10 +7,30 @@ export class AgendaService {
   constructor(private prisma: PrismaService) {}
 
   async getAgenda(user: any) {
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: { rt: { include: { rw: true } } },
+    });
+    const rtId = dbUser?.rtId || user?.rtId;
+    const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+    const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
+
     const orConditions: any[] = [];
-    if (user?.rtId) orConditions.push({ scope: ScopeWilayah.RT, rtId: user.rtId });
-    if (user?.rwId) orConditions.push({ scope: ScopeWilayah.RW, rwId: user.rwId });
-    if (user?.kelurahanId) orConditions.push({ scope: ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId });
+    if (rtId && rwId && kelurahanId) {
+      orConditions.push({ scope: ScopeWilayah.RT, rtId, rwId, kelurahanId });
+    } else if (rtId) {
+      orConditions.push({ scope: ScopeWilayah.RT, rtId });
+    }
+
+    if (rwId && kelurahanId) {
+      orConditions.push({ scope: ScopeWilayah.RW, rwId, kelurahanId });
+    } else if (rwId) {
+      orConditions.push({ scope: ScopeWilayah.RW, rwId });
+    }
+
+    if (kelurahanId) {
+      orConditions.push({ scope: ScopeWilayah.KELURAHAN, kelurahanId });
+    }
 
     if (orConditions.length === 0) {
       return [];
@@ -31,6 +51,14 @@ export class AgendaService {
     lokasi?: string;
     scope?: ScopeWilayah;
   }) {
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: { rt: { include: { rw: true } } },
+    });
+    const rtId = dbUser?.rtId || user?.rtId;
+    const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+    const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
+
     const scope = data.scope || ScopeWilayah.RT;
     return this.prisma.agendaKegiatan.create({
       data: {
@@ -41,9 +69,9 @@ export class AgendaService {
         tanggalSelesai: data.tanggalSelesai ? new Date(data.tanggalSelesai) : null,
         lokasi: data.lokasi || null,
         scope,
-        rtId: scope === ScopeWilayah.RT ? user.rtId : null,
-        rwId: scope === ScopeWilayah.RW ? user.rwId : null,
-        kelurahanId: scope === ScopeWilayah.KELURAHAN ? user.kelurahanId : null,
+        rtId: rtId || null,
+        rwId: rwId || null,
+        kelurahanId: kelurahanId || null,
       },
     });
   }

@@ -101,6 +101,8 @@ class _LapakScreenState extends State<LapakScreen> {
       ),
       builder: (_) => AdPackageSheet(
         productTitle: product.title,
+        currentExpiry: product.promotedUntil,
+        sisaDurasiHari: product.sisaDurasiHari,
         onActivate: (package) => widget.repository.promote(product.id, package),
       ),
     );

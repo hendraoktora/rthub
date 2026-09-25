@@ -50,6 +50,7 @@ export declare class LapakService {
         isPromoted: boolean;
         promotedBadge: string | null;
         paketIklan: string | null;
+        promotedAt: Date | null;
         promotedUntil: Date | null;
     }>;
     boostProduk(id: string, user: any, data: {
@@ -60,6 +61,8 @@ export declare class LapakService {
         paymentMethod?: string;
         promotedUntil?: string;
     }): Promise<{
+        sisaDurasiHari: number;
+        sisaDurasiJam: number;
         rt: {
             nomor: string;
         };
@@ -71,7 +74,6 @@ export declare class LapakService {
             phone: string;
             id: string;
         };
-    } & {
         rtId: string;
         id: string;
         isActive: boolean;
@@ -89,6 +91,7 @@ export declare class LapakService {
         isPromoted: boolean;
         promotedBadge: string | null;
         paketIklan: string | null;
+        promotedAt: Date | null;
         promotedUntil: Date | null;
     }>;
     deleteProduk(id: string, user: any): Promise<{
@@ -109,6 +112,7 @@ export declare class LapakService {
         isPromoted: boolean;
         promotedBadge: string | null;
         paketIklan: string | null;
+        promotedAt: Date | null;
         promotedUntil: Date | null;
     }>;
 }

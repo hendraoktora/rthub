@@ -18,13 +18,29 @@ let AgendaService = class AgendaService {
         this.prisma = prisma;
     }
     async getAgenda(user) {
+        const dbUser = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            include: { rt: { include: { rw: true } } },
+        });
+        const rtId = dbUser?.rtId || user?.rtId;
+        const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+        const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
         const orConditions = [];
-        if (user?.rtId)
-            orConditions.push({ scope: client_1.ScopeWilayah.RT, rtId: user.rtId });
-        if (user?.rwId)
-            orConditions.push({ scope: client_1.ScopeWilayah.RW, rwId: user.rwId });
-        if (user?.kelurahanId)
-            orConditions.push({ scope: client_1.ScopeWilayah.KELURAHAN, kelurahanId: user.kelurahanId });
+        if (rtId && rwId && kelurahanId) {
+            orConditions.push({ scope: client_1.ScopeWilayah.RT, rtId, rwId, kelurahanId });
+        }
+        else if (rtId) {
+            orConditions.push({ scope: client_1.ScopeWilayah.RT, rtId });
+        }
+        if (rwId && kelurahanId) {
+            orConditions.push({ scope: client_1.ScopeWilayah.RW, rwId, kelurahanId });
+        }
+        else if (rwId) {
+            orConditions.push({ scope: client_1.ScopeWilayah.RW, rwId });
+        }
+        if (kelurahanId) {
+            orConditions.push({ scope: client_1.ScopeWilayah.KELURAHAN, kelurahanId });
+        }
         if (orConditions.length === 0) {
             return [];
         }
@@ -34,6 +50,13 @@ let AgendaService = class AgendaService {
         });
     }
     async createAgenda(user, data) {
+        const dbUser = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            include: { rt: { include: { rw: true } } },
+        });
+        const rtId = dbUser?.rtId || user?.rtId;
+        const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+        const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
         const scope = data.scope || client_1.ScopeWilayah.RT;
         return this.prisma.agendaKegiatan.create({
             data: {
@@ -44,9 +67,9 @@ let AgendaService = class AgendaService {
                 tanggalSelesai: data.tanggalSelesai ? new Date(data.tanggalSelesai) : null,
                 lokasi: data.lokasi || null,
                 scope,
-                rtId: scope === client_1.ScopeWilayah.RT ? user.rtId : null,
-                rwId: scope === client_1.ScopeWilayah.RW ? user.rwId : null,
-                kelurahanId: scope === client_1.ScopeWilayah.KELURAHAN ? user.kelurahanId : null,
+                rtId: rtId || null,
+                rwId: rwId || null,
+                kelurahanId: kelurahanId || null,
             },
         });
     }

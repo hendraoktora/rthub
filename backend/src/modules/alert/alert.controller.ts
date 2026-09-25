@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AlertService } from './alert.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -21,9 +21,17 @@ export class AlertController {
   }
 
   @Get('active')
-  @ApiOperation({ summary: 'Mendapatkan daftar alarm darurat yang sedang aktif di RT' })
-  async getActive(@CurrentUser() user: any) {
-    return this.alertService.getActiveAlerts(user.rtId);
+  @ApiOperation({ summary: 'Mendapatkan daftar alarm darurat aktif di RT atau radius 500m' })
+  async getActive(
+    @CurrentUser() user: any,
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
+  ) {
+    return this.alertService.getActiveAlerts(
+      user,
+      lat ? parseFloat(lat) : undefined,
+      lng ? parseFloat(lng) : undefined,
+    );
   }
 
   @Patch(':id/resolve')

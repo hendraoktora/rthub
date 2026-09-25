@@ -173,6 +173,7 @@ class _LaporScreenState extends State<LaporScreen> {
     String kategori = 'FASILITAS_UMUM';
     bool isAnonymous = false;
     String? fotoBase64;
+    bool isSubmitting = false;
 
     showModalBottomSheet(
       context: context,
@@ -686,69 +687,84 @@ class _LaporScreenState extends State<LaporScreen> {
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      final j = judulController.text.trim();
-                      final desc = deskripsiController.text.trim();
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            final j = judulController.text.trim();
+                            final desc = deskripsiController.text.trim();
 
-                      if (j.isEmpty || desc.isEmpty) {
-                        messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text('Judul dan rincian wajib diisi!'),
-                            backgroundColor: AppTheme.alertRed,
-                          ),
-                        );
-                        return;
-                      }
+                            if (j.isEmpty || desc.isEmpty) {
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Judul dan rincian wajib diisi!'),
+                                  backgroundColor: AppTheme.alertRed,
+                                ),
+                              );
+                              return;
+                            }
 
-                      Navigator.pop(modalContext);
+                            setModalState(() {
+                              isSubmitting = true;
+                            });
 
-                      final dataSuratMap = {
-                        'namaAlmarhum': namaAlmController.text.trim(),
-                        'nikAlmarhum': nikAlmController.text.trim(),
-                        'tglMeninggal': tglMeninggalController.text.trim(),
-                        'tempatMeninggal': tempatMeninggalController.text
-                            .trim(),
-                        'hubunganPelapor': hubunganController.text.trim(),
-                        'pekerjaan': pekerjaanController.text.trim(),
-                        'penghasilan': penghasilanController.text.trim(),
-                        'keperluan': keperluanController.text.trim(),
-                        'alamatDomisili': alamatDomisiliController.text.trim(),
-                        'lamaTinggal': lamaTinggalController.text.trim(),
-                      };
+                            Navigator.pop(modalContext);
 
-                      try {
-                        await ApiService.createLaporan({
-                          'judul': j,
-                          'deskripsi': desc,
-                          'kategori': kategori,
-                          'tujuan': tujuan,
-                          'tipeLaporan': tipeLaporan,
-                          'isAnonymous': isAnonymous,
-                          'fotoUrl': fotoBase64,
-                          'dataSurat': dataSuratMap,
-                        });
-                        messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              '✅ Permohonan / Laporan berhasil dikirimkan secara privat!',
+                            final dataSuratMap = {
+                              'namaAlmarhum': namaAlmController.text.trim(),
+                              'nikAlmarhum': nikAlmController.text.trim(),
+                              'tglMeninggal': tglMeninggalController.text.trim(),
+                              'tempatMeninggal': tempatMeninggalController.text
+                                  .trim(),
+                              'hubunganPelapor': hubunganController.text.trim(),
+                              'pekerjaan': pekerjaanController.text.trim(),
+                              'penghasilan': penghasilanController.text.trim(),
+                              'keperluan': keperluanController.text.trim(),
+                              'alamatDomisili': alamatDomisiliController.text.trim(),
+                              'lamaTinggal': lamaTinggalController.text.trim(),
+                            };
+
+                            try {
+                              await ApiService.createLaporan({
+                                'judul': j,
+                                'deskripsi': desc,
+                                'kategori': kategori,
+                                'tujuan': tujuan,
+                                'tipeLaporan': tipeLaporan,
+                                'isAnonymous': isAnonymous,
+                                'fotoUrl': fotoBase64,
+                                'dataSurat': dataSuratMap,
+                              });
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    '✅ Permohonan / Laporan berhasil dikirimkan secara privat!',
+                                  ),
+                                  backgroundColor: AppTheme.successGreen,
+                                ),
+                              );
+                              _loadLaporanFromDb();
+                            } catch (e) {
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text('⚠️ Gagal mengirim: $e'),
+                                  backgroundColor: AppTheme.alertRed,
+                                ),
+                              );
+                            }
+                          },
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
                             ),
-                            backgroundColor: AppTheme.successGreen,
+                          )
+                        : const Text(
+                            'Kirim Permohonan Sekarang',
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                        );
-                        _loadLaporanFromDb();
-                      } catch (e) {
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text('⚠️ Gagal mengirim: $e'),
-                            backgroundColor: AppTheme.alertRed,
-                          ),
-                        );
-                      }
-                    },
-                    child: const Text(
-                      'Kirim Permohonan Sekarang',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
                   ),
                 ),
               ],

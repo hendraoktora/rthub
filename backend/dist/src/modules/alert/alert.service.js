@@ -20,10 +20,19 @@ let AlertService = class AlertService {
         this.notificationService = notificationService;
     }
     async triggerPanic(user, data) {
+        const dbUser = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            include: { rt: { include: { rw: true } } },
+        });
+        const rtId = dbUser?.rtId || user?.rtId;
+        const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+        const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
         const alert = await this.prisma.alertPanic.create({
             data: {
                 userId: user.id,
-                rtId: user.rtId,
+                rtId: rtId,
+                rwId: rwId || null,
+                kelurahanId: kelurahanId || null,
                 latitude: data.latitude || null,
                 longitude: data.longitude || null,
                 catatan: data.catatan || 'Tombol Panik Ditekan oleh Warga!',
@@ -58,20 +67,59 @@ let AlertService = class AlertService {
                 timestamp: new Date().toISOString(),
             };
             await this.notificationService.sendToTopic(topic, '🚨 PERINGATAN DARURAT (SOS)!', `${nama} (${noRumah}) butuh bantuan: "${catatan}"`, payloadData);
+            if (alert.latitude && alert.longitude) {
+                await this.notificationService.sendToTopic('rthub_broadcast', '🚨 PERINGATAN DARURAT (SOS) DI SEKITAR ANDA!', `Ada bahaya dalam radius 500m di sekitar lokasi Anda: ${nama} (${noRumah})`, {
+                    ...payloadData,
+                    isProximityBroadcast: 'true',
+                });
+            }
         }
         catch (_) { }
         return {
-            message: '🚨 ALARM DARURAT AKTIF! Notifikasi telah dikirim ke Pos Keamanan & Pengurus RT.',
+            message: '🚨 ALARM DARURAT AKTIF! Notifikasi telah dikirim ke seluruh warga RT & lingkungan radius 500m.',
             alert,
         };
     }
-    async getActiveAlerts(rtId) {
-        return this.prisma.alertPanic.findMany({
-            where: { rtId, status: client_1.StatusAlert.ACTIVE },
+    async getActiveAlerts(user, userLat, userLng) {
+        const dbUser = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            include: { rt: { include: { rw: true } } },
+        });
+        const rtId = dbUser?.rtId || user?.rtId;
+        const rwId = dbUser?.rwId || dbUser?.rt?.rwId || user?.rwId;
+        const kelurahanId = dbUser?.kelurahanId || dbUser?.rt?.rw?.kelurahanId || user?.kelurahanId;
+        const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
+            const R = 6371e3;
+            const φ1 = (lat1 * Math.PI) / 180;
+            const φ2 = (lat2 * Math.PI) / 180;
+            const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+            const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        };
+        const activeAlerts = await this.prisma.alertPanic.findMany({
+            where: { status: client_1.StatusAlert.ACTIVE },
             include: {
                 user: { select: { profile: { select: { namaLengkap: true, noRumah: true } }, phone: true } },
+                rt: { select: { nomor: true } },
             },
             orderBy: { triggeredAt: 'desc' },
+        });
+        return activeAlerts.filter((alert) => {
+            const isSameArea = Boolean(rtId &&
+                alert.rtId === rtId &&
+                (!rwId || !alert.rwId || alert.rwId === rwId) &&
+                (!kelurahanId || !alert.kelurahanId || alert.kelurahanId === kelurahanId));
+            let isWithin500m = false;
+            if (userLat != null && userLng != null && alert.latitude != null && alert.longitude != null) {
+                const dist = getDistanceMeters(userLat, userLng, alert.latitude, alert.longitude);
+                if (dist <= 500) {
+                    isWithin500m = true;
+                }
+            }
+            return isSameArea || isWithin500m;
         });
     }
     async resolveAlert(alertId) {

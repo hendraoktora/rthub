@@ -23,13 +23,25 @@ class LapakProduct {
       rt = '${json['rt']?['nomor'] ?? ''}',
       images = parseImages(json['fotoUrl']),
       isSponsored = _activePromotion(json),
-      scope = '${json['paketIklan'] ?? 'RT'}';
+      scope = '${json['paketIklan'] ?? 'RT'}',
+      promotedUntil = DateTime.tryParse('${json['promotedUntil'] ?? ''}'),
+      promotedAt = DateTime.tryParse('${json['promotedAt'] ?? ''}'),
+      sisaDurasiHari = json['sisaDurasiHari'] is num
+          ? (json['sisaDurasiHari'] as num).toInt()
+          : null,
+      sisaDurasiJam = json['sisaDurasiJam'] is num
+          ? (json['sisaDurasiJam'] as num).toInt()
+          : null;
 
   final String id, title, description, category, contact;
   final String sellerId, sellerName, house, rt, scope;
   final num price;
   final List<String> images;
   final bool isSponsored;
+  final DateTime? promotedUntil;
+  final DateTime? promotedAt;
+  final int? sisaDurasiHari;
+  final int? sisaDurasiJam;
 
   bool isOwnedBy(Map<String, dynamic>? user) =>
       sellerId.isNotEmpty && user?['id']?.toString() == sellerId;

@@ -142,6 +142,44 @@ export class KasService {
     }
   ];
 
+  // Konfigurasi Tarif Fee Platform RtHub (Superadmin Configurable)
+  private static platformFeeConfig = {
+    feeTransaksiIuran: 1500,
+    feePenarikanKas: 6000,
+    feeVirtualAccount: 3000,
+    biayaAddonBulanan: 49000,
+    updatedAt: new Date().toISOString(),
+  };
+
+  getPlatformFeeConfig() {
+    return KasService.platformFeeConfig;
+  }
+
+  updatePlatformFeeConfig(data: {
+    feeTransaksiIuran?: number;
+    feePenarikanKas?: number;
+    feeVirtualAccount?: number;
+    biayaAddonBulanan?: number;
+  }) {
+    if (data.feeTransaksiIuran !== undefined && !isNaN(Number(data.feeTransaksiIuran))) {
+      KasService.platformFeeConfig.feeTransaksiIuran = Number(data.feeTransaksiIuran);
+    }
+    if (data.feePenarikanKas !== undefined && !isNaN(Number(data.feePenarikanKas))) {
+      KasService.platformFeeConfig.feePenarikanKas = Number(data.feePenarikanKas);
+    }
+    if (data.feeVirtualAccount !== undefined && !isNaN(Number(data.feeVirtualAccount))) {
+      KasService.platformFeeConfig.feeVirtualAccount = Number(data.feeVirtualAccount);
+    }
+    if (data.biayaAddonBulanan !== undefined && !isNaN(Number(data.biayaAddonBulanan))) {
+      KasService.platformFeeConfig.biayaAddonBulanan = Number(data.biayaAddonBulanan);
+    }
+    KasService.platformFeeConfig.updatedAt = new Date().toISOString();
+    return {
+      message: 'Konfigurasi tarif fee platform berhasil diperbarui.',
+      config: KasService.platformFeeConfig,
+    };
+  }
+
   // Pengajuan Penarikan Kas RT oleh Bendahara
   async ajukanPenarikanKas(rtId: string, userId: string, data: {
     bankName: string;
@@ -155,12 +193,12 @@ export class KasService {
     }
 
     const kasSummary = await this.getKasSummary(rtId);
-    const biayaAdmin = 6000;
+    const biayaAdmin = KasService.platformFeeConfig.feePenarikanKas;
     const totalDipotong = nominalTarik + biayaAdmin;
 
     if (kasSummary.saldoKas < totalDipotong) {
       throw new BadRequestException(
-        `Saldo kas RT (${kasSummary.saldoKas.toLocaleString('id-ID')}) tidak mencukupi untuk penarikan Rp ${nominalTarik.toLocaleString('id-ID')} + Biaya Layanan Rp 6.000.`
+        `Saldo kas RT (Rp ${kasSummary.saldoKas.toLocaleString('id-ID')}) tidak mencukupi untuk penarikan Rp ${nominalTarik.toLocaleString('id-ID')} + Biaya Transfer Rp ${biayaAdmin.toLocaleString('id-ID')}.`
       );
     }
 
@@ -356,8 +394,8 @@ export class KasService {
       const metode = t.transaksi[0]?.paymentMethod || 'QRIS';
       const isVa = metode.toString().startsWith('VA_');
       const pokok = Number(t.nominalPokok) || 50000;
-      const feePlatform = 1500; // Biaya layanan aplikasi Rp 1.500
-      const feeBank = isVa ? 3000 : 0;
+      const feePlatform = KasService.platformFeeConfig.feeTransaksiIuran;
+      const feeBank = isVa ? KasService.platformFeeConfig.feeVirtualAccount : 0;
       const total = pokok + feePlatform + feeBank;
 
       totalHakKasRt += pokok;

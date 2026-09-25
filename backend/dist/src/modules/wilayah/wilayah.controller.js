@@ -96,7 +96,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('rt/:rtId/warga'),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN_RT, client_1.Role.SEKRETARIS_RT, client_1.Role.SUPERADMIN),
     (0, swagger_1.ApiOperation)({ summary: 'Tambah warga baru langsung oleh Ketua RT / Sekretaris RT' }),
     __param(0, (0, common_1.Param)('rtId')),
@@ -118,6 +118,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('rt/:rtId/pengurus'),
     (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN_RT, client_1.Role.SEKRETARIS_RT, client_1.Role.SUPERADMIN),
     (0, swagger_1.ApiOperation)({ summary: 'Tambah atau ubah jabatan pengurus RT (Khusus Ketua RT & Sekretaris RT)' }),
     __param(0, (0, common_1.Param)('rtId')),
@@ -129,6 +130,7 @@ __decorate([
 __decorate([
     (0, common_1.Delete)('rt/:rtId/pengurus/:userId'),
     (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN_RT, client_1.Role.SEKRETARIS_RT, client_1.Role.SUPERADMIN),
     (0, swagger_1.ApiOperation)({ summary: 'Hapus pengurus RT (Khusus Ketua RT & Sekretaris RT)' }),
     __param(0, (0, common_1.Param)('userId')),
@@ -139,7 +141,6 @@ __decorate([
 exports.WilayahController = WilayahController = __decorate([
     (0, swagger_1.ApiTags)('Wilayah (Hierarki Kelurahan, RW, RT & Manajemen Warga & Pengurus)'),
     (0, common_1.Controller)('api/wilayah'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [wilayah_service_1.WilayahService])
 ], WilayahController);
 //# sourceMappingURL=wilayah.controller.js.map

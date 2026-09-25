@@ -202,8 +202,40 @@ export const api = {
   },
 
   async getAllRtSummary() {
-    const res = await fetch(`${API_BASE_URL}/wilayah/rt-summary-all`);
+    const token = this.getToken();
+    const res = await fetch(`${API_BASE_URL}/wilayah/rt-summary-all`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
     if (!res.ok) throw new Error('Gagal memuat ringkasan RT');
+    return res.json();
+  },
+
+  async getFeeConfig() {
+    const token = this.getToken();
+    const res = await fetch(`${API_BASE_URL}/kas/superadmin/fee-config`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) throw new Error('Gagal memuat konfigurasi fee platform');
+    return res.json();
+  },
+
+  async updateFeeConfig(data: any) {
+    const token = this.getToken();
+    const res = await fetch(`${API_BASE_URL}/kas/superadmin/fee-config`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Gagal memperbarui konfigurasi fee platform');
     return res.json();
   },
 

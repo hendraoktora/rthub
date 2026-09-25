@@ -8,7 +8,6 @@ import { Role } from '@prisma/client';
 
 @ApiTags('Wilayah (Hierarki Kelurahan, RW, RT & Manajemen Warga & Pengurus)')
 @Controller('api/wilayah')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class WilayahController {
   constructor(private readonly wilayahService: WilayahService) {}
 
@@ -46,7 +45,7 @@ export class WilayahController {
 
   @Post('rt/:rtId/warga')
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN_RT, Role.SEKRETARIS_RT, Role.SUPERADMIN)
   @ApiOperation({ summary: 'Tambah warga baru langsung oleh Ketua RT / Sekretaris RT' })
   async addWargaToRt(
@@ -76,6 +75,7 @@ export class WilayahController {
 
   @Post('rt/:rtId/pengurus')
   @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN_RT, Role.SEKRETARIS_RT, Role.SUPERADMIN)
   @ApiOperation({ summary: 'Tambah atau ubah jabatan pengurus RT (Khusus Ketua RT & Sekretaris RT)' })
   async addOrUpdatePengurus(
@@ -93,6 +93,7 @@ export class WilayahController {
 
   @Delete('rt/:rtId/pengurus/:userId')
   @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN_RT, Role.SEKRETARIS_RT, Role.SUPERADMIN)
   @ApiOperation({ summary: 'Hapus pengurus RT (Khusus Ketua RT & Sekretaris RT)' })
   async deletePengurus(@Param('userId') userId: string) {

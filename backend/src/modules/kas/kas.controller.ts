@@ -93,4 +93,25 @@ export class KasController {
   async getSuperadminUangMasuk() {
     return this.kasService.getSuperadminUangMasuk();
   }
+
+  @Get('superadmin/fee-config')
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Mendapatkan konfigurasi tarif dan fee platform RtHub' })
+  async getFeeConfig() {
+    return this.kasService.getPlatformFeeConfig();
+  }
+
+  @Post('superadmin/fee-config')
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Memperbarui konfigurasi tarif dan fee platform RtHub (Khusus Superadmin)' })
+  async updateFeeConfig(
+    @Body() body: {
+      feeTransaksiIuran?: number;
+      feePenarikanKas?: number;
+      feeVirtualAccount?: number;
+      biayaAddonBulanan?: number;
+    },
+  ) {
+    return this.kasService.updatePlatformFeeConfig(body);
+  }
 }

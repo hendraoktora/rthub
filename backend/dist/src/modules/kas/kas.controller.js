@@ -52,6 +52,12 @@ let KasController = class KasController {
     async getSuperadminUangMasuk() {
         return this.kasService.getSuperadminUangMasuk();
     }
+    async getFeeConfig() {
+        return this.kasService.getPlatformFeeConfig();
+    }
+    async updateFeeConfig(body) {
+        return this.kasService.updatePlatformFeeConfig(body);
+    }
 };
 exports.KasController = KasController;
 __decorate([
@@ -136,6 +142,23 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], KasController.prototype, "getSuperadminUangMasuk", null);
+__decorate([
+    (0, common_1.Get)('superadmin/fee-config'),
+    (0, roles_decorator_1.Roles)(client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Mendapatkan konfigurasi tarif dan fee platform RtHub' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], KasController.prototype, "getFeeConfig", null);
+__decorate([
+    (0, common_1.Post)('superadmin/fee-config'),
+    (0, roles_decorator_1.Roles)(client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Memperbarui konfigurasi tarif dan fee platform RtHub (Khusus Superadmin)' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], KasController.prototype, "updateFeeConfig", null);
 exports.KasController = KasController = __decorate([
     (0, swagger_1.ApiTags)('Kas RT (Pembukuan & Saldo Lingkungan)'),
     (0, common_1.Controller)('api/kas'),

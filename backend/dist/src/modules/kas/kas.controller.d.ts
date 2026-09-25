@@ -204,4 +204,26 @@ export declare class KasController {
             status: string;
         }[];
     }>;
+    getFeeConfig(): Promise<{
+        feeTransaksiIuran: number;
+        feePenarikanKas: number;
+        feeVirtualAccount: number;
+        biayaAddonBulanan: number;
+        updatedAt: string;
+    }>;
+    updateFeeConfig(body: {
+        feeTransaksiIuran?: number;
+        feePenarikanKas?: number;
+        feeVirtualAccount?: number;
+        biayaAddonBulanan?: number;
+    }): Promise<{
+        message: string;
+        config: {
+            feeTransaksiIuran: number;
+            feePenarikanKas: number;
+            feeVirtualAccount: number;
+            biayaAddonBulanan: number;
+            updatedAt: string;
+        };
+    }>;
 }

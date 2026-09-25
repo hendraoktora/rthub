@@ -39,6 +39,29 @@ export declare class KasService {
         buktiNotaUrl: string | null;
     }>;
     private static withdrawalRequests;
+    private static platformFeeConfig;
+    getPlatformFeeConfig(): {
+        feeTransaksiIuran: number;
+        feePenarikanKas: number;
+        feeVirtualAccount: number;
+        biayaAddonBulanan: number;
+        updatedAt: string;
+    };
+    updatePlatformFeeConfig(data: {
+        feeTransaksiIuran?: number;
+        feePenarikanKas?: number;
+        feeVirtualAccount?: number;
+        biayaAddonBulanan?: number;
+    }): {
+        message: string;
+        config: {
+            feeTransaksiIuran: number;
+            feePenarikanKas: number;
+            feeVirtualAccount: number;
+            biayaAddonBulanan: number;
+            updatedAt: string;
+        };
+    };
     ajukanPenarikanKas(rtId: string, userId: string, data: {
         bankName: string;
         nomorRekening: string;

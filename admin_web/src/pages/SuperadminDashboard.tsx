@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Users, Receipt, UserCheck, TrendingUp, Filter, RefreshCw, CheckCircle2, Phone, X, Search, MessageSquare, AlertCircle, Home, Calendar, CreditCard } from 'lucide-react';
+import { api } from '../services/api';
 
 interface RTItem {
   id: string;
@@ -39,33 +40,14 @@ export const SuperadminDashboard: React.FC = () => {
   const [wargaList, setWargaList] = useState<WargaData[]>([]);
   const [isLoadingWarga, setIsLoadingWarga] = useState(false);
 
-  const [rts, setRts] = useState<RTItem[]>([
-    {
-      id: 'cff664ca-dd41-4b82-987b-e1eb087d8274',
-      nomor: '03',
-      namaJalan: 'Jl. Melati Raya Kompleks Sukamaju Asri',
-      rwNomor: '05',
-      kelurahanNama: 'Sukamaju',
-      kota: 'Depok',
-      label: 'RT 03 / RW 05 (Sukamaju)',
-      wargaCount: 14,
-      rumahCount: 13,
-      ketua: 'Bpk. Hendra Gunawan',
-      phone: '081234567890',
-      saldoKas: 38450000,
-      createdAt: '2026-09-08T14:41:56.177Z',
-    },
-  ]);
+  const [rts, setRts] = useState<RTItem[]>([]);
 
   const fetchRts = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/api/wilayah/rt-summary-all');
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setRts(data);
-        }
+      const data = await api.getAllRtSummary();
+      if (Array.isArray(data) && data.length > 0) {
+        setRts(data);
       }
     } catch (e) {
       console.error('Failed to fetch RTs from DB:', e);
@@ -85,14 +67,8 @@ export const SuperadminDashboard: React.FC = () => {
     setIsLoadingWarga(true);
 
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3000/api/wilayah/rt/${rt.id}/warga`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.rumahList && data.rumahList.length > 0) {
+      const data = await api.getWargaList(rt.id);
+      if (data && data.rumahList && data.rumahList.length > 0) {
           const mapped: WargaData[] = data.rumahList.map((r: any, idx: number) => {
             const kk = r.kartuKeluarga;
             const tagihan = r.tagihanWarga?.[0];
@@ -114,7 +90,6 @@ export const SuperadminDashboard: React.FC = () => {
           setIsLoadingWarga(false);
           return;
         }
-      }
     } catch (e) {
       console.error('Failed to fetch warga list:', e);
     }
@@ -211,8 +186,19 @@ export const SuperadminDashboard: React.FC = () => {
       </div>
 
       {/* Overview per RT Cards (Interactive Clickable to Open Detail Modal) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {rts.map(r => (
+      {isLoading && rts.length === 0 ? (
+        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-3">
+          <RefreshCw className="animate-spin text-blue-600" size={28} />
+          <p className="text-sm font-bold text-slate-700">Menyinkronkan data seluruh wilayah RT dari server...</p>
+        </div>
+      ) : rts.length === 0 ? (
+        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
+          <Building2 className="text-slate-400 mx-auto mb-2" size={36} />
+          <p className="text-sm font-bold text-slate-700">Belum ada wilayah RT yang terdeteksi di database.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {rts.map(r => (
           <div 
             key={r.id} 
             onClick={() => openRtDetail(r)}
@@ -258,7 +244,8 @@ export const SuperadminDashboard: React.FC = () => {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Detail Modal per RT */}
       {modalRt && (

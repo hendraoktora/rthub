@@ -69,7 +69,7 @@ export class TagihanService {
       });
 
       if (!existing) {
-        const adminFee = Number(process.env.DEFAULT_ADMIN_FEE || 2000);
+        const adminFee = Number(process.env.DEFAULT_ADMIN_FEE || 1500);
         const nominalPokok = Number(master.nominalPokok);
         const totalBayar = nominalPokok + adminFee;
 
@@ -95,7 +95,7 @@ export class TagihanService {
       bulan,
       tahun,
       nominalPokok: master.nominalPokok,
-      adminFee: process.env.DEFAULT_ADMIN_FEE || 2000,
+      adminFee: process.env.DEFAULT_ADMIN_FEE || 1500,
     };
   }
 

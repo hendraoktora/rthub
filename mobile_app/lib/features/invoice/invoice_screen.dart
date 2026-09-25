@@ -308,8 +308,15 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
     final activeTagihan = _tagihanList.isNotEmpty ? _tagihanList[0] : null;
     final isPaid = activeTagihan?['status'] == 'PAID';
     final nominalPokok = activeTagihan?['nominalPokok'] != null ? double.tryParse(activeTagihan['nominalPokok'].toString()) ?? 50000 : 50000;
-    final adminFee = activeTagihan?['adminFee'] != null ? double.tryParse(activeTagihan['adminFee'].toString()) ?? 2000 : 2000;
-    final totalBayar = activeTagihan?['totalBayar'] != null ? double.tryParse(activeTagihan['totalBayar'].toString()) ?? 52000 : (nominalPokok + adminFee);
+    
+    // Fee calculations based on selected payment method
+    final isCash = _selectedPaymentMethod == 'CASH';
+    final isVa = _selectedPaymentMethod.startsWith('VA_');
+    final appFee = isCash ? 0.0 : (activeTagihan?['adminFee'] != null ? double.tryParse(activeTagihan['adminFee'].toString()) ?? 1500.0 : 1500.0);
+    final vaFee = isVa ? 3000.0 : 0.0;
+    final totalBayar = isPaid
+        ? (activeTagihan?['totalBayar'] != null ? double.tryParse(activeTagihan['totalBayar'].toString()) ?? (nominalPokok + 1500) : (nominalPokok + 1500))
+        : (nominalPokok + appFee + vaFee);
     final bulan = activeTagihan?['periodeBulan'] ?? 9;
     final tahun = activeTagihan?['periodeTahun'] ?? 2026;
 
@@ -480,9 +487,17 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
                       const Divider(height: 20, color: AppTheme.slateLight),
                       _buildPriceRow(
                         'Biaya Layanan Aplikasi',
-                        'Rp ${adminFee.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                        info: 'Biaya admin pemeliharaan platform RtHub',
+                        'Rp ${appFee.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                        info: isCash ? 'Gratis untuk pembayaran tunai langsung' : 'Biaya admin pemeliharaan platform RtHub',
                       ),
+                      if (isVa) ...[
+                        const Divider(height: 20, color: AppTheme.slateLight),
+                        _buildPriceRow(
+                          'Biaya Virtual Account (Bank)',
+                          'Rp ${vaFee.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                          info: 'Biaya transaksi switching & channel bank mitra',
+                        ),
+                      ],
                       const Divider(height: 24, thickness: 1.5, color: AppTheme.slateBorder),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -513,13 +528,33 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  _buildPaymentOption('QRIS', 'QRIS (GoPay, OVO, Dana, ShopeePay, BCA)', Icons.qr_code_2_rounded),
+                  _buildPaymentOption(
+                    'QRIS',
+                    'QRIS (GoPay, OVO, Dana, ShopeePay, BCA)',
+                    Icons.qr_code_2_rounded,
+                    subtitle: 'Bebas biaya transfer bank • Biaya aplikasi Rp 1.500',
+                  ),
                   const SizedBox(height: 10),
-                  _buildPaymentOption('VA_BCA', 'BCA Virtual Account (8800108123456)', Icons.account_balance_rounded),
+                  _buildPaymentOption(
+                    'VA_BCA',
+                    'BCA Virtual Account (8800108123456)',
+                    Icons.account_balance_rounded,
+                    subtitle: 'Biaya admin aplikasi Rp 1.500 + Bank VA Rp 3.000',
+                  ),
                   const SizedBox(height: 10),
-                  _buildPaymentOption('VA_MANDIRI', 'Mandiri Virtual Account (8900108123456)', Icons.account_balance_wallet_rounded),
+                  _buildPaymentOption(
+                    'VA_MANDIRI',
+                    'Mandiri Virtual Account (8900108123456)',
+                    Icons.account_balance_wallet_rounded,
+                    subtitle: 'Biaya admin aplikasi Rp 1.500 + Bank VA Rp 3.000',
+                  ),
                   const SizedBox(height: 10),
-                  _buildPaymentOption('CASH', 'Bayar Tunai ke Bendahara RT', Icons.payments_rounded),
+                  _buildPaymentOption(
+                    'CASH',
+                    'Bayar Tunai ke Bendahara RT',
+                    Icons.payments_rounded,
+                    subtitle: 'Setor langsung ke pengurus • Tanpa biaya admin tambahan',
+                  ),
                 ] else ...[
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -964,7 +999,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildPaymentOption(String id, String label, IconData icon) {
+  Widget _buildPaymentOption(String id, String label, IconData icon, {String? subtitle}) {
     final isSelected = _selectedPaymentMethod == id;
     return GestureDetector(
       onTap: () => setState(() => _selectedPaymentMethod = id),
@@ -983,12 +1018,27 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
             Icon(icon, color: isSelected ? AppTheme.electricBlue : AppTheme.textSecondary),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isSelected ? AppTheme.electricBlue.withValues(alpha: 0.85) : AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             if (isSelected)

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/services/api_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/utils/image_cache_helper.dart';
 import '../../core/widgets/hub_motion.dart';
@@ -1534,6 +1535,30 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
+                        if (_isPengurus) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showTarikKasModal();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF087252),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              icon: const Icon(Icons.account_balance_wallet_outlined, size: 16),
+                              label: const Text(
+                                'Tarik Kas RT (Biaya Layanan Rp 6.000)',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1705,6 +1730,256 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showTarikKasModal() {
+    final saldoNum = (_data.kas?['saldoKas'] as num?)?.toDouble() ?? 0.0;
+    final nominalController = TextEditingController();
+    final noRekController = TextEditingController();
+    final atasNamaController = TextEditingController();
+    String selectedBank = 'BCA';
+    const withdrawalFee = 6000.0; // Biaya penarikan kas RT Rp 6.000
+    bool isSubmitting = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          final nominalVal = double.tryParse(nominalController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0.0;
+          final totalDipotong = nominalVal > 0 ? (nominalVal + withdrawalFee) : 0.0;
+          final isExceed = totalDipotong > saldoNum;
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 20,
+              bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 24,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Pencairan Dana Kas RT',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () => Navigator.pop(modalCtx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE7F6EF),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Saldo Kas Tersedia:',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF087252)),
+                        ),
+                        Text(
+                          hubRupiah(saldoNum),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF087252),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Bank Tujuan Rekening RT *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.slateLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.slateBorder),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedBank,
+                        isExpanded: true,
+                        items: ['BCA', 'Mandiri', 'BRI', 'BNI', 'BSI', 'Bank DKI', 'CIMB Niaga', 'Lainnya']
+                            .map((b) => DropdownMenuItem(value: b, child: Text(b, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold))))
+                            .toList(),
+                        onChanged: (v) {
+                          if (v != null) setModalState(() => selectedBank = v);
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: noRekController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Nomor Rekening Kas RT *',
+                      hintText: 'Contoh: 8870123456',
+                      prefixIcon: Icon(Icons.credit_card_rounded),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: atasNamaController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Pemilik Rekening *',
+                      hintText: 'Contoh: Kas Paguyuban RT 03 / Hendra',
+                      prefixIcon: Icon(Icons.person_outline),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: nominalController,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setModalState(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'Nominal Pencairan *',
+                      hintText: 'Contoh: 1000000',
+                      prefixIcon: Icon(Icons.payments_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // Breakdown Biaya
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppTheme.slateBorder),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Nominal Dana Ditarik:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                            Text(hubRupiah(nominalVal), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Biaya Penarikan Platform:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                            Text(hubRupiah(withdrawalFee), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.alertRed)),
+                          ],
+                        ),
+                        const Divider(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total Saldo Kas Terpotong:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                            Text(
+                              hubRupiah(totalDipotong),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: isExceed ? AppTheme.alertRed : const Color(0xFF087252),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isExceed) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      '⚠️ Total penarikan + biaya melebihi saldo kas yang tersedia!',
+                      style: TextStyle(color: AppTheme.alertRed, fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF087252),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: (isSubmitting || nominalVal < 10000 || isExceed || noRekController.text.trim().isEmpty || atasNamaController.text.trim().isEmpty)
+                          ? null
+                          : () async {
+                              setModalState(() => isSubmitting = true);
+                              try {
+                                await ApiService.createMutasiKas({
+                                  'tipe': 'PENGELUARAN',
+                                  'kategori': 'Penarikan Kas RT',
+                                  'nominal': totalDipotong.toInt(),
+                                  'keterangan': 'Pencairan Kas RT ke $selectedBank ${noRekController.text.trim()} a/n ${atasNamaController.text.trim()} (Nominal: ${hubRupiah(nominalVal)} + Biaya Layanan: Rp 6.000)',
+                                });
+
+                                if (modalCtx.mounted) {
+                                  Navigator.pop(modalCtx);
+                                }
+                                if (mounted) {
+                                  _refresh();
+                                  showDialog(
+                                    context: context,
+                                    builder: (dlgCtx) => AlertDialog(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      title: const Row(
+                                        children: [
+                                          Icon(Icons.check_circle_rounded, color: AppTheme.successGreen, size: 26),
+                                          SizedBox(width: 8),
+                                          Text('Pencairan Diproses'),
+                                        ],
+                                      ),
+                                      content: Text(
+                                        'Pencairan dana kas sebesar ${hubRupiah(nominalVal)} ke rekening $selectedBank ${noRekController.text.trim()} berhasil diproses dan saldo kas telah disesuaikan.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(dlgCtx),
+                                          child: const Text('OK'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                setModalState(() => isSubmitting = false);
+                                if (modalCtx.mounted) {
+                                  ScaffoldMessenger.of(modalCtx).showSnackBar(
+                                    SnackBar(content: Text('Gagal mengajukan penarikan: $e'), backgroundColor: AppTheme.alertRed),
+                                  );
+                                }
+                              }
+                            },
+                      child: isSubmitting
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text('Konfirmasi & Cairkan Kas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },

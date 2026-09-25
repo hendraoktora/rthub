@@ -69,7 +69,7 @@ let TagihanService = class TagihanService {
                 },
             });
             if (!existing) {
-                const adminFee = Number(process.env.DEFAULT_ADMIN_FEE || 2000);
+                const adminFee = Number(process.env.DEFAULT_ADMIN_FEE || 1500);
                 const nominalPokok = Number(master.nominalPokok);
                 const totalBayar = nominalPokok + adminFee;
                 await this.prisma.tagihanWarga.create({
@@ -93,7 +93,7 @@ let TagihanService = class TagihanService {
             bulan,
             tahun,
             nominalPokok: master.nominalPokok,
-            adminFee: process.env.DEFAULT_ADMIN_FEE || 2000,
+            adminFee: process.env.DEFAULT_ADMIN_FEE || 1500,
         };
     }
     async getTagihanSaya(user) {

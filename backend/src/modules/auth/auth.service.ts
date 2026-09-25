@@ -116,7 +116,7 @@ export class AuthService {
           rtId: rt.id,
           namaTagihan: 'Iuran Kas & Kebersihan Lingkungan',
           nominalPokok: 50000.00,
-          adminFee: 2000.00,
+          adminFee: 1500.00,
           deskripsi: 'Iuran kas operasional RT dan pengelolaan sampah bulanan',
         },
       ],

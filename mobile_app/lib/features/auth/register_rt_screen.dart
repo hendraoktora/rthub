@@ -349,12 +349,23 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
   void _startRegistrationWithOtp() async {
     final nama = _namaLengkap.text.trim();
     final phone = _phone.text.trim();
+    final email = _email.text.trim();
     final password = _password.text.trim();
 
-    if (nama.isEmpty || phone.isEmpty || password.isEmpty) {
+    if (nama.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Semua field bertanda * wajib diisi'),
+          content: Text('Semua field bertanda * wajib diisi (Termasuk Email untuk pengiriman OTP)'),
+          backgroundColor: AppTheme.alertRed,
+        ),
+      );
+      return;
+    }
+
+    if (!RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Format alamat email tidak valid (Contoh: nama@domain.com)'),
           backgroundColor: AppTheme.alertRed,
         ),
       );
@@ -636,7 +647,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                             }
 
                             setModalState(() => isVerifyingOtp = true);
-                            final target = currentChannel == 'WHATSAPP' ? _phone.text.trim() : (_email.text.trim().isNotEmpty ? _email.text.trim() : _phone.text.trim());
+                            final target = _email.text.trim();
 
                             try {
                               await ApiService.verifyOtp(target, code);
@@ -1123,7 +1134,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                 controller: _phone,
                 keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(
-                  labelText: 'No. WhatsApp Aktif (Untuk OTP) *',
+                  labelText: 'No. WhatsApp / Kontak HP *',
                   hintText: 'Contoh: 081234567890',
                   prefixIcon: Icon(Icons.phone_android_rounded),
                 ),
@@ -1133,7 +1144,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                 controller: _email,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  labelText: 'Alamat Email (Opsional)',
+                  labelText: 'Alamat Email Aktif (Untuk OTP) *',
                   hintText: 'Contoh: hendra@gmail.com',
                   prefixIcon: Icon(Icons.email_outlined),
                 ),

@@ -285,7 +285,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> sendOtp(
     String target, {
-    String channel = 'WHATSAPP',
+    String channel = 'EMAIL',
     String purpose = 'REGISTRASI',
   }) async {
     final response = await _postWithFallback('/auth/send-otp', {

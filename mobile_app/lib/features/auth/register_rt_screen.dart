@@ -407,7 +407,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
   }
 
   void _showOtpVerificationModal() {
-    String currentChannel = 'WHATSAPP';
+    String currentChannel = 'EMAIL';
     final otpController = TextEditingController();
     int secondsRemaining = 60;
     Timer? resendTimer;
@@ -429,9 +429,21 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
 
     Future<void> sendOtpRequest(StateSetter setModalState) async {
       setModalState(() => isSendingOtp = true);
-      final target = currentChannel == 'WHATSAPP' ? _phone.text.trim() : (_email.text.trim().isNotEmpty ? _email.text.trim() : _phone.text.trim());
+      final target = _email.text.trim();
+      if (target.isEmpty) {
+        setModalState(() => isSendingOtp = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Silakan masukkan alamat email yang valid pada formulir pendaftaran.'),
+              backgroundColor: AppTheme.alertRed,
+            ),
+          );
+        }
+        return;
+      }
       try {
-        final res = await ApiService.sendOtp(target, channel: currentChannel);
+        final res = await ApiService.sendOtp(target, channel: 'EMAIL');
         setModalState(() {
           isSendingOtp = false;
           latestDemoOtp = res['demoOtp'];
@@ -440,7 +452,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('📲 ${res['message']}'),
+              content: Text('✉️ ${res['message']}'),
               backgroundColor: AppTheme.successGreen,
             ),
           );
@@ -469,6 +481,8 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
             sendOtpRequest(setModalState);
           }
 
+          final targetEmail = _email.text.trim();
+
           return Padding(
             padding: EdgeInsets.only(
               left: 24,
@@ -484,7 +498,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Verifikasi Kode OTP',
+                      'Verifikasi Email OTP',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     IconButton(
@@ -498,92 +512,56 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Masukkan 6 digit kode OTP yang telah dikirimkan ke:',
+                  'Masukkan 6 digit kode OTP yang telah dikirimkan ke email resmi:',
                   style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                 ),
                 const SizedBox(height: 12),
 
-                // Channel Selector Tabs
-                Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          if (currentChannel != 'WHATSAPP') {
-                            setModalState(() => currentChannel = 'WHATSAPP');
-                            sendOtpRequest(setModalState);
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: currentChannel == 'WHATSAPP' ? AppTheme.successGreen.withValues(alpha: 0.1) : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: currentChannel == 'WHATSAPP' ? AppTheme.successGreen : AppTheme.slateBorder,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.phone_android, size: 16, color: currentChannel == 'WHATSAPP' ? AppTheme.successGreen : AppTheme.textSecondary),
-                              const SizedBox(width: 6),
-                              Text(
-                                'WhatsApp',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: currentChannel == 'WHATSAPP' ? AppTheme.successGreen : AppTheme.textSecondary,
-                                ),
+                // Verified Official Email Banner
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF2261E8),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.mark_email_read_rounded, size: 18, color: Colors.white),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Email Penerima Kode OTP',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E3A8A),
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              targetEmail.isNotEmpty ? targetEmail : 'Email belum diisi di formulir',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF2563EB),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          if (_email.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Isi kolom Email pada formulir untuk OTP via Email')),
-                            );
-                            return;
-                          }
-                          if (currentChannel != 'EMAIL') {
-                            setModalState(() => currentChannel = 'EMAIL');
-                            sendOtpRequest(setModalState);
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: currentChannel == 'EMAIL' ? AppTheme.electricBlue.withValues(alpha: 0.1) : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: currentChannel == 'EMAIL' ? AppTheme.electricBlue : AppTheme.slateBorder,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.email_outlined, size: 16, color: currentChannel == 'EMAIL' ? AppTheme.electricBlue : AppTheme.textSecondary),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Email',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: currentChannel == 'EMAIL' ? AppTheme.electricBlue : AppTheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
 

@@ -17,9 +17,16 @@ let LapakService = class LapakService {
         this.prisma = prisma;
     }
     async getFeedLapak(user) {
-        const rwId = user?.rwId || user?.rt?.rwId;
-        const kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
-        const rtId = user?.rtId;
+        let rwId = user?.rwId || user?.rt?.rwId;
+        let kelurahanId = user?.kelurahanId || user?.rt?.rw?.kelurahanId;
+        let rtId = user?.rtId;
+        if ((!rwId || !kelurahanId) && rtId) {
+            const rt = await this.prisma.rT.findUnique({ where: { id: rtId }, include: { rw: true } });
+            if (rt) {
+                rwId = rwId || rt.rwId;
+                kelurahanId = kelurahanId || rt.rw?.kelurahanId;
+            }
+        }
         const filters = [];
         if (rwId)
             filters.push({ rwId });
@@ -28,18 +35,32 @@ let LapakService = class LapakService {
         if (rtId)
             filters.push({ rtId });
         if (filters.length === 0) {
-            return [];
+            return this.prisma.lapakProduk.findMany({
+                where: { isActive: true },
+                include: {
+                    seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
+                    rt: { select: { nomor: true } },
+                },
+                orderBy: [{ isPromoted: 'desc' }, { createdAt: 'desc' }],
+                take: 50,
+            });
         }
         return this.prisma.lapakProduk.findMany({
             where: {
-                OR: filters,
+                OR: [
+                    ...filters,
+                    { isPromoted: true, paketIklan: 'SEMUA' },
+                ],
                 isActive: true,
             },
             include: {
                 seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
                 rt: { select: { nomor: true } },
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: [
+                { isPromoted: 'desc' },
+                { createdAt: 'desc' },
+            ],
             take: 50,
         });
     }
@@ -91,6 +112,26 @@ let LapakService = class LapakService {
                 kategori: data.kategori || 'PRODUK',
                 kontakWa: data.kontakWa || user.phone,
                 fotoUrl: data.fotoUrl || null,
+            },
+        });
+    }
+    async boostProduk(id, user, data) {
+        const scope = (data.scope || 'RT').toUpperCase();
+        const duration = Number(data.durationDays) || 7;
+        const expiry = data.promotedUntil
+            ? new Date(data.promotedUntil)
+            : new Date(Date.now() + duration * 24 * 60 * 60 * 1000);
+        return this.prisma.lapakProduk.update({
+            where: { id },
+            data: {
+                isPromoted: true,
+                promotedBadge: 'SPONSORED',
+                paketIklan: scope,
+                promotedUntil: expiry,
+            },
+            include: {
+                seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
+                rt: { select: { nomor: true } },
             },
         });
     }

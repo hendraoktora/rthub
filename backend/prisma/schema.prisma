@@ -353,11 +353,15 @@ model LapakProduk {
   deskripsi   String   @db.Text
   harga       Decimal  @db.Decimal(12, 2)
   kategori    String   @default("PRODUK") @db.VarChar(50) // PRODUK / JASA
-  fotoUrl     String?  @db.LongText
-  kontakWa    String   @db.VarChar(20)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  fotoUrl       String?   @db.LongText
+  kontakWa      String    @db.VarChar(20)
+  isActive      Boolean   @default(true)
+  isPromoted    Boolean   @default(false)
+  promotedBadge String?   @default("SPONSORED") @db.VarChar(50)
+  paketIklan    String?   @db.VarChar(50)
+  promotedUntil DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   seller      User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   rt          RT        @relation(fields: [rtId], references: [id], onDelete: Cascade)

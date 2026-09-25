@@ -44,6 +44,9 @@ let LapakController = class LapakController {
         }
         return this.lapakService.createProduk(user, body);
     }
+    async boostProduk(id, user, body) {
+        return this.lapakService.boostProduk(id, user, body);
+    }
     async deleteProduk(id, user) {
         return this.lapakService.deleteProduk(id, user);
     }
@@ -91,6 +94,16 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], LapakController.prototype, "createProduk", null);
+__decorate([
+    (0, common_1.Post)(':id/boost'),
+    (0, swagger_1.ApiOperation)({ summary: 'Boost / pasang iklan produk lapak agar tampil di Homescreen' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], LapakController.prototype, "boostProduk", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Hapus produk lapak' }),

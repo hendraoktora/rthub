@@ -54,6 +54,16 @@ export class LapakController {
     return this.lapakService.createProduk(user, body);
   }
 
+  @Post(':id/boost')
+  @ApiOperation({ summary: 'Boost / pasang iklan produk lapak agar tampil di Homescreen' })
+  async boostProduk(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+    @Body() body: { packageType?: string; scope?: string; durationDays?: number; price?: number; paymentMethod?: string; promotedUntil?: string },
+  ) {
+    return this.lapakService.boostProduk(id, user, body);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Hapus produk lapak' })
   async deleteProduk(@Param('id') id: string, @CurrentUser() user: any) {

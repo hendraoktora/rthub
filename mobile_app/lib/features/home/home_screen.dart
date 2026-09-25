@@ -202,26 +202,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Column(
                           children: [
-                            // SIAPA
                             _buildPanicInfoRow(
                               icon: Icons.person_rounded,
-                              title: 'SIAPA (Pelapor)',
+                              title: 'Pelapor',
                               value: nama,
                               highlight: true,
                             ),
                             const Divider(height: 16, color: Color(0xFFFFE0E0)),
-                            // DI MANA
                             _buildPanicInfoRow(
                               icon: Icons.location_on_rounded,
-                              title: 'DI MANA (Lokasi)',
+                              title: 'Lokasi',
                               value: lokasi,
                               highlight: false,
                             ),
                             const Divider(height: 16, color: Color(0xFFFFE0E0)),
-                            // KENAPA
                             _buildPanicInfoRow(
                               icon: Icons.report_problem_rounded,
-                              title: 'KENAPA (Keterangan)',
+                              title: 'Keterangan',
                               value: catatan,
                               highlight: false,
                             ),
@@ -1339,17 +1336,17 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       // Filter jangkauan berdasarkan paket iklan:
-      // RT (hanya RT yang sama) | RW (satu RW) | KELURAHAN (satu kelurahan) | SEMUA / NASIONAL (seluruh pengguna)
+      // RT (hanya RT yang sama) | RW (satu RW) | KELURAHAN (satu kelurahan) | SEMUA / NASIONAL / GLOBAL (seluruh pengguna)
       final paket = (it['paketIklan'] ?? 'RT').toString().toUpperCase();
-      if (paket == 'SEMUA' || paket == 'NASIONAL') {
+      if (paket == 'SEMUA' || paket == 'NASIONAL' || paket.contains('GLOBAL') || paket.contains('SEMUA')) {
         return true;
-      } else if (paket == 'KELURAHAN') {
+      } else if (paket.contains('KELURAHAN')) {
         final itemKelId = it['kelurahanId'] ?? it['seller']?['kelurahanId'];
         if (itemKelId != null && userKelId != null) {
           return itemKelId.toString() == userKelId;
         }
         return true;
-      } else if (paket == 'RW') {
+      } else if (paket.contains('RW')) {
         final itemRwId = it['rwId'] ?? it['seller']?['rwId'];
         if (itemRwId != null && userRwId != null) {
           return itemRwId.toString() == userRwId;
@@ -1362,7 +1359,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (itemRtId != null && userRtId != null) {
           return itemRtId.toString() == userRtId;
         }
-        if (itemRtNomor != null) {
+        if (itemRtNomor != null && rtNomor.isNotEmpty) {
           return itemRtNomor.toString() == rtNomor;
         }
         return true;

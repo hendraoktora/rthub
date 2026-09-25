@@ -29,6 +29,10 @@ export declare class LapakService {
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
         kontakWa: string;
+        isPromoted: boolean;
+        promotedBadge: string | null;
+        paketIklan: string | null;
+        promotedUntil: Date | null;
     })[]>;
     getFeedKontrakan(user: any): Promise<({
         rt: {
@@ -74,6 +78,49 @@ export declare class LapakService {
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
         kontakWa: string;
+        isPromoted: boolean;
+        promotedBadge: string | null;
+        paketIklan: string | null;
+        promotedUntil: Date | null;
+    }>;
+    boostProduk(id: string, user: any, data: {
+        packageType?: string;
+        scope?: string;
+        durationDays?: number;
+        price?: number;
+        paymentMethod?: string;
+        promotedUntil?: string;
+    }): Promise<{
+        rt: {
+            nomor: string;
+        };
+        seller: {
+            profile: {
+                namaLengkap: string;
+                noRumah: string;
+            };
+            phone: string;
+            id: string;
+        };
+    } & {
+        rtId: string;
+        id: string;
+        isActive: boolean;
+        kelurahanId: string;
+        rwId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deskripsi: string;
+        kategori: string;
+        judul: string;
+        sellerId: string;
+        harga: import("@prisma/client/runtime/library").Decimal;
+        fotoUrl: string | null;
+        kontakWa: string;
+        isPromoted: boolean;
+        promotedBadge: string | null;
+        paketIklan: string | null;
+        promotedUntil: Date | null;
     }>;
     deleteProduk(id: string, user: any): Promise<{
         rtId: string;
@@ -90,5 +137,9 @@ export declare class LapakService {
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
         kontakWa: string;
+        isPromoted: boolean;
+        promotedBadge: string | null;
+        paketIklan: string | null;
+        promotedUntil: Date | null;
     }>;
 }

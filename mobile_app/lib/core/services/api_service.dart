@@ -654,13 +654,36 @@ class ApiService {
     String? scope,
     String? paymentMethod,
   }) async {
+    final expireDate = DateTime.now().add(Duration(days: durationDays)).toIso8601String();
+    final finalScope = (scope != null && scope.isNotEmpty) ? scope : 'RT';
+
+    // 1. Send boost directly to backend so ALL accounts/devices see the boosted product
+    try {
+      final token = await getToken();
+      final configuredUrl = await getBaseUrl();
+      await http.post(
+        Uri.parse('$configuredUrl/lapak/$id/boost'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'packageType': packageType,
+          'scope': finalScope,
+          'durationDays': durationDays,
+          'price': price,
+          'paymentMethod': paymentMethod,
+          'promotedUntil': expireDate,
+        }),
+      ).timeout(const Duration(seconds: 7));
+    } catch (_) {}
+
+    // 2. Also update local cache for zero-latency instant offline feedback
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedStr = prefs.getString('local_custom_lapak');
       List<dynamic> list = savedStr != null ? jsonDecode(savedStr) : [];
 
-      final expireDate = DateTime.now().add(Duration(days: durationDays)).toIso8601String();
-      final finalScope = (scope != null && scope.isNotEmpty) ? scope : 'RT';
       final index = list.indexWhere((e) => (e['id'] ?? '').toString() == id);
 
       if (index != -1) {

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
+import '../../core/widgets/isometric_village_3d.dart';
+import '../../core/widgets/rthub_logo.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_rt_screen.dart';
 import '../home/home_screen.dart';
@@ -51,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: const Row(
           children: [
-            Icon(Icons.dns_rounded, color: AppTheme.electricBlue),
+            Icon(Icons.dns_rounded, color: Color(0xFF2261E8)),
             SizedBox(width: 8),
             Text('Konfigurasi Server IP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
@@ -61,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Masukkan alamat IP laptop backend Anda jika HP terhubung via Wi-Fi:',
+              'Masukkan alamat IP server API backend:',
               style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 12),
@@ -103,259 +105,261 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     if (_checkingSession) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: const Color(0xFFF7F8F2),
         body: Center(
           child: Container(
-            width: 80,
-            height: 80,
+            width: 76,
+            height: 76,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFFDCE1D7)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 18,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             padding: const EdgeInsets.all(16),
-            child: const CircularProgressIndicator(color: AppTheme.electricBlue, strokeWidth: 2.5),
+            child: const CircularProgressIndicator(color: Color(0xFF2261E8), strokeWidth: 2.8),
           ),
         ),
       );
     }
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background Gradient
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF0F172A),
-                  Color(0xFF131E32),
-                  Color(0xFF1E293B),
-                ],
-              ),
-            ),
-          ),
+      backgroundColor: const Color(0xFFF7F8F2),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 6),
 
-          // Ambient Glow Top-Left
-          Positioned(
-            top: -60,
-            left: -80,
-            child: Container(
-              width: 320,
-              height: 320,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFF6366F1).withValues(alpha: 0.20),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Ambient Glow Bottom-Right
-          Positioned(
-            bottom: 120,
-            right: -60,
-            child: Container(
-              width: 280,
-              height: 280,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFF38BDF8).withValues(alpha: 0.15),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Main Content
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 16.0),
-              child: Column(
+              // Top Brand Pill Tag (identical to landing page .hero-tag)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 20),
-
-                  const Spacer(flex: 2),
-
-                  // Glowing Center Card (Secret long press for admin server config)
                   GestureDetector(
                     onLongPress: () => _showServerConfigDialog(context),
                     child: Container(
-                      width: 96,
-                      height: 96,
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          width: 1.5,
-                        ),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: const Color(0xFFDCE1D7)),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF6366F1).withValues(alpha: 0.35),
-                            blurRadius: 36,
-                            spreadRadius: 2,
-                          ),
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.4),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                      alignment: Alignment.center,
-                      child: Center(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Image.asset(
-                            'assets/images/rthub_icon.png',
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.contain,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF32664C), // Sage green dot
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'RUANG DIGITAL UNTUK HIDUP BERTETANGGA',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                              color: Color(0xFF5A6B5E),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 22),
+                ],
+              ),
+              const SizedBox(height: 16),
 
-                  // Brand Title
-                  const Text(
-                    'RtHub',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -1.2,
+              // Hero Headline (matching landing page: "Satu kampung. Banyak cerita.")
+              RichText(
+                textAlign: TextAlign.center,
+                text: const TextSpan(
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1.0,
+                    height: 1.15,
+                    color: Color(0xFF263A32),
+                  ),
+                  children: [
+                    TextSpan(text: 'Satu kampung.\n'),
+                    TextSpan(
+                      text: 'Banyak cerita.',
+                      style: TextStyle(color: Color(0xFF2261E8)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Subtitle
+              const Text(
+                'Urusan RT, sekarang lebih sederhana. Dari kas warga sampai lapak tetangga, semuanya terhubung.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  height: 1.55,
+                  color: Color(0xFF69776E),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 3D Isometric Interactive Village Canvas
+              const IsometricVillage3D(
+                height: 290,
+                interactive: true,
+                showFloatingBadges: true,
+              ),
+              const SizedBox(height: 14),
+
+              // Feature Badges (Landing page style)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  _buildLandingPill(Icons.account_balance_wallet_outlined, 'Iuran Kas', const Color(0xFF2261E8)),
+                  _buildLandingPill(Icons.storefront_outlined, 'Lapak Tetangga', const Color(0xFF047857)),
+                  _buildLandingPill(Icons.videocam_outlined, 'CCTV 24 Jam', const Color(0xFF3B82F6)),
+                  _buildLandingPill(Icons.campaign_outlined, 'Warta RT', const Color(0xFFD97706)),
+                ],
+              ),
+              const SizedBox(height: 26),
+
+              // Action Buttons
+              // Primary "Masuk Akun" Button (.btn-primary style)
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2261E8),
+                    foregroundColor: Colors.white,
+                    elevation: 4,
+                    shadowColor: const Color(0xFF2261E8).withValues(alpha: 0.35),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50), // Landing page round pill
                     ),
                   ),
-                  const SizedBox(height: 10),
-
-                  // Tagline
-                  Text(
-                    'Hunian Cerdas, Lingkungan Nyaman\n& Transparan',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: const Color(0xFF94A3B8),
-                      fontSize: 15,
-                      height: 1.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Feature Badges
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.center,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildPill('Iuran Digital'),
-                      _buildPill('Pengumuman RT'),
-                      _buildPill('Lapor Warga'),
-                      _buildPill('Panic Button'),
-                    ],
-                  ),
-
-                  const Spacer(flex: 3),
-
-                  // Action Buttons
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF0F172A),
-                        elevation: 4,
-                        shadowColor: Colors.black.withValues(alpha: 0.3),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
+                      Text(
                         'Masuk Akun',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.2,
                         ),
                       ),
-                    ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded, size: 18),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const RegisterRtScreen()),
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.22),
-                          width: 1.5,
-                        ),
-                        backgroundColor: Colors.white.withValues(alpha: 0.06),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        'Daftarkan RT Baru',
-                        style: TextStyle(
-                          color: Color(0xFFE2E8F0),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 10),
+
+              // Secondary "Daftar Akun Baru" Button (.btn-secondary style)
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RegisterRtScreen()),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF263A32),
+                    side: const BorderSide(color: Color(0xFFDCE1D7), width: 1.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
+                  child: const Text(
+                    'Daftar RT / Warga Baru',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF263A32),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Subtle author & platform tag
+              const Text(
+                'RT Hub • Platform Digital Rukun Tetangga',
+                style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildPill(String label) {
+  Widget _buildLandingPill(IconData icon, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFFCBD5E1),
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF334155),
+            ),
+          ),
+        ],
       ),
     );
   }

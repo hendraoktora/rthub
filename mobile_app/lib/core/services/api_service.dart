@@ -733,9 +733,9 @@ class ApiService {
         'kategori': 'Kuliner',
         'kontakWa': '081234567890',
         'sellerId': 'seller_mpok_siti',
-        'isPromoted': true,
-        'promotedBadge': 'SPONSORED',
-        'paketIklan': 'RT',
+        'isPromoted': false,
+        'promotedBadge': null,
+        'paketIklan': null,
         'seller': {
           'profile': {'namaLengkap': 'Mpok Siti', 'noRumah': 'Blok A3 No. 5'},
         },

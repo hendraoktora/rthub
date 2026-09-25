@@ -357,7 +357,7 @@ model LapakProduk {
   kontakWa      String    @db.VarChar(20)
   isActive      Boolean   @default(true)
   isPromoted    Boolean   @default(false)
-  promotedBadge String?   @default("SPONSORED") @db.VarChar(50)
+  promotedBadge String?   @db.VarChar(50)
   paketIklan    String?   @db.VarChar(50)
   promotedUntil DateTime?
   createdAt     DateTime  @default(now())

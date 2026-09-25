@@ -26,8 +26,19 @@ export class LapakService {
       if (rtId) filters.push({ rtId });
 
       try {
+        const sanitizePromotion = (r: any) => {
+          const expired = r.promotedUntil ? new Date(r.promotedUntil) <= new Date() : false;
+          const isPromoted = Boolean((r.isPromoted === true || r.isPromoted === 1 || r.isPromoted === '1') && !expired);
+          return {
+            ...r,
+            isPromoted,
+            promotedBadge: isPromoted ? (r.promotedBadge || 'SPONSORED') : null,
+            paketIklan: isPromoted ? r.paketIklan : null,
+          };
+        };
+
         if (filters.length === 0) {
-          return await this.prisma.lapakProduk.findMany({
+          const items = await this.prisma.lapakProduk.findMany({
             where: { isActive: true },
             include: {
               seller: { select: { id: true, phone: true, profile: { select: { namaLengkap: true, noRumah: true } } } },
@@ -36,9 +47,10 @@ export class LapakService {
             orderBy: [{ isPromoted: 'desc' }, { createdAt: 'desc' }],
             take: 50,
           });
+          return items.map(sanitizePromotion);
         }
 
-        return await this.prisma.lapakProduk.findMany({
+        const items = await this.prisma.lapakProduk.findMany({
           where: {
             OR: [
               ...filters,
@@ -56,6 +68,7 @@ export class LapakService {
           ],
           take: 50,
         });
+        return items.map(sanitizePromotion);
       } catch (innerErr) {
         // Fallback with direct SQL so columns in MySQL are always queried safely
         try {
@@ -73,23 +86,27 @@ export class LapakService {
             ORDER BY lp.isPromoted DESC, lp.createdAt DESC
             LIMIT 50
           `);
-          return rawItems.map((r: any) => ({
-            ...r,
-            isPromoted: Boolean(r.isPromoted),
-            promotedBadge: r.promotedBadge || (r.isPromoted ? 'SPONSORED' : null),
-            paketIklan: r.paketIklan,
-            seller: {
-              id: r.sellerId,
-              phone: r.sellerPhone,
-              profile: {
-                namaLengkap: r.sellerNama,
-                noRumah: r.sellerRumah,
+          return rawItems.map((r: any) => {
+            const expired = r.promotedUntil ? new Date(r.promotedUntil) <= new Date() : false;
+            const isPromoted = Boolean((r.isPromoted === true || r.isPromoted === 1 || r.isPromoted === '1') && !expired);
+            return {
+              ...r,
+              isPromoted,
+              promotedBadge: isPromoted ? (r.promotedBadge || 'SPONSORED') : null,
+              paketIklan: isPromoted ? r.paketIklan : null,
+              seller: {
+                id: r.sellerId,
+                phone: r.sellerPhone,
+                profile: {
+                  namaLengkap: r.sellerNama,
+                  noRumah: r.sellerRumah,
+                },
               },
-            },
-            rt: {
-              nomor: r.rtNomor,
-            },
-          }));
+              rt: {
+                nomor: r.rtNomor,
+              },
+            };
+          });
         } catch (_) {
           return [];
         }
@@ -152,6 +169,10 @@ export class LapakService {
         kategori: data.kategori || 'PRODUK',
         kontakWa: data.kontakWa || user.phone,
         fotoUrl: data.fotoUrl || null,
+        isPromoted: false,
+        promotedBadge: null,
+        paketIklan: null,
+        promotedUntil: null,
       },
     });
   }

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/nik_service.dart';
+import '../../core/widgets/hub_motion.dart';
 import '../home/home_screen.dart';
 import 'login_screen.dart';
 
@@ -789,22 +790,140 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
     final isRt = _selectedRole == 'RT';
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFF7F8F2),
       appBar: AppBar(
-        title: Text(isRt ? 'Pendaftaran Ketua RT' : 'Pendaftaran Warga Baru'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF475569)),
+          tooltip: 'Kembali',
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          isRt ? 'Pendaftaran Ketua RT' : 'Pendaftaran Warga Baru',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF263A32)),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 3D Animated Interactive Header (Landing Page Inspired)
+              Center(
+                child: TiltCard(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFDCE1D7)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isRt ? const Color(0xFF2261E8) : const Color(0xFF047857)).withValues(alpha: 0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: isRt
+                                  ? [const Color(0xFF2261E8), const Color(0xFF164FC9)]
+                                  : [const Color(0xFF047857), const Color(0xFF065F46)],
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isRt ? const Color(0xFF2261E8) : const Color(0xFF047857)).withValues(alpha: 0.35),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            isRt ? Icons.add_home_work_rounded : Icons.person_add_alt_1_rounded,
+                            color: Colors.white,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: isRt ? const Color(0xFF2261E8) : const Color(0xFF047857),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'REGISTRASI SISTEM DIGITAL',
+                                    style: TextStyle(
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.6,
+                                      color: Color(0xFF5A6B5E),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                isRt ? 'Bentuk Lingkungan RT' : 'Gabung ke Komunitas RT',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF263A32),
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              const Text(
+                                'Satu kampung, banyak cerita.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF69776E),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
               // 1. TOP ROLE SELECTOR CARD BUTTONS
               const Text(
                 'Daftar Sebagai:',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF263A32)),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
@@ -813,7 +932,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                       title: 'Ketua RT',
                       subtitle: 'Bentuk RT Baru',
                       icon: Icons.admin_panel_settings_rounded,
-                      badgeColor: AppTheme.electricBlue,
+                      badgeColor: const Color(0xFF2261E8),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -823,25 +942,25 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                       title: 'Warga RT',
                       subtitle: 'Gabung RT Terdaftar',
                       icon: Icons.person_pin_rounded,
-                      badgeColor: AppTheme.successGreen,
+                      badgeColor: const Color(0xFF047857),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
               // Info Card Banner
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: isRt
-                      ? AppTheme.electricBlue.withValues(alpha: 0.08)
-                      : AppTheme.successGreen.withValues(alpha: 0.08),
+                      ? const Color(0xFF2261E8).withValues(alpha: 0.06)
+                      : const Color(0xFF047857).withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isRt
-                        ? AppTheme.electricBlue.withValues(alpha: 0.25)
-                        : AppTheme.successGreen.withValues(alpha: 0.25),
+                        ? const Color(0xFF2261E8).withValues(alpha: 0.20)
+                        : const Color(0xFF047857).withValues(alpha: 0.20),
                   ),
                 ),
                 child: Row(
@@ -1375,8 +1494,8 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
           color: isSelected ? badgeColor.withValues(alpha: 0.1) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? badgeColor : AppTheme.slateBorder,
-            width: isSelected ? 2.5 : 1,
+            color: isSelected ? badgeColor : const Color(0xFFDCE1D7),
+            width: isSelected ? 2.2 : 1.2,
           ),
           boxShadow: isSelected
               ? [

@@ -35,9 +35,10 @@ class LapakProduct {
       sellerId.isNotEmpty && user?['id']?.toString() == sellerId;
 
   static bool _activePromotion(Map<String, dynamic> json) {
-    if (json['isPromoted'] != true && json['promotedBadge'] != 'SPONSORED') {
-      return false;
-    }
+    final isPromoted = json['isPromoted'] == true ||
+        json['isPromoted'] == 1 ||
+        json['isPromoted'] == '1';
+    if (!isPromoted) return false;
     final expires = DateTime.tryParse('${json['promotedUntil'] ?? ''}');
     return expires == null || expires.isAfter(DateTime.now());
   }

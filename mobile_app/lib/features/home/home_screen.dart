@@ -710,12 +710,10 @@ class _HomeScreenState extends State<HomeScreen> {
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
         .where((item) {
-          final promoted =
-              item['isPromoted'] == true ||
-              item['promotedBadge'] == 'SPONSORED' ||
-              item['status'] == 'PROMOTED' ||
-              item['paketIklan'] != null;
-          if (!promoted) return false;
+          final isPromoted = item['isPromoted'] == true ||
+              item['isPromoted'] == 1 ||
+              item['isPromoted'] == '1';
+          if (!isPromoted) return false;
           final expiry = DateTime.tryParse(
             (item['promotedUntil'] ??
                     item['iklanExpiredAt'] ??

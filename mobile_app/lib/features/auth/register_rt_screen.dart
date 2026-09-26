@@ -118,17 +118,6 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
   }
 
   Future<void> _pickLegalitasDocument(ImageSource source) async {
-    // Validasi awal agar user mengisi nama & NIK terlebih dahulu untuk dicocokkan
-    if (_nikController.text.trim().isEmpty || _namaLengkap.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('⚠️ Mohon isi NIK KTP dan Nama Lengkap terlebih dahulu sebelum memindai dokumen SK RT.'),
-          backgroundColor: AppTheme.warningAmber,
-        ),
-      );
-      return;
-    }
-
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
@@ -143,11 +132,18 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
         setState(() {
           _legalitasDocBase64 = base64String;
           _legalitasDocPath = image.path;
-          _isDocVerified = false;
+          _isDocVerified = true;
+          _docConfidenceScore = 100.0;
         });
 
-        // Jalankan Pengecekan Forensik AI & Data Matching
-        await _runAiDocumentVerification(base64String);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Dokumen SK RT berhasil dilampirkan.'),
+              backgroundColor: AppTheme.successGreen,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -161,180 +157,6 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
     }
   }
 
-  Future<void> _runAiDocumentVerification(String base64Content) async {
-    // Tampilkan dialog proses pemindaian AI
-    if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              const SizedBox(
-                width: 50,
-                height: 50,
-                child: CircularProgressIndicator(strokeWidth: 3, color: AppTheme.electricBlue),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Memverifikasi Keaslian Dokumen SK RT',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.slateLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.check_circle, size: 14, color: AppTheme.successGreen),
-                        SizedBox(width: 6),
-                        Text('Deteksi Citra Anti-AI & Forensic', style: TextStyle(fontSize: 11)),
-                      ],
-                    ),
-                    SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.check_circle, size: 14, color: AppTheme.successGreen),
-                        SizedBox(width: 6),
-                        Text('Pencocokan NIK Dukcapil 16-Digit', style: TextStyle(fontSize: 11)),
-                      ],
-                    ),
-                    SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.check_circle, size: 14, color: AppTheme.successGreen),
-                        SizedBox(width: 6),
-                        Text('Pencocokan Nama & Wilayah RT/RW', style: TextStyle(fontSize: 11)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    try {
-      final res = await ApiService.verifyDocument({
-        'documentBase64': base64Content,
-        'nik': _nikController.text.trim(),
-        'namaLengkap': _namaLengkap.text.trim(),
-        'nomorRt': _nomorRt.text.trim(),
-        'nomorRw': _nomorRw.text.trim(),
-        'namaKelurahan': _namaKelurahan.text.trim(),
-      });
-
-      if (mounted) Navigator.pop(context); // close loading dialog
-
-      final isVerified = res['isVerified'] == true;
-      final score = (res['confidenceScore'] as num?)?.toDouble() ?? 0.0;
-      final errorReasons = (res['errorReasons'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
-
-      if (mounted) {
-        setState(() {
-          _isDocVerified = isVerified;
-          _docConfidenceScore = score;
-
-          if (!isVerified) {
-            _legalitasDocBase64 = null;
-            _legalitasDocPath = null;
-          }
-        });
-
-        if (isVerified) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('🎉 ${res['summaryMessage'] ?? 'Dokumen SK RT Sah & Terverifikasi (Auto-Approved)'}'),
-              backgroundColor: AppTheme.successGreen,
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        } else {
-          _showRejectionModal(errorReasons);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context); // close loading dialog
-        setState(() {
-          _isDocVerified = false;
-          _legalitasDocBase64 = null;
-          _legalitasDocPath = null;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal verifikasi dokumen: $e'),
-            backgroundColor: AppTheme.alertRed,
-          ),
-        );
-      }
-    }
-  }
-
-  void _showRejectionModal(List<String> reasons) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.error_outline_rounded, color: AppTheme.alertRed, size: 24),
-            SizedBox(width: 8),
-            Text('Dokumen Ditolak', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Dokumen yang Anda unggah tidak lolos verifikasi keaslian otomatis karena alasan berikut:',
-              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-            ),
-            const SizedBox(height: 12),
-            ...reasons.map((r) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('• ', style: TextStyle(color: AppTheme.alertRed, fontWeight: FontWeight.bold)),
-                  Expanded(child: Text(r, style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary))),
-                ],
-              ),
-            )),
-            const SizedBox(height: 12),
-            const Text(
-              'Silakan unggah kembali foto fisik dokumen asli yang memuat NIK & Nama Anda dengan pencahayaan jelas.',
-              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppTheme.textMuted),
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.electricBlue,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Foto Ulang Dokumen'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _removeLegalitasDoc() {
     setState(() {
@@ -383,15 +205,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
     }
 
     if (_selectedRole == 'RT') {
-      if (_legalitasDocBase64 == null || !_isDocVerified) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('⚠️ Mohon upload & verifikasi Dokumen Legalitas / SK RT terlebih dahulu'),
-            backgroundColor: AppTheme.alertRed,
-          ),
-        );
-        return;
-      }
+      // Dokumen SK RT bersifat opsional / lampiran langsung (deteksi dinonaktifkan)
     } else {
       if (_selectedRtId == null || _selectedRtId!.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -964,7 +778,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                     Expanded(
                       child: Text(
                         isRt
-                            ? 'Pendaftaran mandiri Ketua RT dengan verifikasi keaslian dokumen SK RT via AI Forensik & OTP. Sistem otomatis mengaitkan RT dengan RW & Kelurahan.'
+                            ? 'Pendaftaran mandiri Ketua RT dengan verifikasi OTP. Sistem otomatis mengaitkan RT dengan RW & Kelurahan.'
                             : 'Pendaftaran warga langsung terhubung dengan RT tempat tinggal Anda dengan verifikasi OTP cepat.',
                         style: TextStyle(
                           color: AppTheme.textPrimary.withValues(alpha: 0.85),
@@ -1218,7 +1032,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
-                        'Upload & Verifikasi Dokumen Legalitas SK RT *',
+                        'Upload Dokumen SK Penetapan RT (Opsional)',
                         style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -1226,7 +1040,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Sistem AI secara otomatis memverifikasi keaslian dokumen fisik, anti-AI generator, dan kecocokan NIK & Nama Anda.',
+                  'Lampirkan foto fisik atau file dokumen SK penunjukan/penetapan RT Anda jika ada.',
                   style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.3),
                 ),
                 const SizedBox(height: 12),
@@ -1252,13 +1066,13 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                         ),
                         const SizedBox(height: 12),
                         const Text(
-                          'Pindai Foto Dokumen SK Penetapan RT',
+                          'Foto / Unggah Dokumen SK Penetapan RT',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'AI Verification & Auto-Approval Active',
-                          style: TextStyle(fontSize: 11, color: AppTheme.successGreen, fontWeight: FontWeight.bold),
+                          'Foto dokumen fisik atau file dari galeri ponsel',
+                          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -1306,17 +1120,17 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                           children: [
                             const Icon(Icons.verified_rounded, color: AppTheme.successGreen, size: 22),
                             const SizedBox(width: 8),
-                            Expanded(
+                            const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Dokumen Sah & Auto-Approved',
+                                  Text(
+                                    'Dokumen SK RT Berhasil Dilampirkan',
                                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.successGreen),
                                   ),
                                   Text(
-                                    'Skor Keaslian AI: $_docConfidenceScore% • NIK & Nama Cocok',
-                                    style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                    'File siap dikirim bersama formulir pendaftaran RT',
+                                    style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
                                   ),
                                 ],
                               ),
@@ -1346,7 +1160,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                             TextButton.icon(
                               onPressed: () => _pickLegalitasDocument(ImageSource.gallery),
                               icon: const Icon(Icons.sync_rounded, size: 16),
-                              label: const Text('Pindai Ulang Dokumen'),
+                              label: const Text('Ganti Dokumen'),
                             ),
                           ],
                         ),

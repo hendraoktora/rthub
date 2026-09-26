@@ -15,6 +15,7 @@ import { LaporanModule } from './modules/laporan/laporan.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { GempaModule } from './modules/gempa/gempa.module';
 import { AddonsModule } from './modules/addons/addons.module';
+import { PaymentModule } from './modules/payment/payment.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AddonsModule } from './modules/addons/addons.module';
     CctvModule,
     LaporanModule,
     AddonsModule,
+    PaymentModule,
   ],
   controllers: [AppController],
 })

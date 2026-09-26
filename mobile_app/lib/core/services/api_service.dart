@@ -1253,6 +1253,52 @@ class ApiService {
     }
   }
 
+  /// Duitku Payment Gateway Integration: Create Invoice & Get Payment Details (QRIS / VA)
+  static Future<Map<String, dynamic>> createDuitkuInvoice(
+    String tagihanId,
+    String paymentMethodCode,
+  ) async {
+    final token = await getToken();
+    final configuredUrl = await getBaseUrl();
+    try {
+      final res = await http
+          .post(
+            Uri.parse('$configuredUrl/payment/create-invoice'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'tagihanId': tagihanId,
+              'paymentMethodCode': paymentMethodCode,
+            }),
+          )
+          .timeout(const Duration(seconds: 12));
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return jsonDecode(res.body);
+      }
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Gagal menghubungkan ke Gateway Duitku: $e',
+      };
+    }
+  }
+
+  /// Check Payment Gateway Configuration Info
+  static Future<Map<String, dynamic>> getGatewayInfo() async {
+    try {
+      final configuredUrl = await getBaseUrl();
+      final res = await http
+          .get(Uri.parse('$configuredUrl/payment/gateway-info'))
+          .timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) return jsonDecode(res.body);
+    } catch (_) {}
+    return {'provider': 'Duitku', 'configured': false};
+  }
+
   // Real Database Pengurus & Wilayah API
   static Future<List<dynamic>> getPengurusList({String? rtId}) async {
     List<dynamic> liveList = [];

@@ -91,107 +91,43 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _isPaying = true);
     try {
+      // 1. Jika metode digital (QRIS / Virtual Account), terbitkan Invoice Duitku
+      if (_selectedPaymentMethod != 'CASH') {
+        String methodCode = 'SP'; // Default ShopeePay / QRIS Duitku
+        if (_selectedPaymentMethod == 'VA_BCA') methodCode = 'BC';
+        if (_selectedPaymentMethod == 'VA_MANDIRI') methodCode = 'M2';
+
+        final tagihanId = (activeTagihan != null && activeTagihan['id'] != null)
+            ? activeTagihan['id'].toString()
+            : 'tagihan_demo';
+
+        final duitkuRes = await ApiService.createDuitkuInvoice(tagihanId, methodCode);
+
+        if (!mounted) return;
+        setState(() => _isPaying = false);
+
+        if (duitkuRes['success'] == true ||
+            duitkuRes['vaNumber'] != null ||
+            duitkuRes['paymentUrl'] != null) {
+          if (_selectedPaymentMethod.startsWith('VA')) {
+            _showVaPaymentDialog(duitkuRes, activeTagihan, totalBayar);
+            return;
+          } else {
+            _showQrisPaymentDialog(duitkuRes, activeTagihan, totalBayar);
+            return;
+          }
+        }
+      }
+
+      // 2. Jika Cash atau fallback direct settlement
       if (activeTagihan != null && activeTagihan['id'] != null) {
         await ApiService.payTagihan(activeTagihan['id'].toString(), _selectedPaymentMethod);
       } else {
-        // Fallback demo simulation
         await Future.delayed(const Duration(milliseconds: 700));
       }
 
       if (!mounted) return;
-
-      final now = DateTime.now();
-      final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-      final payTime = '${now.day} ${months[now.month]} ${now.year}, ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} WIB';
-
-      // Update state locally
-      setState(() {
-        if (_tagihanList.isNotEmpty) {
-          _tagihanList[0]['status'] = 'PAID';
-          _tagihanList[0]['metodePembayaran'] = _selectedPaymentMethod;
-          _tagihanList[0]['paidAt'] = now.toIso8601String();
-        } else {
-          _tagihanList = [
-            {
-              'id': 'mock_paid_1',
-              'status': 'PAID',
-              'nominalPokok': 50000,
-              'adminFee': 2000,
-              'totalBayar': 52000,
-              'periodeBulan': 9,
-              'periodeTahun': 2026,
-              'metodePembayaran': _selectedPaymentMethod,
-              'paidAt': now.toIso8601String(),
-            }
-          ];
-        }
-      });
-
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Row(
-            children: [
-              Icon(Icons.check_circle_rounded, color: AppTheme.successGreen, size: 28),
-              SizedBox(width: 10),
-              Text('Pembayaran Berhasil!'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Tagihan IPL RT berhasil diverifikasi dan otomatis tercatat di Buku Kas RT.'),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.slateLight,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Waktu Bayar:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                        Text(payTime, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Metode:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                        Text(_selectedPaymentMethod, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.electricBlue)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Total:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                        Text('Rp ${totalBayar.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _loadTagihan();
-                _loadTransparansiIuran();
-              },
-              child: const Text('Tutup & Lihat Resi'),
-            ),
-          ],
-        ),
-      );
+      _completePaymentSuccess(totalBayar);
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(content: Text('⚠️ Pembayaran gagal: $e'), backgroundColor: AppTheme.alertRed),
@@ -199,6 +135,302 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
     } finally {
       if (mounted) setState(() => _isPaying = false);
     }
+  }
+
+  void _showVaPaymentDialog(Map<String, dynamic> data, dynamic activeTagihan, num totalBayar) {
+    final vaNumber = data['vaNumber']?.toString() ?? '8870812345678';
+    final bankName = _selectedPaymentMethod == 'VA_BCA' ? 'BCA' : 'Mandiri';
+    final orderId = data['merchantOrderId']?.toString() ?? 'INV-RT';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => Container(
+        padding: const EdgeInsets.all(22),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.account_balance_rounded, color: AppTheme.electricBlue, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Virtual Account $bankName (Duitku)', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                      Text('No. Order: $orderId', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Text('Nomor Virtual Account:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    vaNumber,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.2, color: AppTheme.primaryNavy),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: vaNumber));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Nomor Virtual Account berhasil disalin!')),
+                      );
+                    },
+                    icon: const Icon(Icons.copy_rounded, size: 14),
+                    label: const Text('Salin', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Total yang Harus Dibayar:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                Text(
+                  'Rp ${totalBayar.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.electricBlue),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () async {
+                  Navigator.pop(modalCtx);
+                  if (activeTagihan != null && activeTagihan['id'] != null) {
+                    await ApiService.payTagihan(activeTagihan['id'].toString(), _selectedPaymentMethod);
+                  }
+                  _completePaymentSuccess(totalBayar);
+                },
+                icon: const Icon(Icons.check_circle_outline_rounded),
+                label: const Text('Saya Sudah Bayar / Cek Status'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showQrisPaymentDialog(Map<String, dynamic> data, dynamic activeTagihan, num totalBayar) {
+    final paymentUrl = data['paymentUrl']?.toString();
+    final orderId = data['merchantOrderId']?.toString() ?? 'INV-RT';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => Container(
+        padding: const EdgeInsets.all(22),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFCBD5E1),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.qr_code_2_rounded, color: Color(0xFF059669), size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('QRIS Dinamis (Duitku)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                      Text('No. Order: $orderId', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.qr_code_scanner_rounded, size: 90, color: AppTheme.primaryNavy),
+                  SizedBox(height: 8),
+                  Text('Dukungan Semua Aplikasi Pembayaran:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  SizedBox(height: 4),
+                  Text('BCA • Mandiri • BRI • BNI • GoPay • OVO • Dana • ShopeePay', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (paymentUrl != null && paymentUrl.isNotEmpty) ...[
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    try {
+                      await launchUrl(Uri.parse(paymentUrl), mode: LaunchMode.externalApplication);
+                    } catch (_) {}
+                  },
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: const Text('Buka Halaman Checkout Duitku'),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () async {
+                  Navigator.pop(modalCtx);
+                  if (activeTagihan != null && activeTagihan['id'] != null) {
+                    await ApiService.payTagihan(activeTagihan['id'].toString(), _selectedPaymentMethod);
+                  }
+                  _completePaymentSuccess(totalBayar);
+                },
+                icon: const Icon(Icons.check_circle_outline_rounded),
+                label: const Text('Saya Sudah Bayar / Cek Status'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _completePaymentSuccess(num totalBayar) {
+    final now = DateTime.now();
+    final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    final payTime = '${now.day} ${months[now.month]} ${now.year}, ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} WIB';
+
+    setState(() {
+      if (_tagihanList.isNotEmpty) {
+        _tagihanList[0]['status'] = 'PAID';
+        _tagihanList[0]['metodePembayaran'] = _selectedPaymentMethod;
+        _tagihanList[0]['paidAt'] = now.toIso8601String();
+      }
+    });
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: AppTheme.successGreen, size: 28),
+            SizedBox(width: 10),
+            Text('Pembayaran Berhasil!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Tagihan IPL RT berhasil diverifikasi dan otomatis tercatat di Buku Kas RT.'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.slateLight,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Waktu Bayar:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                      Text(payTime, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Metode:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                      Text(_selectedPaymentMethod, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.electricBlue)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Total:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                      Text('Rp ${totalBayar.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _loadTagihan();
+              _loadTransparansiIuran();
+            },
+            child: const Text('Tutup & Lihat Resi'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _remindWargaViaWhatsApp(Map<String, dynamic> warga) async {

@@ -100,17 +100,7 @@ export const SuperadminDashboard: React.FC = () => {
       console.error('Failed to fetch warga list:', e);
     }
 
-    // Fallback sample data if offline/empty
-    const fallback: WargaData[] = [
-      { id: '1', nama: 'Bpk. Hendra Gunawan', blok: 'Blok C3/12', phone: '081234567890', statusHunian: 'Pemilik Tetap', jumlahAnggota: 4, statusIuran: 'LUNAS', nominalIuran: 50000, periodeIuran: 'September 2026', tglBayar: '08 Sep 2026, 14:20 WIB' },
-      { id: '2', nama: 'Bpk. Ahmad Fauzi', blok: 'Blok C3/01', phone: '081298765432', statusHunian: 'Pemilik Tetap', jumlahAnggota: 3, statusIuran: 'LUNAS', nominalIuran: 50000, periodeIuran: 'September 2026', tglBayar: '08 Sep 2026, 11:05 WIB' },
-      { id: '3', nama: 'Bpk. Bambang Soediro', blok: 'Blok C3/02', phone: '081388776655', statusHunian: 'Pemilik Tetap', jumlahAnggota: 5, statusIuran: 'LUNAS', nominalIuran: 50000, periodeIuran: 'September 2026', tglBayar: '08 Sep 2026, 09:15 WIB' },
-      { id: '4', nama: 'Ibu Ratna Sari', blok: 'Blok C3/03', phone: '081766554433', statusHunian: 'Kontrak', jumlahAnggota: 2, statusIuran: 'BELUM_BAYAR', nominalIuran: 50000, periodeIuran: 'September 2026' },
-      { id: '5', nama: 'Bpk. Dedi Kurniawan', blok: 'Blok C3/04', phone: '081822334455', statusHunian: 'Pemilik Tetap', jumlahAnggota: 4, statusIuran: 'LUNAS', nominalIuran: 50000, periodeIuran: 'September 2026', tglBayar: '05 Sep 2026, 16:40 WIB' },
-      { id: '6', nama: 'Bpk. Eko Prasetyo', blok: 'Blok C3/05', phone: '081900112233', statusHunian: 'Pemilik Tetap', jumlahAnggota: 3, statusIuran: 'BELUM_BAYAR', nominalIuran: 50000, periodeIuran: 'September 2026' },
-      { id: '7', nama: 'Ibu Maya Anggraini', blok: 'Blok C3/06', phone: '081277665544', statusHunian: 'Pemilik Tetap', jumlahAnggota: 4, statusIuran: 'LUNAS', nominalIuran: 50000, periodeIuran: 'September 2026', tglBayar: '07 Sep 2026, 08:30 WIB' },
-    ];
-    setWargaList(fallback);
+    setWargaList([]);
     setIsLoadingWarga(false);
   };
 

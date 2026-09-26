@@ -64,116 +64,38 @@ export const SuperadminUangMasuk: React.FC = () => {
     setIsLoading(true);
     try {
       const res = await api.get('/kas/superadmin/uang-masuk');
-      if (res && res.transactions) {
+      if (res && Array.isArray(res.transactions)) {
         setTransactions(res.transactions);
-        setSummary(res.summary);
+        setSummary(res.summary || {
+          totalBruto: 0,
+          totalHakKasRt: 0,
+          totalCuanPlatform: 0,
+          totalFeeBankVa: 0,
+          totalTransaksi: 0,
+        });
         if (res.gatewayInfo) setGatewayInfo(res.gatewayInfo);
       } else {
-        // Fallback demo dataset
-        setFallbackDemoData();
+        setTransactions([]);
+        setSummary({
+          totalBruto: 0,
+          totalHakKasRt: 0,
+          totalCuanPlatform: 0,
+          totalFeeBankVa: 0,
+          totalTransaksi: 0,
+        });
       }
     } catch {
-      setFallbackDemoData();
+      setTransactions([]);
+      setSummary({
+        totalBruto: 0,
+        totalHakKasRt: 0,
+        totalCuanPlatform: 0,
+        totalFeeBankVa: 0,
+        totalTransaksi: 0,
+      });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const setFallbackDemoData = () => {
-    const demoItems: TransactionItem[] = [
-      {
-        id: 'TRX-9F8102A1',
-        waktu: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-        wilayah: 'RT 03 / RW 05, Kel. Sukamaju',
-        tipe: 'Iuran Bulanan (09/2026)',
-        pembayar: 'Rumah Blok A1 (Bpk. Ahmad Fauzi)',
-        metode: 'QRIS',
-        nominalPokok: 50000,
-        feePlatform: 1500,
-        feeBankVa: 0,
-        totalBayar: 51500,
-        status: 'SETTLED',
-      },
-      {
-        id: 'TRX-8B7390C2',
-        waktu: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-        wilayah: 'RT 03 / RW 05, Kel. Sukamaju',
-        tipe: 'Iuran Bulanan (09/2026)',
-        pembayar: 'Rumah Blok B4 (Ibu Siti Rahma)',
-        metode: 'VA_BCA',
-        nominalPokok: 50000,
-        feePlatform: 1500,
-        feeBankVa: 3000,
-        totalBayar: 54500,
-        status: 'SETTLED',
-      },
-      {
-        id: 'ADS-BOOST-RT03',
-        waktu: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-        wilayah: 'RT 03 / RW 05, Kel. Sukamaju',
-        tipe: 'Boost Iklan Lapak (Paket RW)',
-        pembayar: 'Dapur Bu Titin (Catering Warga)',
-        metode: 'QRIS',
-        nominalPokok: 0,
-        feePlatform: 25000,
-        feeBankVa: 0,
-        totalBayar: 25000,
-        status: 'SETTLED',
-      },
-      {
-        id: 'TRX-7C6281D4',
-        waktu: new Date(Date.now() - 1000 * 3600 * 3).toISOString(),
-        wilayah: 'RT 01 / RW 02, Kel. Mekarsari',
-        tipe: 'Iuran Bulanan (09/2026)',
-        pembayar: 'Rumah No. 12 (Bpk. Bambang)',
-        metode: 'VA_MANDIRI',
-        nominalPokok: 50000,
-        feePlatform: 1500,
-        feeBankVa: 3000,
-        totalBayar: 54500,
-        status: 'SETTLED',
-      },
-      {
-        id: 'ADS-BOOST-KEL',
-        waktu: new Date(Date.now() - 1000 * 3600 * 6).toISOString(),
-        wilayah: 'RT 02 / RW 01, Kel. Sukamaju',
-        tipe: 'Boost Iklan Lapak (Paket KELURAHAN)',
-        pembayar: 'Kopi Susu Senja RT02',
-        metode: 'QRIS',
-        nominalPokok: 0,
-        feePlatform: 50000,
-        feeBankVa: 0,
-        totalBayar: 50000,
-        status: 'SETTLED',
-      },
-      {
-        id: 'TRX-5E4170F5',
-        waktu: new Date(Date.now() - 1000 * 3600 * 12).toISOString(),
-        wilayah: 'RT 03 / RW 05, Kel. Sukamaju',
-        tipe: 'Iuran Bulanan (09/2026)',
-        pembayar: 'Rumah Blok C7 (Bpk. Joko Purnomo)',
-        metode: 'CASH',
-        nominalPokok: 50000,
-        feePlatform: 0,
-        feeBankVa: 0,
-        totalBayar: 50000,
-        status: 'SETTLED',
-      }
-    ];
-
-    const totalHakKasRt = demoItems.reduce((acc, c) => acc + c.nominalPokok, 0);
-    const totalCuanPlatform = demoItems.reduce((acc, c) => acc + c.feePlatform, 0);
-    const totalFeeBankVa = demoItems.reduce((acc, c) => acc + c.feeBankVa, 0);
-    const totalBruto = demoItems.reduce((acc, c) => acc + c.totalBayar, 0);
-
-    setTransactions(demoItems);
-    setSummary({
-      totalBruto,
-      totalHakKasRt,
-      totalCuanPlatform,
-      totalFeeBankVa,
-      totalTransaksi: demoItems.length,
-    });
   };
 
   useEffect(() => {

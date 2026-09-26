@@ -64,103 +64,16 @@ export const SuperadminApprovalPenarikan: React.FC = () => {
       const res = await api.get('/kas/superadmin/penarikan-list');
       if (Array.isArray(res)) {
         setItems(res);
+      } else if (res && Array.isArray(res.penarikanList)) {
+        setItems(res.penarikanList);
       } else {
-        setFallbackDemoData();
+        setItems([]);
       }
     } catch {
-      setFallbackDemoData();
+      setItems([]);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const setFallbackDemoData = () => {
-    const demo: WithdrawalItem[] = [
-      {
-        id: 'WD-RT03-1727334001',
-        rtId: 'seed-rt-03',
-        rtNomor: '03',
-        rwNomor: '05',
-        kelurahan: 'Sukamaju',
-        requestedById: 'user-bendahara-1',
-        requestedByName: 'Bpk. Hendra Gunawan (Bendahara RT)',
-        bankName: 'BCA',
-        nomorRekening: '8870123456',
-        namaPemilik: 'Hendra Gunawan',
-        nominalTarik: 1500000,
-        biayaAdmin: 6000,
-        totalDipotong: 1506000,
-        saldoKasSaatPengajuan: 4850000,
-        status: 'MENUNGGU_APPROVAL',
-        createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
-        auditChecks: {
-          saldoKasSaatIni: 4850000,
-          isSaldoCukup: true,
-          isPgSufficient: true,
-          estimasiSaldoPg: 8750000,
-          validitasSumberDana: '98% Terverifikasi dari Iuran Digital Warga',
-          isNamaCocok: true,
-          kesimpulanAudit: 'LAYAK_CAIR (Aman & Valid)',
-        },
-      },
-      {
-        id: 'WD-RT04-1727339900',
-        rtId: 'seed-rt-04',
-        rtNomor: '04',
-        rwNomor: '05',
-        kelurahan: 'Sukamaju',
-        requestedById: 'user-bendahara-4',
-        requestedByName: 'Bpk. Rahmat Hidayat (Ketua RT)',
-        bankName: 'Bank Mandiri',
-        nomorRekening: '1370009887711',
-        namaPemilik: 'Rahmat Hidayat',
-        nominalTarik: 2500000,
-        biayaAdmin: 6000,
-        totalDipotong: 2506000,
-        saldoKasSaatPengajuan: 3200000,
-        status: 'MENUNGGU_APPROVAL',
-        createdAt: new Date(Date.now() - 3600000 * 7).toISOString(),
-        auditChecks: {
-          saldoKasSaatIni: 3200000,
-          isSaldoCukup: true,
-          isPgSufficient: true,
-          estimasiSaldoPg: 8750000,
-          validitasSumberDana: '100% Terverifikasi dari Iuran Digital Warga',
-          isNamaCocok: true,
-          kesimpulanAudit: 'LAYAK_CAIR (Aman & Valid)',
-        },
-      },
-      {
-        id: 'WD-RT01-1727312000',
-        rtId: 'seed-rt-01',
-        rtNomor: '01',
-        rwNomor: '02',
-        kelurahan: 'Mekarsari',
-        requestedById: 'user-bendahara-2',
-        requestedByName: 'Ibu Ratna Sari (Bendahara RT 01)',
-        bankName: 'BNI',
-        nomorRekening: '0439988112',
-        namaPemilik: 'Ratna Sari',
-        nominalTarik: 2000000,
-        biayaAdmin: 6000,
-        totalDipotong: 2006000,
-        saldoKasSaatPengajuan: 6200000,
-        status: 'APPROVED',
-        catatanApproval: 'Disetujui. Dana ditransfer otomatis ke rekening RT via BI-FAST.',
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-        approvedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-        auditChecks: {
-          saldoKasSaatIni: 4194000,
-          isSaldoCukup: true,
-          isPgSufficient: true,
-          estimasiSaldoPg: 8750000,
-          validitasSumberDana: '100% Terverifikasi',
-          isNamaCocok: true,
-          kesimpulanAudit: 'SUDAH_DICAIRKAN',
-        },
-      }
-    ];
-    setItems(demo);
   };
 
   useEffect(() => {

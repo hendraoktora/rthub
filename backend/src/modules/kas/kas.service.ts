@@ -91,7 +91,7 @@ export class KasService implements OnModuleInit {
     });
   }
 
-  // In-memory store for Withdrawal Requests with pre-seeded demo entries
+  // In-memory store for Withdrawal Requests (starts empty, filled by real requests)
   private static withdrawalRequests: Array<{
     id: string;
     rtId: string;
@@ -111,46 +111,7 @@ export class KasService implements OnModuleInit {
     catatanApproval?: string;
     createdAt: string;
     approvedAt?: string;
-  }> = [
-    {
-      id: 'WD-RT03-1727334001',
-      rtId: 'seed-rt-03',
-      rtNomor: '03',
-      rwNomor: '05',
-      kelurahan: 'Sukamaju',
-      requestedById: 'user-bendahara-1',
-      requestedByName: 'Bpk. Hendra Gunawan (Bendahara RT)',
-      bankName: 'BCA',
-      nomorRekening: '8870123456',
-      namaPemilik: 'Hendra Gunawan',
-      nominalTarik: 1500000,
-      biayaAdmin: 6000,
-      totalDipotong: 1506000,
-      saldoKasSaatPengajuan: 4850000,
-      status: 'MENUNGGU_APPROVAL',
-      createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-    },
-    {
-      id: 'WD-RT01-1727312000',
-      rtId: 'seed-rt-01',
-      rtNomor: '01',
-      rwNomor: '02',
-      kelurahan: 'Mekarsari',
-      requestedById: 'user-bendahara-2',
-      requestedByName: 'Ibu Ratna Sari (Bendahara RT 01)',
-      bankName: 'Mandiri',
-      nomorRekening: '1370019283741',
-      namaPemilik: 'Ratna Sari',
-      nominalTarik: 2000000,
-      biayaAdmin: 6000,
-      totalDipotong: 2006000,
-      saldoKasSaatPengajuan: 6200000,
-      status: 'APPROVED',
-      catatanApproval: 'Disetujui. Dana berhasil dicairkan via BI-FAST oleh Superadmin.',
-      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      approvedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-    }
-  ];
+  }> = [];
 
   // Konfigurasi Tarif Fee Platform RtHub (Superadmin Configurable)
   private static platformFeeConfig = {

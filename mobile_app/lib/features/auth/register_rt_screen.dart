@@ -238,7 +238,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
     Timer? resendTimer;
     bool isSendingOtp = false;
     bool isVerifyingOtp = false;
-    String? latestDemoOtp;
+    bool hasInitialSent = false;
 
     void startTimer(StateSetter setModalState) {
       resendTimer?.cancel();
@@ -271,7 +271,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
         final res = await ApiService.sendOtp(target, channel: 'EMAIL');
         setModalState(() {
           isSendingOtp = false;
-          latestDemoOtp = res['demoOtp'];
+          hasInitialSent = true;
         });
         startTimer(setModalState);
         if (mounted) {
@@ -302,7 +302,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (modalCtx) => StatefulBuilder(
         builder: (ctx, setModalState) {
-          if (latestDemoOtp == null && !isSendingOtp && secondsRemaining == 60) {
+          if (!hasInitialSent && !isSendingOtp && secondsRemaining == 60) {
             sendOtpRequest(setModalState);
           }
 
@@ -407,20 +407,6 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // Demo Helper OTP code autofill button
-                if (latestDemoOtp != null)
-                  Center(
-                    child: TextButton.icon(
-                      onPressed: () {
-                        otpController.text = latestDemoOtp!;
-                      },
-                      icon: const Icon(Icons.touch_app_rounded, size: 16, color: AppTheme.electricBlue),
-                      label: Text(
-                        'Isi Cepat Kode Demo: $latestDemoOtp',
-                        style: const TextStyle(fontSize: 12, color: AppTheme.electricBlue, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
 
                 const SizedBox(height: 8),
                 Row(

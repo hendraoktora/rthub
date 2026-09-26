@@ -39,8 +39,9 @@ let OtpService = OtpService_1 = class OtpService {
                 secure: port === 465,
                 auth: { user, pass },
                 tls: { rejectUnauthorized: false },
+                family: 4,
             });
-            this.logger.log(`📧 SMTP Transporter initialized on ${host}:${port} (${user})`);
+            this.logger.log(`📧 SMTP Transporter initialized on ${host}:${port} (${user}) [IPv4]`);
         }
         catch (err) {
             this.logger.error('Failed to initialize SMTP Transporter:', err);
@@ -69,6 +70,7 @@ let OtpService = OtpService_1 = class OtpService {
             }
             catch (err) {
                 this.logger.error(`❌ [EMAIL OTP ERROR] Gagal mengirim email ke ${cleanTarget}: ${err?.message || err}`);
+                throw new common_1.BadRequestException(`Gagal mengirim email OTP ke ${cleanTarget}. Pastikan alamat email benar dan aktif. (${err?.message || 'SMTP Error'})`);
             }
         }
         else {
@@ -76,11 +78,10 @@ let OtpService = OtpService_1 = class OtpService {
         }
         return {
             success: true,
-            message: `Kode OTP 6-digit berhasil dikirim ke ${effectiveChannel === 'WHATSAPP' ? 'nomor WhatsApp' : 'email'} ${masked}.`,
+            message: `Kode OTP 6-digit berhasil dikirimkan ke email ${masked}. Silakan periksa Kotak Masuk (Inbox) atau folder Spam email Anda.`,
             targetMasked: masked,
             channel: effectiveChannel,
             expiresInSeconds: 300,
-            demoOtp: code,
         };
     }
     async sendEmailOtp(to, code, purpose) {
@@ -102,25 +103,32 @@ let OtpService = OtpService_1 = class OtpService {
             to,
             subject: `Kode Verifikasi RtHub: ${code}`,
             html: `
-        <div style="font-family: 'Plus Jakarta Sans', Arial, -apple-system, BlinkMacSystemFont, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
-          <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 32px 24px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">RtHub</h1>
-            <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Platform Digital Manajemen Rukun Tetangga</p>
+        <div style="font-family: 'Plus Jakarta Sans', Arial, -apple-system, BlinkMacSystemFont, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
+          <div style="background: linear-gradient(135deg, #091328 0%, #1e293b 100%); padding: 36px 24px; text-align: center;">
+            <div style="margin-bottom: 14px;">
+              <img src="https://rthub.id/rthub_logo.png" alt="RtHub Logo" width="130" style="display: inline-block; max-width: 130px; height: auto;" />
+            </div>
+            <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">RtHub Indonesia</h1>
+            <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Platform Digital Manajemen Rukun Tetangga & Warga</p>
           </div>
-          <div style="padding: 32px 24px; text-align: center;">
+          <div style="padding: 36px 28px; text-align: center;">
+            <div style="display: inline-block; background: #eff6ff; color: #2563eb; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 999px; margin-bottom: 16px; border: 1px solid #bfdbfe;">
+              🔐 KODE KEAMANAN AKUN
+            </div>
             <h2 style="color: #0f172a; margin: 0 0 12px; font-size: 18px; font-weight: 700;">${purposeTitle}</h2>
             <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-              Gunakan kode OTP berikut untuk menyelesaikan proses verifikasi di aplikasi RtHub. Kode ini hanya berlaku selama <strong>5 menit</strong>.
+              Gunakan 6-digit kode OTP di bawah ini untuk menyelesaikan pendaftaran Anda di aplikasi <strong>RtHub</strong>. Kode ini hanya berlaku selama <strong>5 menit</strong>.
             </p>
-            <div style="background: #f0fdf4; border: 2px dashed #22c55e; border-radius: 12px; padding: 18px 24px; display: inline-block; margin: 0 auto 24px;">
-              <span style="font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #15803d; font-family: monospace;">${code}</span>
+            <div style="background: #f0fdf4; border: 2px dashed #22c55e; border-radius: 14px; padding: 20px 28px; display: inline-block; margin: 0 auto 24px;">
+              <span style="font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #15803d; font-family: monospace;">${code}</span>
             </div>
             <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 0;">
-              Demi keamanan, <strong>jangan bagikan kode ini</strong> kepada siapa pun termasuk pengurus RT. Jika Anda tidak merasa meminta kode ini, abaikan email ini.
+              Demi keamanan akun Anda, <strong>jangan bagikan kode ini</strong> kepada siapa pun. Jika Anda tidak merasa melakukan permintaan verifikasi ini, abaikan email ini.
             </p>
           </div>
-          <div style="background: #f8fafc; padding: 16px 24px; text-align: center; border-top: 1px solid #e2e8f0;">
-            <p style="color: #94a3b8; font-size: 11px; margin: 0;">© 2026 RtHub Indonesia · Smart Neighborhood Ecosystem</p>
+          <div style="background: #f8fafc; padding: 18px 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="color: #64748b; font-size: 12px; margin: 0 0 4px; font-weight: 600;">RtHub — Smart Neighborhood Ecosystem</p>
+            <p style="color: #94a3b8; font-size: 11px; margin: 0;">Portal Komunitas & Manajemen Lingkungan RT/RW se-Indonesia · <a href="https://rthub.id" style="color: #2563eb; text-decoration: none;">rthub.id</a></p>
           </div>
         </div>
       `,

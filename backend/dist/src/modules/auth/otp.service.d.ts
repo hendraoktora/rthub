@@ -10,7 +10,6 @@ export declare class OtpService {
         targetMasked: string;
         channel: "WHATSAPP" | "EMAIL";
         expiresInSeconds: number;
-        demoOtp: string;
     }>;
     private sendEmailOtp;
     verifyOtp(target: string, code: string): Promise<boolean>;

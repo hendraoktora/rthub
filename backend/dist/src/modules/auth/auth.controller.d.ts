@@ -19,7 +19,6 @@ export declare class AuthController {
         targetMasked: string;
         channel: "WHATSAPP" | "EMAIL";
         expiresInSeconds: number;
-        demoOtp: string;
     }>;
     verifyOtp(body: {
         target: string;

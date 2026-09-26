@@ -2,20 +2,34 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 
+const appRootDir = path.resolve(__dirname, '../../../../');
+
 function writeEmailLog(message: string) {
   try {
     const timestamp = new Date().toISOString();
-    const logFile = path.join(process.cwd(), 'email_log.txt');
-    fs.appendFileSync(logFile, `[${timestamp}] ${message}\n`);
+    const logLine = `[${timestamp}] ${message}\n`;
+    const targets = [
+      path.join(appRootDir, 'email_log.txt'),
+      path.join(process.cwd(), 'email_log.txt'),
+    ];
+    for (const t of targets) {
+      try { fs.appendFileSync(t, logLine); } catch (_) {}
+    }
   } catch (_) {}
 }
 
 function writeErrorLog(message: string, error?: any) {
   try {
     const timestamp = new Date().toISOString();
-    const logFile = path.join(process.cwd(), 'error_log.txt');
     const details = error?.stack || error?.message || (typeof error === 'object' ? JSON.stringify(error) : error) || '';
-    fs.appendFileSync(logFile, `[${timestamp}] ${message} ${details}\n`);
+    const logLine = `[${timestamp}] ${message} ${details}\n`;
+    const targets = [
+      path.join(appRootDir, 'error_log.txt'),
+      path.join(process.cwd(), 'error_log.txt'),
+    ];
+    for (const t of targets) {
+      try { fs.appendFileSync(t, logLine); } catch (_) {}
+    }
   } catch (_) {}
 }
 
@@ -40,21 +54,36 @@ export class OtpService {
   private initMailTransporter() {
     try {
       let nodemailer: any;
-      try {
-        nodemailer = require('nodemailer');
-      } catch (e1: any) {
+      const candidatePaths = [
+        'nodemailer',
+        path.resolve(__dirname, '../../../../node_modules/nodemailer'),
+        path.resolve(__dirname, '../../../../nodemailer'),
+        path.resolve(__dirname, '../../../node_modules/nodemailer'),
+        path.resolve(__dirname, '../../../nodemailer'),
+        path.resolve(__dirname, '../../node_modules/nodemailer'),
+        path.resolve(__dirname, '../../nodemailer'),
+        path.resolve(__dirname, '../node_modules/nodemailer'),
+        path.resolve(__dirname, '../nodemailer'),
+        path.resolve(__dirname, 'nodemailer'),
+        path.join(process.cwd(), 'node_modules', 'nodemailer'),
+        path.join(process.cwd(), 'nodemailer'),
+      ];
+
+      for (const p of candidatePaths) {
         try {
-          nodemailer = require(path.join(process.cwd(), 'nodemailer'));
-        } catch (e2: any) {
-          try {
-            nodemailer = require(path.join(process.cwd(), 'node_modules', 'nodemailer'));
-          } catch (e3: any) {
-            this.logger.warn('Module nodemailer belum terpasang.');
-            writeErrorLog('Nodemailer belum terpasang di node_modules maupun folder root:', { e1: e1?.message, e2: e2?.message, e3: e3?.message });
-            writeEmailLog('GAGAL INIT SMTP: Module nodemailer tidak ditemukan.');
-            return;
+          nodemailer = require(p);
+          if (nodemailer) {
+            writeEmailLog(`Nodemailer berhasil dimuat dari path: ${p}`);
+            break;
           }
-        }
+        } catch (_) {}
+      }
+
+      if (!nodemailer) {
+        this.logger.warn('Module nodemailer belum terpasang.');
+        writeErrorLog('Nodemailer tidak ditemukan di seluruh candidate paths');
+        writeEmailLog('GAGAL INIT SMTP: Module nodemailer tidak ditemukan.');
+        return;
       }
 
       const host = process.env.SMTP_HOST || 'agile.jagoanhosting.id';

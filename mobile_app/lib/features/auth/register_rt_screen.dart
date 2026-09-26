@@ -322,9 +322,10 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (modalCtx) => StatefulBuilder(
         builder: (ctx, setModalState) {
-          if (!hasInitialSent && !isSendingOtp) {
+          if (!hasInitialSent) {
+            hasInitialSent = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (isModalOpen && !hasInitialSent && !isSendingOtp) {
+              if (isModalOpen) {
                 sendOtpRequest(setModalState);
               }
             });

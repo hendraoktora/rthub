@@ -232,18 +232,23 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
   }
 
   void _showOtpVerificationModal() {
-    String currentChannel = 'EMAIL';
     final otpController = TextEditingController();
-    int secondsRemaining = 60;
+    int secondsRemaining = 0;
     Timer? resendTimer;
     bool isSendingOtp = false;
     bool isVerifyingOtp = false;
     bool hasInitialSent = false;
+    bool isModalOpen = true;
 
     void startTimer(StateSetter setModalState) {
       resendTimer?.cancel();
-      secondsRemaining = 60;
+      if (!isModalOpen) return;
+      setModalState(() => secondsRemaining = 60);
       resendTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+        if (!isModalOpen) {
+          t.cancel();
+          return;
+        }
         if (secondsRemaining > 0) {
           setModalState(() => secondsRemaining--);
         } else {
@@ -253,10 +258,16 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
     }
 
     Future<void> sendOtpRequest(StateSetter setModalState) async {
+      if (!isModalOpen) return;
       setModalState(() => isSendingOtp = true);
       final target = _email.text.trim();
       if (target.isEmpty) {
-        setModalState(() => isSendingOtp = false);
+        if (isModalOpen) {
+          setModalState(() {
+            isSendingOtp = false;
+            secondsRemaining = 0;
+          });
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -269,11 +280,13 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
       }
       try {
         final res = await ApiService.sendOtp(target, channel: 'EMAIL');
-        setModalState(() {
-          isSendingOtp = false;
-          hasInitialSent = true;
-        });
-        startTimer(setModalState);
+        if (isModalOpen) {
+          setModalState(() {
+            isSendingOtp = false;
+            hasInitialSent = true;
+          });
+          startTimer(setModalState);
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -283,7 +296,12 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
           );
         }
       } catch (e) {
-        setModalState(() => isSendingOtp = false);
+        if (isModalOpen) {
+          setModalState(() {
+            isSendingOtp = false;
+            secondsRemaining = 0;
+          });
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -302,8 +320,12 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (modalCtx) => StatefulBuilder(
         builder: (ctx, setModalState) {
-          if (!hasInitialSent && !isSendingOtp && secondsRemaining == 60) {
-            sendOtpRequest(setModalState);
+          if (!hasInitialSent && !isSendingOtp) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (isModalOpen && !hasInitialSent && !isSendingOtp) {
+                sendOtpRequest(setModalState);
+              }
+            });
           }
 
           final targetEmail = _email.text.trim();
@@ -477,7 +499,10 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
           );
         },
       ),
-    );
+    ).whenComplete(() {
+      isModalOpen = false;
+      resendTimer?.cancel();
+    });
   }
 
   void _executeFinalRegistration() async {

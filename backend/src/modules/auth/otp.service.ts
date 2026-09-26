@@ -28,7 +28,7 @@ export class OtpService {
         return;
       }
 
-      const host = process.env.SMTP_HOST || 'mail.rthub.id';
+      const host = process.env.SMTP_HOST || 'agile.jagoanhosting.id';
       const port = Number(process.env.SMTP_PORT) || 465;
       const user = process.env.SMTP_USER || 'no-reply@rthub.id';
       const pass = process.env.SMTP_PASS || 'M@!LrTHu8!';

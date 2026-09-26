@@ -155,6 +155,28 @@ export declare class KasController {
             createdAt: string;
             approvedAt?: string;
         };
+        disbursement: {
+            success: boolean;
+            isSimulation: boolean;
+            disbursementRef: string;
+            status: string;
+            message: string;
+            raw?: undefined;
+        } | {
+            success: boolean;
+            disbursementRef: any;
+            status: string;
+            message: any;
+            raw: any;
+            isSimulation?: undefined;
+        } | {
+            success: boolean;
+            isSimulation: boolean;
+            status: string;
+            message: string;
+            disbursementRef?: undefined;
+            raw?: undefined;
+        };
     }>;
     rejectPenarikan(body: {
         penarikanId: string;
@@ -183,6 +205,14 @@ export declare class KasController {
         };
     }>;
     getSuperadminUangMasuk(): Promise<{
+        gatewayInfo: {
+            provider: string;
+            configured: boolean;
+            environment: string;
+            merchantCode: string;
+            callbackUrl: string;
+            returnUrl: string;
+        };
         summary: {
             totalBruto: number;
             totalHakKasRt: number;

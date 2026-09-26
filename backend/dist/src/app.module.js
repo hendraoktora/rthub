@@ -24,6 +24,7 @@ const laporan_module_1 = require("./modules/laporan/laporan.module");
 const notification_module_1 = require("./modules/notification/notification.module");
 const gempa_module_1 = require("./modules/gempa/gempa.module");
 const addons_module_1 = require("./modules/addons/addons.module");
+const payment_module_1 = require("./modules/payment/payment.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -45,6 +46,7 @@ exports.AppModule = AppModule = __decorate([
             cctv_module_1.CctvModule,
             laporan_module_1.LaporanModule,
             addons_module_1.AddonsModule,
+            payment_module_1.PaymentModule,
         ],
         controllers: [app_controller_1.AppController],
     })

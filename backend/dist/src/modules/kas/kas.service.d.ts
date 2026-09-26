@@ -1,9 +1,11 @@
 import { OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TipeKas } from '@prisma/client';
+import { DuitkuService } from '../payment/duitku.service';
 export declare class KasService implements OnModuleInit {
     private prisma;
-    constructor(prisma: PrismaService);
+    private duitkuService;
+    constructor(prisma: PrismaService, duitkuService: DuitkuService);
     onModuleInit(): void;
     getKasSummary(rtId?: string): Promise<{
         saldoKas: number;
@@ -164,6 +166,28 @@ export declare class KasService implements OnModuleInit {
             createdAt: string;
             approvedAt?: string;
         };
+        disbursement: {
+            success: boolean;
+            isSimulation: boolean;
+            disbursementRef: string;
+            status: string;
+            message: string;
+            raw?: undefined;
+        } | {
+            success: boolean;
+            disbursementRef: any;
+            status: string;
+            message: any;
+            raw: any;
+            isSimulation?: undefined;
+        } | {
+            success: boolean;
+            isSimulation: boolean;
+            status: string;
+            message: string;
+            disbursementRef?: undefined;
+            raw?: undefined;
+        };
     }>;
     rejectPenarikan(penarikanId: string, alasan?: string): Promise<{
         message: string;
@@ -189,6 +213,14 @@ export declare class KasService implements OnModuleInit {
         };
     }>;
     getSuperadminUangMasuk(): Promise<{
+        gatewayInfo: {
+            provider: string;
+            configured: boolean;
+            environment: string;
+            merchantCode: string;
+            callbackUrl: string;
+            returnUrl: string;
+        };
         summary: {
             totalBruto: number;
             totalHakKasRt: number;

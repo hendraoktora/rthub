@@ -47,11 +47,13 @@ exports.KasService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const client_1 = require("@prisma/client");
+const duitku_service_1 = require("../payment/duitku.service");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 let KasService = KasService_1 = class KasService {
-    constructor(prisma) {
+    constructor(prisma, duitkuService) {
         this.prisma = prisma;
+        this.duitkuService = duitkuService;
     }
     onModuleInit() {
         KasService_1.loadFromDisk();
@@ -274,13 +276,22 @@ let KasService = KasService_1 = class KasService {
             nominal: item.totalDipotong,
             keterangan: `Pencairan Kas RT ke rekening ${item.bankName} ${item.nomorRekening} a/n ${item.namaPemilik} (Nominal: Rp ${item.nominalTarik.toLocaleString('id-ID')} + Biaya Platform: Rp ${item.biayaAdmin.toLocaleString('id-ID')}) - Approved by Superadmin`,
         });
+        const payoutRes = await this.duitkuService.createDisbursement({
+            withdrawalId: item.id,
+            bankCode: item.bankName.toUpperCase(),
+            bankAccount: item.nomorRekening,
+            accountHolderName: item.namaPemilik,
+            amount: item.nominalTarik,
+            purpose: `Pencairan Kas RT ${item.rtNomor} RW ${item.rwNomor}`,
+        });
         item.status = 'APPROVED';
-        item.catatanApproval = 'Pencairan disetujui & dieksekusi oleh Superadmin. Dana telah diteruskan ke rekening RT.';
+        item.catatanApproval = `Pencairan disetujui Superadmin. ${payoutRes.message} (Ref: ${payoutRes.disbursementRef})`;
         item.approvedAt = new Date().toISOString();
         KasService_1.saveToDisk();
         return {
-            message: 'Pencairan kas RT berhasil disetujui! Saldo kas RT telah disesuaikan dan dana diteruskan.',
+            message: 'Pencairan kas RT berhasil disetujui! Saldo kas RT telah disesuaikan dan instruksi payout Duitku diteruskan.',
             penarikan: item,
+            disbursement: payoutRes,
         };
     }
     async rejectPenarikan(penarikanId, alasan) {
@@ -378,6 +389,7 @@ let KasService = KasService_1 = class KasService {
         }
         mappedTransactions.sort((a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime());
         return {
+            gatewayInfo: this.duitkuService.getGatewayStatus(),
             summary: {
                 totalBruto,
                 totalHakKasRt,
@@ -390,46 +402,7 @@ let KasService = KasService_1 = class KasService {
     }
 };
 exports.KasService = KasService;
-KasService.withdrawalRequests = [
-    {
-        id: 'WD-RT03-1727334001',
-        rtId: 'seed-rt-03',
-        rtNomor: '03',
-        rwNomor: '05',
-        kelurahan: 'Sukamaju',
-        requestedById: 'user-bendahara-1',
-        requestedByName: 'Bpk. Hendra Gunawan (Bendahara RT)',
-        bankName: 'BCA',
-        nomorRekening: '8870123456',
-        namaPemilik: 'Hendra Gunawan',
-        nominalTarik: 1500000,
-        biayaAdmin: 6000,
-        totalDipotong: 1506000,
-        saldoKasSaatPengajuan: 4850000,
-        status: 'MENUNGGU_APPROVAL',
-        createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-    },
-    {
-        id: 'WD-RT01-1727312000',
-        rtId: 'seed-rt-01',
-        rtNomor: '01',
-        rwNomor: '02',
-        kelurahan: 'Mekarsari',
-        requestedById: 'user-bendahara-2',
-        requestedByName: 'Ibu Ratna Sari (Bendahara RT 01)',
-        bankName: 'Mandiri',
-        nomorRekening: '1370019283741',
-        namaPemilik: 'Ratna Sari',
-        nominalTarik: 2000000,
-        biayaAdmin: 6000,
-        totalDipotong: 2006000,
-        saldoKasSaatPengajuan: 6200000,
-        status: 'APPROVED',
-        catatanApproval: 'Disetujui. Dana berhasil dicairkan via BI-FAST oleh Superadmin.',
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-        approvedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-    }
-];
+KasService.withdrawalRequests = [];
 KasService.platformFeeConfig = {
     feeTransaksiIuran: 1500,
     feePenarikanKas: 6000,
@@ -439,6 +412,7 @@ KasService.platformFeeConfig = {
 };
 exports.KasService = KasService = KasService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        duitku_service_1.DuitkuService])
 ], KasService);
 //# sourceMappingURL=kas.service.js.map

@@ -10,11 +10,13 @@ exports.KasModule = void 0;
 const common_1 = require("@nestjs/common");
 const kas_service_1 = require("./kas.service");
 const kas_controller_1 = require("./kas.controller");
+const payment_module_1 = require("../payment/payment.module");
 let KasModule = class KasModule {
 };
 exports.KasModule = KasModule;
 exports.KasModule = KasModule = __decorate([
     (0, common_1.Module)({
+        imports: [payment_module_1.PaymentModule],
         controllers: [kas_controller_1.KasController],
         providers: [kas_service_1.KasService],
         exports: [kas_service_1.KasService],

@@ -62,11 +62,11 @@ export declare class TagihanController {
             adminFee: import("@prisma/client/runtime/library").Decimal;
             totalBayar: import("@prisma/client/runtime/library").Decimal;
             paidAt: Date | null;
-            tagihanId: string;
             paymentMethod: import(".prisma/client").$Enums.PaymentMethod;
             paymentCode: string | null;
             referenceId: string | null;
             buktiBayarUrl: string | null;
+            tagihanId: string;
         }[];
     } & {
         id: string;

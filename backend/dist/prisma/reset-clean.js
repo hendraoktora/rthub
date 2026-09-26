@@ -36,21 +36,51 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcryptjs"));
 const prisma = new client_1.PrismaClient();
-async function main() {
-    console.log('🌱 Ensuring clean Superadmin user...');
+async function cleanReset() {
+    console.log('🧹 Mulai pembersihan total database RtHub...');
+    await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS = 0;');
+    const tables = [
+        'SystemFeeLog',
+        'TransaksiPembayaran',
+        'TagihanWarga',
+        'MasterTagihan',
+        'KasRT',
+        'LaporanWarga',
+        'AlertPanic',
+        'AbsensiSecurity',
+        'Berita',
+        'AgendaKegiatan',
+        'LapakProduk',
+        'InfoKontrakan',
+        'CCTV',
+        'AnggotaKeluarga',
+        'KartuKeluarga',
+        'Profile',
+        'Rumah',
+        'User',
+        'RT',
+        'RW',
+        'Kelurahan',
+    ];
+    for (const table of tables) {
+        try {
+            await prisma.$executeRawUnsafe(`TRUNCATE TABLE \`${table}\`;`);
+            console.log(`  ✓ Table \`${table}\` dikosongkan.`);
+        }
+        catch (e) {
+            await prisma.$executeRawUnsafe(`DELETE FROM \`${table}\`;`);
+            console.log(`  ✓ Table \`${table}\` dibersihkan (via DELETE).`);
+        }
+    }
+    await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS = 1;');
+    console.log('✅ Seluruh tabel berhasil dibersihkan (0 data dummy).');
     const salt = await bcrypt.genSalt(10);
-    const defaultPasswordHash = await bcrypt.hash('P@ssw0rd123', salt);
-    const superadmin = await prisma.user.upsert({
-        where: { phone: '085155163110' },
-        update: {
-            email: 'admin@rthub.id',
-            passwordHash: defaultPasswordHash,
-            role: client_1.Role.SUPERADMIN,
-        },
-        create: {
+    const passwordHash = await bcrypt.hash('P@ssw0rd123', salt);
+    const superadmin = await prisma.user.create({
+        data: {
             phone: '085155163110',
             email: 'admin@rthub.id',
-            passwordHash: defaultPasswordHash,
+            passwordHash,
             role: client_1.Role.SUPERADMIN,
             profile: {
                 create: {
@@ -59,14 +89,19 @@ async function main() {
             },
         },
     });
-    console.log('✅ Clean Superadmin created/verified: admin@rthub.id / 085155163110');
+    console.log('👑 Superadmin Berhasil Dibuat:');
+    console.log(`   ID: ${superadmin.id}`);
+    console.log('   Phone: 085155163110');
+    console.log('   Email: admin@rthub.id');
+    console.log('   Password: P@ssw0rd123');
+    console.log('   Role: SUPERADMIN');
 }
-main()
+cleanReset()
     .catch((e) => {
-    console.error('❌ Seeding error:', e);
+    console.error('❌ Error saat reset database:', e);
     process.exit(1);
 })
     .finally(async () => {
     await prisma.$disconnect();
 });
-//# sourceMappingURL=seed.js.map
+//# sourceMappingURL=reset-clean.js.map

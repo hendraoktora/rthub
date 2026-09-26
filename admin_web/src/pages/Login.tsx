@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Phone, ArrowRight, UserCheck, Crown, Wallet, Shield, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Lock, Phone, ArrowRight, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
 import { api, UserSession } from '../services/api';
 import { RtHubLogo } from '../components/RtHubLogo';
 
@@ -9,8 +9,8 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
-  const [username, setUsername] = useState('081111111111');
-  const [password, setPassword] = useState('Password123!');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -31,19 +31,13 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
     }
   };
 
-  const handleQuickFill = (phone: string) => {
-    setUsername(phone);
-    setPassword('Password123!');
-    setErrorMsg(null);
-  };
-
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
       {/* Background Glows */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="w-full max-w-lg bg-slate-800/80 backdrop-blur-xl border border-slate-700/70 p-8 rounded-3xl shadow-2xl relative z-10 text-white">
+      <div className="w-full max-w-md bg-slate-800/80 backdrop-blur-xl border border-slate-700/70 p-8 rounded-3xl shadow-2xl relative z-10 text-white">
         {onBack && (
           <button
             type="button"
@@ -60,8 +54,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
           <div className="mb-2">
             <RtHubLogo size={52} theme="dark" showWordmark={false} />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">RtHub Admin Portal</h2>
-          <p className="text-xs text-slate-400 mt-1">Sistem Manajemen Lingkungan RT/RW & Platform Multi-Tenant (Live DB)</p>
+          <h2 className="text-2xl font-bold tracking-tight">RtHub Portal</h2>
+          <p className="text-xs text-slate-400 mt-1">Masuk untuk mengelola administrasi lingkungan</p>
         </div>
 
         {/* Error Alert */}
@@ -71,53 +65,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
             <span>{errorMsg}</span>
           </div>
         )}
-
-        {/* 1-Click Demo Quick Logins per Real DB Accounts */}
-        <div className="mb-6 bg-slate-900/60 p-4 rounded-2xl border border-slate-700/50">
-          <p className="text-[10px] uppercase font-bold text-slate-400 mb-2.5 tracking-wider">⚡ 1-Click Quick Isi Akun Real DB:</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickFill('081111111111')}
-              className="p-2.5 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-blue-300 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition"
-            >
-              <Crown size={16} />
-              <span>1. Superadmin</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('081234567890')}
-              className="p-2.5 bg-emerald-600/20 border border-emerald-500/30 hover:bg-emerald-600/30 text-emerald-300 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition"
-            >
-              <UserCheck size={16} />
-              <span>2. RT 03 Sukamaju</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('085280039433')}
-              className="p-2.5 bg-amber-600/20 border border-amber-500/30 hover:bg-amber-600/30 text-amber-300 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition"
-            >
-              <UserCheck size={16} />
-              <span>3. RT 04 Kota Baru (Baru)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('081398765432')}
-              className="p-2.5 bg-purple-600/20 border border-purple-500/30 hover:bg-purple-600/30 text-purple-300 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition"
-            >
-              <Wallet size={16} />
-              <span>4. Bendahara RT</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('087812345678')}
-              className="p-2.5 bg-cyan-600/20 border border-cyan-500/30 hover:bg-cyan-600/30 text-cyan-300 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition sm:col-span-2"
-            >
-              <Shield size={16} />
-              <span>5. Satpam Pos Jaga</span>
-            </button>
-          </div>
-        </div>
 
         {/* Form Login Real */}
         <form onSubmit={handleLoginSubmit} className="space-y-4">

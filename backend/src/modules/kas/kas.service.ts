@@ -1,12 +1,16 @@
 import { Injectable, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TipeKas } from '@prisma/client';
+import { DuitkuService } from '../payment/duitku.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
 @Injectable()
 export class KasService implements OnModuleInit {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private duitkuService: DuitkuService,
+  ) {}
 
   onModuleInit() {
     KasService.loadFromDisk();
@@ -363,14 +367,25 @@ export class KasService implements OnModuleInit {
       keterangan: `Pencairan Kas RT ke rekening ${item.bankName} ${item.nomorRekening} a/n ${item.namaPemilik} (Nominal: Rp ${item.nominalTarik.toLocaleString('id-ID')} + Biaya Platform: Rp ${item.biayaAdmin.toLocaleString('id-ID')}) - Approved by Superadmin`,
     });
 
+    // 2. Eksekusi transfer otomatis via Duitku Disbursement / Payout API
+    const payoutRes = await this.duitkuService.createDisbursement({
+      withdrawalId: item.id,
+      bankCode: item.bankName.toUpperCase(),
+      bankAccount: item.nomorRekening,
+      accountHolderName: item.namaPemilik,
+      amount: item.nominalTarik,
+      purpose: `Pencairan Kas RT ${item.rtNomor} RW ${item.rwNomor}`,
+    });
+
     item.status = 'APPROVED';
-    item.catatanApproval = 'Pencairan disetujui & dieksekusi oleh Superadmin. Dana telah diteruskan ke rekening RT.';
+    item.catatanApproval = `Pencairan disetujui Superadmin. ${payoutRes.message} (Ref: ${payoutRes.disbursementRef})`;
     item.approvedAt = new Date().toISOString();
     KasService.saveToDisk();
 
     return {
-      message: 'Pencairan kas RT berhasil disetujui! Saldo kas RT telah disesuaikan dan dana diteruskan.',
+      message: 'Pencairan kas RT berhasil disetujui! Saldo kas RT telah disesuaikan dan instruksi payout Duitku diteruskan.',
       penarikan: item,
+      disbursement: payoutRes,
     };
   }
 
@@ -501,6 +516,7 @@ export class KasService implements OnModuleInit {
     mappedTransactions.sort((a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime());
 
     return {
+      gatewayInfo: this.duitkuService.getGatewayStatus(),
       summary: {
         totalBruto,
         totalHakKasRt,

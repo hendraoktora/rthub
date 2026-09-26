@@ -497,4 +497,72 @@ export class DuitkuService {
       },
     ];
   }
+
+  /**
+   * Payout / Disbursement ke rekening bank bendahara RT (Penarikan Kas RT)
+   */
+  async createDisbursement(dto: {
+    withdrawalId: string;
+    bankCode: string;
+    bankAccount: string;
+    accountHolderName: string;
+    amount: number;
+    purpose: string;
+  }) {
+    if (!this.isConfigured()) {
+      this.logger.log(
+        `[DUITKU DISBURSEMENT SIMULATION] Transfer Rp ${dto.amount} ke ${dto.bankCode} ${dto.bankAccount} a/n ${dto.accountHolderName}`
+      );
+      return {
+        success: true,
+        isSimulation: true,
+        disbursementRef: `SIM-DISB-${Date.now()}`,
+        status: 'SUCCESS',
+        message: 'Pencairan dana kas disimulasikan berhasil (Mode Sandbox).',
+      };
+    }
+
+    const rawSignature = `${this.merchantCode}${dto.amount}${dto.bankAccount}${this.apiKey}`;
+    const signature = crypto.createHash('sha256').update(rawSignature).digest('hex');
+
+    const payload = {
+      merchantCode: this.merchantCode,
+      amount: dto.amount,
+      bankCode: dto.bankCode,
+      bankAccount: dto.bankAccount,
+      custRefNumber: dto.withdrawalId,
+      purpose: dto.purpose,
+      senderId: this.merchantCode,
+      signature,
+    };
+
+    try {
+      const response = await fetch(`${this.baseUrl}/disbursement/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-DUITKU-MERCHANT-CODE': this.merchantCode,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      this.logger.log(`[DUITKU DISBURSEMENT RESPONSE] -> ${JSON.stringify(result)}`);
+      return {
+        success: result.responseCode === '00' || result.statusCode === '00',
+        disbursementRef: result.reference || result.disburseId || dto.withdrawalId,
+        status: (result.responseCode === '00' || result.statusCode === '00') ? 'SUCCESS' : 'PENDING',
+        message: result.responseMessage || result.statusMessage || 'Instruksi transfer dana diproses Duitku.',
+        raw: result,
+      };
+    } catch (err: any) {
+      this.logger.error(`[DUITKU DISBURSEMENT ERROR] ${err.message}`, err.stack);
+      return {
+        success: false,
+        isSimulation: false,
+        status: 'FAILED',
+        message: `Gagal memproses payout Duitku: ${err.message}`,
+      };
+    }
+  }
 }

@@ -51,6 +51,14 @@ export const SuperadminUangMasuk: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTipe, setFilterTipe] = useState('SEMUA');
   const [filterMetode, setFilterMetode] = useState('SEMUA');
+  const [gatewayInfo, setGatewayInfo] = useState<any>({
+    provider: 'Duitku',
+    configured: false,
+    environment: 'sandbox',
+    merchantCode: 'Belum diatur',
+    callbackUrl: 'https://api.rthub.id/api/payment/duitku/callback',
+    returnUrl: 'https://rthub.id/payment-success',
+  });
 
   const loadData = async () => {
     setIsLoading(true);
@@ -59,6 +67,7 @@ export const SuperadminUangMasuk: React.FC = () => {
       if (res && res.transactions) {
         setTransactions(res.transactions);
         setSummary(res.summary);
+        if (res.gatewayInfo) setGatewayInfo(res.gatewayInfo);
       } else {
         // Fallback demo dataset
         setFallbackDemoData();
@@ -213,6 +222,41 @@ export const SuperadminUangMasuk: React.FC = () => {
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
           Refresh Data
         </button>
+      </div>
+
+      {/* Payment Gateway Status Banner */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-2.5 rounded-xl ${gatewayInfo.configured ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-900">Payment Gateway: Duitku</span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                gatewayInfo.configured
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-amber-100 text-amber-700'
+              }`}>
+                {gatewayInfo.configured ? `TERHUBUNG (${gatewayInfo.environment.toUpperCase()})` : 'MODE SANDBOX / SIMULASI'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Merchant Code: <span className="font-mono font-semibold text-slate-700">{gatewayInfo.merchantCode}</span> • Webhook: <code className="text-[11px] bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-mono">{gatewayInfo.callbackUrl}</code>
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 self-end md:self-auto">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(gatewayInfo.callbackUrl);
+              alert('Callback URL Webhook berhasil disalin ke clipboard!');
+            }}
+            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 transition-all flex items-center gap-1.5"
+          >
+            Salin Webhook URL
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}

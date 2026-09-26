@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f2">
+  <title>Pembayaran Berhasil — RT Hub Indonesia</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%232261e8'/%3E%3Cpath d='m9 20 11-10 11 10v12H16V21h9v11' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f8f2;
+      --panel: #ffffff;
+      --primary: #2261e8;
+      --success: #059669;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --heading: 'Space Grotesk', sans-serif;
+      --body: 'Plus Jakarta Sans', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      max-width: 480px;
+      width: 100%;
+      padding: 40px 32px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
+      animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .icon-wrapper {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 20px;
+      background: #ecfdf5;
+      border: 2px solid #a7f3d0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--success);
+      box-shadow: 0 8px 24px rgba(5, 150, 105, 0.15);
+    }
+    .icon-wrapper svg {
+      width: 40px;
+      height: 40px;
+      stroke-width: 2.4;
+    }
+    h1 {
+      font-family: var(--heading);
+      font-size: 26px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .detail-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      text-align: left;
+      margin-bottom: 26px;
+      font-size: 12.5px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+      padding-top: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      color: #0f172a;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #ecfdf5;
+      color: var(--success);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 48px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(34, 97, 232, 0.3);
+      margin-bottom: 10px;
+    }
+    .btn-primary:hover {
+      background: #184abd;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+    .footer-text {
+      margin-top: 24px;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="icon-wrapper">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+      </svg>
+    </div>
+
+    <h1>Pembayaran Berhasil!</h1>
+    <p class="subtitle">
+      Transaksi Anda telah diverifikasi oleh Payment Gateway Duitku dan otomatis tercatat di kas RT serta sistem platform RT Hub.
+    </p>
+
+    <div class="detail-box">
+      <div class="detail-row">
+        <span style="color: var(--muted);">Status Pembayaran</span>
+        <span class="badge">LUNAS / BERHASIL</span>
+      </div>
+      <div class="detail-row">
+        <span style="color: var(--muted);">Metode</span>
+        <span id="txt-method">QRIS / Virtual Account</span>
+      </div>
+      <div class="detail-row">
+        <span style="color: var(--muted);">No. Referensi</span>
+        <span id="txt-ref" style="font-family: monospace; font-size: 11px;">RTHUB-PAY-SUCCESS</span>
+      </div>
+      <div class="detail-row">
+        <span>Keterangan</span>
+        <span style="color: var(--success);">Kas RT & Fee Terbagi Otomatis</span>
+      </div>
+    </div>
+
+    <a href="/" class="btn btn-primary">Kembali ke Beranda RT Hub</a>
+    <a href="/RTHub-Latest-Release.apk" class="btn btn-secondary">Unduh / Buka Aplikasi Mobile</a>
+
+    <p class="footer-text">
+      RT Hub Indonesia • Terhubung Resmi dengan Payment Gateway Duitku
+    </p>
+  </div>
+
+  <script>
+    // Ambil parameter jika Duitku menyertakan query string
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('merchantOrderId') || urlParams.get('order_id');
+    const ref = urlParams.get('reference') || urlParams.get('ref');
+    if (orderId || ref) {
+      document.getElementById('txt-ref').innerText = ref || orderId;
+    }
+  </script>
+
+</body>
+</html>

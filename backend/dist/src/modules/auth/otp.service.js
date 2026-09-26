@@ -47,6 +47,8 @@ exports.OtpService = void 0;
 const common_1 = require("@nestjs/common");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const tls = __importStar(require("tls"));
+const crypto = __importStar(require("crypto"));
 const appRootDir = path.resolve(__dirname, '../../../../');
 function writeEmailLog(message) {
     try {
@@ -186,17 +188,90 @@ let OtpService = OtpService_1 = class OtpService {
             expiresInSeconds: 300,
         };
     }
+    async sendNativeSmtp({ host, port, user, pass, from, to, subject, html, }) {
+        return new Promise((resolve, reject) => {
+            const socket = tls.connect(port, host, { rejectUnauthorized: false, family: 4 }, () => { });
+            let step = 0;
+            let buffer = '';
+            const send = (cmd) => socket.write(cmd + '\r\n');
+            socket.on('data', (data) => {
+                buffer += data.toString();
+                const lines = buffer.split('\r\n');
+                const lastLine = lines[lines.length - 2] || lines[lines.length - 1];
+                if (/^\d{3}\s/.test(lastLine)) {
+                    const code = parseInt(lastLine.substring(0, 3));
+                    buffer = '';
+                    if (step === 0 && code === 220) {
+                        step = 1;
+                        send('EHLO rthub.id');
+                    }
+                    else if (step === 1 && code === 250) {
+                        step = 2;
+                        send('AUTH LOGIN');
+                    }
+                    else if (step === 2 && code === 334) {
+                        step = 3;
+                        send(Buffer.from(user).toString('base64'));
+                    }
+                    else if (step === 3 && code === 334) {
+                        step = 4;
+                        send(Buffer.from(pass).toString('base64'));
+                    }
+                    else if (step === 4 && code === 235) {
+                        step = 5;
+                        send('MAIL FROM:<' + user + '>');
+                    }
+                    else if (step === 5 && code === 250) {
+                        step = 6;
+                        send('RCPT TO:<' + to + '>');
+                    }
+                    else if (step === 6 && code === 250) {
+                        step = 7;
+                        send('DATA');
+                    }
+                    else if (step === 7 && code === 354) {
+                        step = 8;
+                        const msgId = '<' + crypto.randomUUID() + '@rthub.id>';
+                        const dateStr = new Date().toUTCString();
+                        const emailData = [
+                            'From: ' + from,
+                            'To: ' + to,
+                            'Date: ' + dateStr,
+                            'Message-ID: ' + msgId,
+                            'Subject: ' + subject,
+                            'MIME-Version: 1.0',
+                            'Content-Type: text/html; charset=UTF-8',
+                            '',
+                            html,
+                            '.'
+                        ].join('\r\n');
+                        send(emailData);
+                    }
+                    else if (step === 8 && code === 250) {
+                        step = 9;
+                        send('QUIT');
+                        resolve({ success: true, message: lastLine, messageId: lastLine });
+                    }
+                    else if (code >= 400) {
+                        reject(new Error('SMTP Error (' + code + '): ' + lastLine));
+                    }
+                }
+            });
+            socket.on('error', (err) => reject(err));
+            socket.on('timeout', () => {
+                socket.destroy();
+                reject(new Error('SMTP Connection Timeout'));
+            });
+            socket.setTimeout(15000);
+        });
+    }
     async sendEmailOtp(to, code, purpose) {
-        if (!this.mailTransporter) {
-            this.initMailTransporter();
-        }
-        if (!this.mailTransporter) {
-            writeEmailLog(`[SEND ERROR] Transporter masih null saat kirim ke ${to}`);
-            writeErrorLog(`Transporter null saat kirim email ke ${to}`);
-            throw new Error('SMTP mailer belum terkonfigurasi. Periksa apakah nodemailer sudah terpasang di cPanel.');
-        }
         const fromName = process.env.SMTP_FROM_NAME || 'RtHub Indonesia';
         const fromEmail = process.env.SMTP_FROM_EMAIL || 'no-reply@rthub.id';
+        const host = process.env.SMTP_HOST || 'agile.jagoanhosting.id';
+        const port = Number(process.env.SMTP_PORT) || 465;
+        const user = process.env.SMTP_USER || 'no-reply@rthub.id';
+        const pass = process.env.SMTP_PASS || 'M@!LrTHu8!';
         const purposeTitle = purpose === 'RESET_PASSWORD'
             ? 'Reset Kata Sandi Akun'
             : purpose === 'VERIFIKASI_RT'
@@ -237,7 +312,36 @@ let OtpService = OtpService_1 = class OtpService {
         </div>
       `,
         };
-        return this.mailTransporter.sendMail(mailOptions);
+        if (this.mailTransporter) {
+            try {
+                const info = await this.mailTransporter.sendMail(mailOptions);
+                writeEmailLog(`[SENT VIA NODEMAILER] Ke: ${to} | ID: ${info?.messageId}`);
+                return info;
+            }
+            catch (err) {
+                writeEmailLog(`[NODEMAILER FAILED] ${err?.message}. Mengalihkan ke Native TLS...`);
+            }
+        }
+        writeEmailLog(`[SENDING VIA NATIVE TLS] Mengirim email OTP langsung via built-in TLS socket ke ${to}...`);
+        try {
+            const res = await this.sendNativeSmtp({
+                host,
+                port,
+                user,
+                pass,
+                from: `"${fromName}" <${fromEmail}>`,
+                to,
+                subject: mailOptions.subject,
+                html: mailOptions.html,
+            });
+            writeEmailLog(`[NATIVE TLS SUCCESS] Ke: ${to} | Status: ${res?.message}`);
+            return res;
+        }
+        catch (nativeErr) {
+            writeEmailLog(`[NATIVE TLS FAILED] Ke: ${to} | Error: ${nativeErr?.message}`);
+            writeErrorLog(`Native TLS SMTP Error:`, nativeErr);
+            throw nativeErr;
+        }
     }
     async verifyOtp(target, code) {
         const cleanTarget = target.trim();

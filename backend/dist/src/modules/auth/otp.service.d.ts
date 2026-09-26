@@ -11,6 +11,7 @@ export declare class OtpService {
         channel: "WHATSAPP" | "EMAIL";
         expiresInSeconds: number;
     }>;
+    private sendNativeSmtp;
     private sendEmailOtp;
     verifyOtp(target: string, code: string): Promise<boolean>;
     private maskTarget;

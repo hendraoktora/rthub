@@ -1,10 +1,31 @@
 import 'reflect-metadata';
+import * as fs from 'fs';
+import * as path from 'path';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import express, { Express } from 'express';
+
+// File logger helper for error_log.txt
+process.on('uncaughtException', (err) => {
+  try {
+    fs.appendFileSync(
+      path.join(process.cwd(), 'error_log.txt'),
+      `[${new Date().toISOString()}] UNCAUGHT_EXCEPTION: ${err?.stack || err}\n`
+    );
+  } catch (_) {}
+});
+
+process.on('unhandledRejection', (reason: any) => {
+  try {
+    fs.appendFileSync(
+      path.join(process.cwd(), 'error_log.txt'),
+      `[${new Date().toISOString()}] UNHANDLED_REJECTION: ${reason?.stack || reason}\n`
+    );
+  } catch (_) {}
+});
 
 const server: Express = express();
 server.use(express.json({ limit: '15mb' }));

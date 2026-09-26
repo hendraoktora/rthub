@@ -260,9 +260,11 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
     Future<void> sendOtpRequest(StateSetter setModalState) async {
       if (!isModalOpen) return;
       setModalState(() => isSendingOtp = true);
+      startTimer(setModalState);
       final target = _email.text.trim();
       if (target.isEmpty) {
         if (isModalOpen) {
+          resendTimer?.cancel();
           setModalState(() {
             isSendingOtp = false;
             secondsRemaining = 0;
@@ -285,7 +287,6 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
             isSendingOtp = false;
             hasInitialSent = true;
           });
-          startTimer(setModalState);
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -297,6 +298,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
         }
       } catch (e) {
         if (isModalOpen) {
+          resendTimer?.cancel();
           setModalState(() {
             isSendingOtp = false;
             secondsRemaining = 0;
@@ -410,7 +412,56 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+
+                // Status Banner & Live Countdown Timer
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSendingOtp
+                        ? const Color(0xFFFEF3C7)
+                        : (secondsRemaining > 0 ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSendingOtp
+                          ? const Color(0xFFFDE68A)
+                          : (secondsRemaining > 0 ? const Color(0xFFBFDBFE) : const Color(0xFFCBD5E1)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (isSendingOtp) ...[
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706)),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Sedang mengirim kode OTP ke email...',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFB45309)),
+                        ),
+                      ] else if (secondsRemaining > 0) ...[
+                        const Icon(Icons.timer_outlined, size: 16, color: Color(0xFF2563EB)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Kirim ulang tersedia dalam: ${secondsRemaining}s',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
+                        ),
+                      ] else ...[
+                        const Icon(Icons.refresh_rounded, size: 16, color: Color(0xFF475569)),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Kode belum masuk? Klik "Kirim Ulang OTP"',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
 
                 // OTP Input Field
                 TextField(
@@ -429,20 +480,21 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                 ),
                 const SizedBox(height: 10),
 
-
-                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      secondsRemaining > 0 ? 'Kirim ulang dalam ${secondsRemaining}s' : 'Tidak menerima kode?',
+                      secondsRemaining > 0 ? 'Tunggu ${secondsRemaining}s untuk kirim ulang' : 'Tidak menerima kode?',
                       style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                     ),
-                    TextButton(
+                    TextButton.icon(
                       onPressed: (secondsRemaining == 0 && !isSendingOtp)
                           ? () => sendOtpRequest(setModalState)
                           : null,
-                      child: const Text('Kirim Ulang OTP', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      icon: isSendingOtp
+                          ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.send_rounded, size: 14),
+                      label: const Text('Kirim Ulang OTP', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     ),
                   ],
                 ),

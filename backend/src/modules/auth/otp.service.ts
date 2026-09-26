@@ -1,4 +1,23 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
+
+function writeEmailLog(message: string) {
+  try {
+    const timestamp = new Date().toISOString();
+    const logFile = path.join(process.cwd(), 'email_log.txt');
+    fs.appendFileSync(logFile, `[${timestamp}] ${message}\n`);
+  } catch (_) {}
+}
+
+function writeErrorLog(message: string, error?: any) {
+  try {
+    const timestamp = new Date().toISOString();
+    const logFile = path.join(process.cwd(), 'error_log.txt');
+    const details = error?.stack || error?.message || (typeof error === 'object' ? JSON.stringify(error) : error) || '';
+    fs.appendFileSync(logFile, `[${timestamp}] ${message} ${details}\n`);
+  } catch (_) {}
+}
 
 interface OtpRecord {
   code: string;
@@ -23,9 +42,19 @@ export class OtpService {
       let nodemailer: any;
       try {
         nodemailer = require('nodemailer');
-      } catch (e) {
-        this.logger.warn('Module nodemailer belum terpasang di node_modules.');
-        return;
+      } catch (e1: any) {
+        try {
+          nodemailer = require(path.join(process.cwd(), 'nodemailer'));
+        } catch (e2: any) {
+          try {
+            nodemailer = require(path.join(process.cwd(), 'node_modules', 'nodemailer'));
+          } catch (e3: any) {
+            this.logger.warn('Module nodemailer belum terpasang.');
+            writeErrorLog('Nodemailer belum terpasang di node_modules maupun folder root:', { e1: e1?.message, e2: e2?.message, e3: e3?.message });
+            writeEmailLog('GAGAL INIT SMTP: Module nodemailer tidak ditemukan.');
+            return;
+          }
+        }
       }
 
       const host = process.env.SMTP_HOST || 'agile.jagoanhosting.id';
@@ -42,8 +71,11 @@ export class OtpService {
         family: 4, // Force IPv4
       });
       this.logger.log(`📧 SMTP Transporter initialized on ${host}:${port} (${user}) [IPv4]`);
-    } catch (err) {
+      writeEmailLog(`SMTP Transporter BERHASIL diinisialisasi ke host ${host}:${port} (${user}) [IPv4]`);
+    } catch (err: any) {
       this.logger.error('Failed to initialize SMTP Transporter:', err);
+      writeErrorLog('Gagal inisialisasi SMTP Transporter:', err);
+      writeEmailLog(`GAGAL INIT SMTP Transporter: ${err?.message || err}`);
     }
   }
 
@@ -72,13 +104,17 @@ export class OtpService {
     });
 
     const masked = this.maskTarget(cleanTarget, effectiveChannel);
+    writeEmailLog(`[REQUEST OTP] Target: ${cleanTarget} | Channel: ${effectiveChannel} | Purpose: ${purpose} | Code: ${code}`);
 
     if (effectiveChannel === 'EMAIL') {
       try {
-        await this.sendEmailOtp(cleanTarget, code, purpose);
+        const info = await this.sendEmailOtp(cleanTarget, code, purpose);
         this.logger.log(`✉️ [EMAIL OTP GATEWAY] OTP [${code}] berhasil terkirim ke ${cleanTarget} via SMTP`);
+        writeEmailLog(`[EMAIL BERHASIL TERKIRIM] Ke: ${cleanTarget} | Kode: ${code} | MessageId: ${info?.messageId}`);
       } catch (err: any) {
         this.logger.error(`❌ [EMAIL OTP ERROR] Gagal mengirim email ke ${cleanTarget}: ${err?.message || err}`);
+        writeEmailLog(`[EMAIL GAGAL] Ke: ${cleanTarget} | Error: ${err?.message || err}`);
+        writeErrorLog(`[EMAIL OTP ERROR] Ke: ${cleanTarget}:`, err);
         // Jika SMTP gagal terkirim, berikan pesan jelas kepada user
         throw new BadRequestException(
           `Gagal mengirim email OTP ke ${cleanTarget}. Pastikan alamat email benar dan aktif. (${err?.message || 'SMTP Error'})`
@@ -86,6 +122,7 @@ export class OtpService {
       }
     } else {
       this.logger.log(`📱 [WHATSAPP OTP GATEWAY] Mengirim OTP [${code}] ke ${cleanTarget} untuk keperluan ${purpose}`);
+      writeEmailLog(`[WHATSAPP GATEWAY] Mengirim OTP [${code}] ke ${cleanTarget}`);
     }
 
     return {
@@ -102,7 +139,9 @@ export class OtpService {
       this.initMailTransporter();
     }
     if (!this.mailTransporter) {
-      throw new Error('SMTP mailer belum terkonfigurasi');
+      writeEmailLog(`[SEND ERROR] Transporter masih null saat kirim ke ${to}`);
+      writeErrorLog(`Transporter null saat kirim email ke ${to}`);
+      throw new Error('SMTP mailer belum terkonfigurasi. Periksa apakah nodemailer sudah terpasang di cPanel.');
     }
 
     const fromName = process.env.SMTP_FROM_NAME || 'RtHub Indonesia';

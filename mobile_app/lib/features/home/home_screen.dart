@@ -41,6 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
   int _entryEpoch = 0;
   Future<void>? _activeLoad;
+  DateTime _calendarFocusedDate = DateTime.now();
+  DateTime? _selectedCalendarDate;
   String get _rt => _data.user?['rt']?['nomor']?.toString() ?? '—';
   String get _rw => _data.user?['rw']?['nomor']?.toString() ?? '—';
   String get _name {
@@ -912,46 +914,301 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _agendaSection() {
     final today = DateUtils.dateOnly(DateTime.now());
-    final agendas = (_data.agenda ?? [])
-        .whereType<Map>()
-        .where((item) {
-          final date = DateTime.tryParse(
-            (item['tanggalSelesai'] ??
-                    item['endDate'] ??
-                    item['tanggalMulai'] ??
-                    item['tanggal'] ??
-                    item['startDate'] ??
-                    '')
-                .toString(),
-          );
-          return date == null || !date.toLocal().isBefore(today);
-        })
-        .take(3)
-        .toList();
+    final allAgendas = (_data.agenda ?? []).whereType<Map>().toList();
+
+    // Map which dates have agendas
+    final datesWithAgenda = <String>{};
+    for (final item in allAgendas) {
+      final start = DateTime.tryParse(
+        (item['tanggalMulai'] ??
+                item['tanggal'] ??
+                item['startDate'] ??
+                '')
+            .toString(),
+      );
+      if (start != null) {
+        datesWithAgenda.add('${start.year}-${start.month}-${start.day}');
+      }
+    }
+
+    final monday = _calendarFocusedDate.subtract(
+      Duration(days: _calendarFocusedDate.weekday - 1),
+    );
+    final weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
+    final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+
+    // Filter agendas: If a specific day is selected, filter by that day.
+    // Otherwise show upcoming agendas (date >= today, max 3)
+    final List<Map> displayedAgendas;
+    if (_selectedCalendarDate != null) {
+      final selYear = _selectedCalendarDate!.year;
+      final selMonth = _selectedCalendarDate!.month;
+      final selDay = _selectedCalendarDate!.day;
+      displayedAgendas = allAgendas.where((item) {
+        final start = DateTime.tryParse(
+          (item['tanggalMulai'] ??
+                  item['tanggal'] ??
+                  item['startDate'] ??
+                  '')
+              .toString(),
+        );
+        return start != null &&
+            start.year == selYear &&
+            start.month == selMonth &&
+            start.day == selDay;
+      }).toList();
+    } else {
+      displayedAgendas = allAgendas.where((item) {
+        final date = DateTime.tryParse(
+          (item['tanggalSelesai'] ??
+                  item['endDate'] ??
+                  item['tanggalMulai'] ??
+                  item['tanggal'] ??
+                  item['startDate'] ??
+                  '')
+              .toString(),
+        );
+        return date == null || !date.toLocal().isBefore(today);
+      }).take(3).toList();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeading(
           'Ketemu di lingkungan.',
-          'Kalender',
+          'Buka Agenda',
           () => _navigate(const AgendaScreen(), refresh: true),
         ),
         const SizedBox(height: 5),
         const Text(
-          'Agenda & kegiatan warga',
+          'Kalender kegiatan & jadwal warga',
           style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
         ),
-        const SizedBox(height: 15),
-        if (agendas.isEmpty)
+        const SizedBox(height: 14),
+
+        // Interactive Calendar Strip Card
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x060F172A),
+                blurRadius: 14,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Header: Month & Navigation
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.calendar_month_rounded,
+                          size: 16,
+                          color: AppTheme.electricBlue,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_months[_calendarFocusedDate.month]} ${_calendarFocusedDate.year}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryNavy,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      if (_selectedCalendarDate != null) ...[
+                        TextButton(
+                          onPressed: () {
+                            setState(() => _selectedCalendarDate = null);
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Semua',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.electricBlue,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left_rounded, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 28,
+                          minHeight: 28,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _calendarFocusedDate = _calendarFocusedDate
+                                .subtract(const Duration(days: 7));
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 2),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right_rounded, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 28,
+                          minHeight: 28,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _calendarFocusedDate = _calendarFocusedDate.add(
+                              const Duration(days: 7),
+                            );
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // 7-day strip row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(weekDays.length, (index) {
+                  final dayDate = weekDays[index];
+                  final isSelected = _selectedCalendarDate != null &&
+                      dayDate.year == _selectedCalendarDate!.year &&
+                      dayDate.month == _selectedCalendarDate!.month &&
+                      dayDate.day == _selectedCalendarDate!.day;
+                  final isToday = dayDate.year == today.year &&
+                      dayDate.month == today.month &&
+                      dayDate.day == today.day;
+                  final hasAgenda = datesWithAgenda.contains(
+                    '${dayDate.year}-${dayDate.month}-${dayDate.day}',
+                  );
+
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedCalendarDate = null;
+                        } else {
+                          _selectedCalendarDate = dayDate;
+                        }
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 42,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppTheme.electricBlue
+                            : isToday
+                                ? const Color(0xFFEFF6FF)
+                                : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppTheme.electricBlue
+                              : isToday
+                                  ? const Color(0xFF93C5FD)
+                                  : const Color(0xFFE2E8F0),
+                          width: (isSelected || isToday) ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            dayNames[index],
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected
+                                  ? Colors.white.withValues(alpha: 0.9)
+                                  : isToday
+                                      ? AppTheme.electricBlue
+                                      : AppTheme.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${dayDate.day}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: isSelected
+                                  ? Colors.white
+                                  : isToday
+                                      ? AppTheme.electricBlue
+                                      : AppTheme.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: hasAgenda
+                                  ? (isSelected
+                                      ? Colors.white
+                                      : AppTheme.electricBlue)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // List of filtered agendas or empty state
+        if (displayedAgendas.isEmpty)
           _emptyCard(
             icon: Icons.event_available_outlined,
-            title: _data.agenda == null
-                ? 'Agenda belum dimuat'
-                : 'Belum ada agenda mendatang',
-            subtitle: 'Rapat, kerja bakti, dan kegiatan warga tampil di sini.',
+            title: _selectedCalendarDate != null
+                ? 'Tidak ada kegiatan di tanggal ini'
+                : (_data.agenda == null
+                    ? 'Agenda belum dimuat'
+                    : 'Belum ada agenda mendatang'),
+            subtitle: _selectedCalendarDate != null
+                ? 'Ketuk "Semua" atau buka kalender untuk mengecek agenda di tanggal lain.'
+                : 'Rapat, kerja bakti, dan kegiatan warga tampil di sini.',
             onTap: () => _navigate(const AgendaScreen(), refresh: true),
           ),
-        ...agendas.asMap().entries.map((entry) {
+        ...displayedAgendas.asMap().entries.map((entry) {
           final item = entry.value;
           final date = DateTime.tryParse(
             (item['tanggalMulai'] ?? item['tanggal'] ?? item['startDate'] ?? '')

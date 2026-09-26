@@ -416,23 +416,14 @@ class _LapakScreenState extends State<LapakScreen> {
           if (filtered.isNotEmpty)
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 22),
-              sliver: SliverLayoutBuilder(
-                builder: (context, constraints) {
-                  final textScale = MediaQuery.textScalerOf(context).scale(1);
-                  final columns =
-                      textScale > 1.25 || constraints.crossAxisExtent < 350
-                      ? 1
-                      : constraints.crossAxisExtent > 760
-                      ? 3
-                      : 2;
-                  final width =
-                      (constraints.crossAxisExtent - (columns - 1) * 14) /
-                      columns;
-                  return SliverGrid(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final product = filtered[index];
-                      final owner = product.isOwnedBy(_user) && _maySell;
-                      return StaggeredEntry(
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final product = filtered[index];
+                    final owner = product.isOwnedBy(_user) && _maySell;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: StaggeredEntry(
                         key: ValueKey('${product.id}-$_refreshEpoch'),
                         index: index.clamp(0, 6),
                         child: LapakProductCard(
@@ -442,21 +433,11 @@ class _LapakScreenState extends State<LapakScreen> {
                           onDelete: owner ? () => _delete(product) : null,
                           onPromote: owner ? () => _promote(product) : null,
                         ),
-                      );
-                    }, childCount: filtered.length),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columns,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 20,
-                      mainAxisExtent:
-                          width / 1.28 +
-                          175 * textScale +
-                          (_mine || filtered.any((p) => p.isOwnedBy(_user))
-                              ? 112 * textScale
-                              : 0),
-                    ),
-                  );
-                },
+                      ),
+                    );
+                  },
+                  childCount: filtered.length,
+                ),
               ),
             ),
           const SliverToBoxAdapter(child: SizedBox(height: 126)),

@@ -233,7 +233,6 @@ export class OtpService {
             step = 8;
             const msgId = '<' + crypto.randomUUID() + '@rthub.id>';
             const dateStr = new Date().toUTCString();
-            const boundary = '----=_Part_RtHub_' + Date.now();
             const emailData = [
               'From: ' + from,
               'To: ' + to,
@@ -241,21 +240,9 @@ export class OtpService {
               'Message-ID: ' + msgId,
               'Subject: ' + subject,
               'MIME-Version: 1.0',
-              'Content-Type: multipart/alternative; boundary="' + boundary + '"',
-              '',
-              '--' + boundary,
-              'Content-Type: text/plain; charset=UTF-8',
-              'Content-Transfer-Encoding: 7bit',
-              '',
-              text || 'Kode verifikasi RtHub Anda berlaku selama 10 menit.',
-              '',
-              '--' + boundary,
               'Content-Type: text/html; charset=UTF-8',
-              'Content-Transfer-Encoding: 7bit',
               '',
               html,
-              '',
-              '--' + boundary + '--',
               '.'
             ].join('\r\n');
             send(emailData);

@@ -267,11 +267,11 @@ export class OtpService {
 
   private async sendEmailOtp(to: string, code: string, purpose: string) {
     const fromName = process.env.SMTP_FROM_NAME || 'RtHub Indonesia';
-    const fromEmail = process.env.SMTP_FROM_EMAIL || 'no-reply@rthub.id';
-    const host = process.env.SMTP_HOST || 'agile.jagoanhosting.id';
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     const port = Number(process.env.SMTP_PORT) || 465;
     const user = process.env.SMTP_USER || 'no-reply@rthub.id';
     const pass = process.env.SMTP_PASS || '';
+    const fromEmail = host.includes('gmail') ? user : (process.env.SMTP_FROM_EMAIL || user);
 
     if (!pass) {
       writeEmailLog('GAGAL: SMTP_PASS belum diset di environment variables (.env)');

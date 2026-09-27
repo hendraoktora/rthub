@@ -128,7 +128,11 @@ let OtpService = OtpService_1 = class OtpService {
             const host = process.env.SMTP_HOST || 'agile.jagoanhosting.id';
             const port = Number(process.env.SMTP_PORT) || 465;
             const user = process.env.SMTP_USER || 'no-reply@rthub.id';
-            const pass = process.env.SMTP_PASS || 'M@!LrTHu8!';
+            const pass = process.env.SMTP_PASS || '';
+            if (!pass) {
+                this.logger.warn('SMTP_PASS is not set in environment variables.');
+                writeEmailLog('PERINGATAN: SMTP_PASS belum diset di environment variables (.env)');
+            }
             this.mailTransporter = nodemailer.createTransport({
                 host,
                 port,
@@ -247,7 +251,7 @@ let OtpService = OtpService_1 = class OtpService {
                             'Content-Type: text/plain; charset=UTF-8',
                             'Content-Transfer-Encoding: 7bit',
                             '',
-                            text || 'Kode verifikasi RtHub Anda berlaku selama 5 menit.',
+                            text || 'Kode verifikasi RtHub Anda berlaku selama 10 menit.',
                             '',
                             '--' + boundary,
                             'Content-Type: text/html; charset=UTF-8',
@@ -284,7 +288,11 @@ let OtpService = OtpService_1 = class OtpService {
         const host = process.env.SMTP_HOST || 'agile.jagoanhosting.id';
         const port = Number(process.env.SMTP_PORT) || 465;
         const user = process.env.SMTP_USER || 'no-reply@rthub.id';
-        const pass = process.env.SMTP_PASS || 'M@!LrTHu8!';
+        const pass = process.env.SMTP_PASS || '';
+        if (!pass) {
+            writeEmailLog('GAGAL: SMTP_PASS belum diset di environment variables (.env)');
+            throw new Error('SMTP_PASS belum diset di file .env');
+        }
         const purposeTitle = purpose === 'RESET_PASSWORD'
             ? 'Reset Kata Sandi Akun'
             : purpose === 'VERIFIKASI_RT'

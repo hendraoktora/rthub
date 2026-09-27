@@ -292,33 +292,16 @@ let OtpService = OtpService_1 = class OtpService {
             subject: `Kode Verifikasi RtHub: ${code}`,
             text: textContent,
             html: `
-        <div style="font-family: 'Plus Jakarta Sans', Arial, -apple-system, BlinkMacSystemFont, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
-          <div style="background: #ffffff; padding: 32px 24px 16px; text-align: center; border-bottom: 1px solid #f1f5f9;">
-            <div style="margin-bottom: 12px;">
-              <img src="https://rthub.id/rthub_logo.png" alt="RtHub Logo" width="140" style="display: inline-block; max-width: 140px; height: auto;" />
-            </div>
-            <h1 style="color: #0f172a; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">RtHub Indonesia</h1>
-            <p style="color: #64748b; margin: 6px 0 0; font-size: 13px;">Platform Digital Manajemen Rukun Tetangga & Warga</p>
+        <div style="font-family: Arial, sans-serif; padding: 24px; max-width: 500px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
+          <h2 style="color: #0f172a; margin-top: 0; font-size: 20px;">${purposeTitle}</h2>
+          <p style="color: #475569; font-size: 14px; margin-bottom: 8px;">Halo,</p>
+          <p style="color: #475569; font-size: 14px; line-height: 1.5;">Gunakan kode OTP berikut untuk menyelesaikan proses verifikasi di aplikasi RtHub:</p>
+          <div style="background: #f0fdf4; border: 2px dashed #22c55e; border-radius: 10px; padding: 18px; text-align: center; margin: 20px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #16a34a; font-family: monospace;">${code}</span>
           </div>
-          <div style="padding: 36px 28px; text-align: center;">
-            <div style="display: inline-block; background: #eff6ff; color: #2563eb; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 999px; margin-bottom: 16px; border: 1px solid #bfdbfe;">
-              🔐 KODE KEAMANAN AKUN
-            </div>
-            <h2 style="color: #0f172a; margin: 0 0 12px; font-size: 18px; font-weight: 700;">${purposeTitle}</h2>
-            <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-              Gunakan 6-digit kode OTP di bawah ini untuk menyelesaikan pendaftaran Anda di aplikasi <strong>RtHub</strong>. Kode ini berlaku selama <strong>10 menit</strong>.
-            </p>
-            <div style="background: #f0fdf4; border: 2px dashed #22c55e; border-radius: 14px; padding: 20px 28px; display: inline-block; margin: 0 auto 24px;">
-              <span style="font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #15803d; font-family: monospace;">${code}</span>
-            </div>
-            <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 0;">
-              Demi keamanan akun Anda, <strong>jangan bagikan kode ini</strong> kepada siapa pun. Jika Anda tidak merasa melakukan permintaan verifikasi ini, abaikan email ini.
-            </p>
-          </div>
-          <div style="background: #f8fafc; padding: 18px 24px; text-align: center; border-top: 1px solid #e2e8f0;">
-            <p style="color: #64748b; font-size: 12px; margin: 0 0 4px; font-weight: 600;">RtHub — Smart Neighborhood Ecosystem</p>
-            <p style="color: #94a3b8; font-size: 11px; margin: 0;">Portal Komunitas & Manajemen Lingkungan RT/RW se-Indonesia · <a href="https://rthub.id" style="color: #2563eb; text-decoration: none;">rthub.id</a></p>
-          </div>
+          <p style="color: #64748b; font-size: 13px; line-height: 1.5;">Kode ini berlaku selama <strong>10 menit</strong>. Demi keamanan akun, jangan berikan kode ini kepada siapapun.</p>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+          <p style="color: #94a3b8; font-size: 12px; margin: 0;">RtHub Indonesia · Platform Digital Manajemen Lingkungan RT/RW</p>
         </div>
       `,
         };

@@ -153,7 +153,7 @@ let OtpService = OtpService_1 = class OtpService {
         }
         const effectiveChannel = cleanTarget.includes('@') ? 'EMAIL' : channel;
         const code = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
         this.otpStore.set(cleanTarget, {
             code,
             target: cleanTarget,
@@ -185,7 +185,7 @@ let OtpService = OtpService_1 = class OtpService {
             message: `Kode OTP 6-digit berhasil dikirimkan ke email ${masked}. Silakan periksa Kotak Masuk (Inbox) atau folder Spam email Anda.`,
             targetMasked: masked,
             channel: effectiveChannel,
-            expiresInSeconds: 300,
+            expiresInSeconds: 600,
         };
     }
     async sendNativeSmtp({ host, port, user, pass, from, to, subject, text, html, }) {
@@ -290,7 +290,7 @@ let OtpService = OtpService_1 = class OtpService {
             : purpose === 'VERIFIKASI_RT'
                 ? 'Verifikasi Pendaftaran RT Baru'
                 : 'Verifikasi Pendaftaran Akun RtHub';
-        const textContent = `Halo,\n\nKode Verifikasi RtHub Anda: ${code}\n\nKode ini digunakan untuk ${purposeTitle} dan hanya berlaku selama 5 menit.\nDemi keamanan akun, jangan berikan kode ini kepada siapapun.\n\nSalam hangat,\nTim RtHub Indonesia (https://rthub.id)`;
+        const textContent = `Halo,\n\nKode Verifikasi RtHub Anda: ${code}\n\nKode ini digunakan untuk ${purposeTitle} dan berlaku selama 10 menit.\nDemi keamanan akun, jangan berikan kode ini kepada siapapun.\n\nSalam hangat,\nTim RtHub Indonesia (https://rthub.id)`;
         const mailOptions = {
             from: `"${fromName}" <${fromEmail}>`,
             to,
@@ -298,12 +298,12 @@ let OtpService = OtpService_1 = class OtpService {
             text: textContent,
             html: `
         <div style="font-family: 'Plus Jakarta Sans', Arial, -apple-system, BlinkMacSystemFont, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
-          <div style="background: linear-gradient(135deg, #091328 0%, #1e293b 100%); padding: 36px 24px; text-align: center;">
-            <div style="margin-bottom: 14px;">
-              <img src="https://rthub.id/rthub_logo.png" alt="RtHub Logo" width="130" style="display: inline-block; max-width: 130px; height: auto;" />
+          <div style="background: #ffffff; padding: 32px 24px 16px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+            <div style="margin-bottom: 12px;">
+              <img src="https://rthub.id/rthub_logo.png" alt="RtHub Logo" width="140" style="display: inline-block; max-width: 140px; height: auto;" />
             </div>
-            <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">RtHub Indonesia</h1>
-            <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Platform Digital Manajemen Rukun Tetangga & Warga</p>
+            <h1 style="color: #0f172a; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">RtHub Indonesia</h1>
+            <p style="color: #64748b; margin: 6px 0 0; font-size: 13px;">Platform Digital Manajemen Rukun Tetangga & Warga</p>
           </div>
           <div style="padding: 36px 28px; text-align: center;">
             <div style="display: inline-block; background: #eff6ff; color: #2563eb; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 999px; margin-bottom: 16px; border: 1px solid #bfdbfe;">
@@ -311,7 +311,7 @@ let OtpService = OtpService_1 = class OtpService {
             </div>
             <h2 style="color: #0f172a; margin: 0 0 12px; font-size: 18px; font-weight: 700;">${purposeTitle}</h2>
             <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-              Gunakan 6-digit kode OTP di bawah ini untuk menyelesaikan pendaftaran Anda di aplikasi <strong>RtHub</strong>. Kode ini hanya berlaku selama <strong>5 menit</strong>.
+              Gunakan 6-digit kode OTP di bawah ini untuk menyelesaikan pendaftaran Anda di aplikasi <strong>RtHub</strong>. Kode ini berlaku selama <strong>10 menit</strong>.
             </p>
             <div style="background: #f0fdf4; border: 2px dashed #22c55e; border-radius: 14px; padding: 20px 28px; display: inline-block; margin: 0 auto 24px;">
               <span style="font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #15803d; font-family: monospace;">${code}</span>

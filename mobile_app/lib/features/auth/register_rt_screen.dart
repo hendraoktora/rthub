@@ -362,7 +362,7 @@ class _RegisterRtScreenState extends State<RegisterRtScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Masukkan 6 digit kode OTP yang telah dikirimkan ke email resmi:',
+                  'Masukkan 6 digit kode OTP yang telah dikirimkan ke email resmi (berlaku 10 menit):',
                   style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                 ),
                 const SizedBox(height: 12),

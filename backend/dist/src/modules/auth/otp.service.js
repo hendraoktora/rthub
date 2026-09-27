@@ -188,7 +188,7 @@ let OtpService = OtpService_1 = class OtpService {
             expiresInSeconds: 300,
         };
     }
-    async sendNativeSmtp({ host, port, user, pass, from, to, subject, html, }) {
+    async sendNativeSmtp({ host, port, user, pass, from, to, subject, text, html, }) {
         return new Promise((resolve, reject) => {
             const socket = tls.connect(port, host, { rejectUnauthorized: false, family: 4 }, () => { });
             let step = 0;
@@ -233,6 +233,7 @@ let OtpService = OtpService_1 = class OtpService {
                         step = 8;
                         const msgId = '<' + crypto.randomUUID() + '@rthub.id>';
                         const dateStr = new Date().toUTCString();
+                        const boundary = '----=_Part_RtHub_' + Date.now();
                         const emailData = [
                             'From: ' + from,
                             'To: ' + to,
@@ -240,14 +241,21 @@ let OtpService = OtpService_1 = class OtpService {
                             'Message-ID: ' + msgId,
                             'Subject: ' + subject,
                             'MIME-Version: 1.0',
+                            'Content-Type: multipart/alternative; boundary="' + boundary + '"',
+                            '',
+                            '--' + boundary,
+                            'Content-Type: text/plain; charset=UTF-8',
+                            'Content-Transfer-Encoding: 7bit',
+                            '',
+                            text || 'Kode verifikasi RtHub Anda berlaku selama 5 menit.',
+                            '',
+                            '--' + boundary,
                             'Content-Type: text/html; charset=UTF-8',
-                            'X-Priority: 1 (Highest)',
-                            'X-MSMail-Priority: High',
-                            'Importance: High',
-                            'Auto-Submitted: auto-generated',
-                            'Precedence: urgent',
+                            'Content-Transfer-Encoding: 7bit',
                             '',
                             html,
+                            '',
+                            '--' + boundary + '--',
                             '.'
                         ].join('\r\n');
                         send(emailData);
@@ -282,10 +290,12 @@ let OtpService = OtpService_1 = class OtpService {
             : purpose === 'VERIFIKASI_RT'
                 ? 'Verifikasi Pendaftaran RT Baru'
                 : 'Verifikasi Pendaftaran Akun RtHub';
+        const textContent = `Halo,\n\nKode Verifikasi RtHub Anda: ${code}\n\nKode ini digunakan untuk ${purposeTitle} dan hanya berlaku selama 5 menit.\nDemi keamanan akun, jangan berikan kode ini kepada siapapun.\n\nSalam hangat,\nTim RtHub Indonesia (https://rthub.id)`;
         const mailOptions = {
             from: `"${fromName}" <${fromEmail}>`,
             to,
             subject: `Kode Verifikasi RtHub: ${code}`,
+            text: textContent,
             html: `
         <div style="font-family: 'Plus Jakarta Sans', Arial, -apple-system, BlinkMacSystemFont, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
           <div style="background: linear-gradient(135deg, #091328 0%, #1e293b 100%); padding: 36px 24px; text-align: center;">
@@ -337,6 +347,7 @@ let OtpService = OtpService_1 = class OtpService {
                 from: `"${fromName}" <${fromEmail}>`,
                 to,
                 subject: mailOptions.subject,
+                text: mailOptions.text,
                 html: mailOptions.html,
             });
             writeEmailLog(`[NATIVE TLS SUCCESS] Ke: ${to} | Status: ${res?.message}`);

@@ -87,6 +87,8 @@ export const PengurusManagement: React.FC<PengurusProps> = ({ user }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>('Sekretaris RT');
   const [selectedWargaId, setSelectedWargaId] = useState<string>('');
+  const [wargaSearch, setWargaSearch] = useState<string>('');
+  const [isWargaDropdownOpen, setIsWargaDropdownOpen] = useState<boolean>(false);
 
   const [formData, setFormData] = useState({ 
     jabatan: 'Sekretaris RT', 
@@ -99,25 +101,95 @@ export const PengurusManagement: React.FC<PengurusProps> = ({ user }) => {
   });
   const [editingPengurus, setEditingPengurus] = useState<PengurusItem | null>(null);
 
-  // Load Warga RT
+  // Load Warga RT (dari akun user dan data rumah/KK)
   useEffect(() => {
     const fetchWarga = async () => {
-      if (!user?.rtId) return;
+      const rtId = user?.rtId || (user as any)?.rt?.id;
+      if (!rtId) return;
       setIsLoadingWarga(true);
       try {
-        const res = await api.getWargaList(user.rtId);
-        if (res && res.rumahList && Array.isArray(res.rumahList)) {
-          const list: WargaOption[] = res.rumahList.map((r: any) => {
-            const kk = r.kartuKeluarga?.[0];
-            return {
-              id: r.id,
-              namaKepala: kk?.namaKepala || `Warga Rumah ${r.noRumah}`,
-              phone: kk?.anggota?.find((a: any) => a.noHp)?.noHp || '-',
-              noRumah: r.noRumah || '-',
-            };
+        const res = await api.getWargaList(rtId);
+        const combined: WargaOption[] = [];
+        const seen = new Set<string>();
+
+        // 1. Dari userList (warga yang punya akun di RT)
+        if (res && res.userList && Array.isArray(res.userList)) {
+          res.userList.forEach((u: any) => {
+            const nama = (u.profile?.namaLengkap || u.name || '').trim();
+            const noRumah = (u.profile?.noRumah || u.noRumah || '-').trim();
+            const phone = (u.phone || '-').trim();
+            const key = `${nama.toLowerCase()}_${phone}`;
+            if (nama && !seen.has(key)) {
+              seen.add(key);
+              combined.push({
+                id: u.id || `u-${Math.random()}`,
+                namaKepala: nama,
+                noRumah: noRumah.length ? noRumah : '-',
+                phone: phone,
+              });
+            }
           });
-          setWargaOptions(list);
         }
+
+        // 2. Dari rumahList (data rumah & kartu keluarga & anggota)
+        if (res && res.rumahList && Array.isArray(res.rumahList)) {
+          res.rumahList.forEach((r: any) => {
+            const noRumah = (r.noRumah || '-').trim();
+            const phoneRumah = (r.phone || '-').trim();
+
+            if (r.kepalaKeluarga) {
+              const nama = r.kepalaKeluarga.trim();
+              const key = `${nama.toLowerCase()}_${phoneRumah}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                combined.push({
+                  id: `r-${r.id}`,
+                  namaKepala: nama,
+                  noRumah: noRumah,
+                  phone: phoneRumah,
+                });
+              }
+            }
+
+            if (r.kartuKeluarga && Array.isArray(r.kartuKeluarga)) {
+              r.kartuKeluarga.forEach((kk: any) => {
+                if (kk.namaKepala) {
+                  const nama = kk.namaKepala.trim();
+                  const phone = kk.anggota?.find((a: any) => a.noHp)?.noHp || phoneRumah;
+                  const key = `${nama.toLowerCase()}_${phone}`;
+                  if (!seen.has(key)) {
+                    seen.add(key);
+                    combined.push({
+                      id: `kk-${kk.id || r.id}`,
+                      namaKepala: nama,
+                      noRumah: noRumah,
+                      phone: phone,
+                    });
+                  }
+                }
+                if (kk.anggota && Array.isArray(kk.anggota)) {
+                  kk.anggota.forEach((a: any) => {
+                    const nama = (a.namaLengkap || '').trim();
+                    const phone = (a.noHp || phoneRumah || '-').trim();
+                    const key = `${nama.toLowerCase()}_${phone}`;
+                    if (nama && !seen.has(key)) {
+                      seen.add(key);
+                      combined.push({
+                        id: `a-${a.id || Math.random()}`,
+                        namaKepala: nama,
+                        noRumah: noRumah,
+                        phone: phone,
+                      });
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
+
+        combined.sort((a, b) => a.namaKepala.localeCompare(b.namaKepala));
+        setWargaOptions(combined);
       } catch (err) {
         console.error('Failed to fetch warga list for pengurus dropdown:', err);
       } finally {
@@ -140,8 +212,8 @@ export const PengurusManagement: React.FC<PengurusProps> = ({ user }) => {
         ...prev,
         nama: found.namaKepala,
         phone: found.phone !== '-' ? found.phone : '',
-        rumah: `Rumah ${found.noRumah}`,
-        email: `${found.namaKepala.toLowerCase().replace(/\s+/g, '.')}@rthub.id`,
+        rumah: found.noRumah !== '-' ? `Rumah ${found.noRumah}` : 'Rumah Warga RT',
+        email: `${found.namaKepala.toLowerCase().replace(/[^a-z0-9]/g, '.')}@rthub.id`,
       }));
     }
   };
@@ -450,7 +522,7 @@ export const PengurusManagement: React.FC<PengurusProps> = ({ user }) => {
             </div>
 
             <form onSubmit={handleAdd} className="space-y-4">
-              {/* Dropdown 1: Pilih Warga Terdaftar */}
+              {/* Dropdown 1: Pilih Warga Terdaftar (Searchable Select Box) */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-bold text-slate-700">1. Pilih Warga Terdaftar ({wilayahLabel}) *</label>
@@ -462,19 +534,111 @@ export const PengurusManagement: React.FC<PengurusProps> = ({ user }) => {
                 </div>
 
                 {wargaOptions.length > 0 ? (
-                  <select
-                    value={selectedWargaId}
-                    onChange={(e) => handleSelectWarga(e.target.value)}
-                    required
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition"
-                  >
-                    <option value="">-- Pilih Warga Sesuai RT Ini --</option>
-                    {wargaOptions.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.namaKepala} (Rumah: {w.noRumah} • Telp: {w.phone})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-2">
+                    {selectedWargaId ? (
+                      /* Card Warga Terpilih */
+                      <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                            {formData.nama ? formData.nama[0].toUpperCase() : 'W'}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-900">{formData.nama}</p>
+                            <p className="text-[11px] text-slate-600 flex items-center gap-1.5 mt-0.5">
+                              <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded font-semibold text-[10px]">
+                                {formData.rumah}
+                              </span>
+                              <span>•</span>
+                              <span>WA: {formData.phone || '-'}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedWargaId('');
+                            setFormData(prev => ({ ...prev, nama: '', phone: '', rumah: '', email: '' }));
+                            setIsWargaDropdownOpen(true);
+                          }}
+                          className="px-2.5 py-1 text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-lg transition"
+                        >
+                          Ganti Warga
+                        </button>
+                      </div>
+                    ) : (
+                      /* Searchable Select Input & Dropdown */
+                      <div className="relative">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={wargaSearch}
+                            onChange={(e) => {
+                              setWargaSearch(e.target.value);
+                              setIsWargaDropdownOpen(true);
+                            }}
+                            onFocus={() => setIsWargaDropdownOpen(true)}
+                            placeholder="Cari nama lengkap warga atau nomor rumah..."
+                            className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition"
+                          />
+                          <Users size={14} className="absolute left-3 top-3 text-slate-400" />
+                          {wargaSearch && (
+                            <button
+                              type="button"
+                              onClick={() => setWargaSearch('')}
+                              className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Dropdown Options List */}
+                        {isWargaDropdownOpen && (
+                          <div className="absolute z-30 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-56 overflow-y-auto divide-y divide-slate-100">
+                            {wargaOptions
+                              .filter((w) => {
+                                if (!wargaSearch.trim()) return true;
+                                const q = wargaSearch.toLowerCase();
+                                return w.namaKepala.toLowerCase().includes(q) || w.noRumah.toLowerCase().includes(q);
+                              })
+                              .map((w) => (
+                                <button
+                                  type="button"
+                                  key={w.id}
+                                  onClick={() => {
+                                    handleSelectWarga(w.id);
+                                    setIsWargaDropdownOpen(false);
+                                    setWargaSearch('');
+                                  }}
+                                  className="w-full text-left px-3.5 py-2.5 hover:bg-blue-50 transition flex items-center justify-between group"
+                                >
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-800 group-hover:text-blue-700">{w.namaKepala}</p>
+                                    <p className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                      <span className="px-1.5 py-0.5 bg-slate-100 group-hover:bg-blue-100 rounded text-[10px] font-semibold text-slate-700 group-hover:text-blue-800">
+                                        Rumah: {w.noRumah}
+                                      </span>
+                                      <span>•</span>
+                                      <span>WA: {w.phone}</span>
+                                    </p>
+                                  </div>
+                                  <span className="text-[11px] text-blue-600 font-semibold opacity-0 group-hover:opacity-100 transition">Pilih</span>
+                                </button>
+                              ))}
+                            {wargaOptions.filter((w) => {
+                              if (!wargaSearch.trim()) return true;
+                              const q = wargaSearch.toLowerCase();
+                              return w.namaKepala.toLowerCase().includes(q) || w.noRumah.toLowerCase().includes(q);
+                            }).length === 0 && (
+                              <div className="p-3 text-center text-xs text-slate-500">
+                                Tidak ada warga dengan nama atau rumah "{wargaSearch}"
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs space-y-2">
                     <p className="font-semibold flex items-center gap-1.5">

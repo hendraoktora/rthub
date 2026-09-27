@@ -147,7 +147,7 @@ let OtpService = OtpService_1 = class OtpService {
         }
     }
     async sendOtp(target, channel = 'WHATSAPP', purpose = 'REGISTRASI') {
-        const cleanTarget = target.trim();
+        const cleanTarget = (target || '').trim();
         if (!cleanTarget) {
             throw new common_1.BadRequestException('Nomor WhatsApp atau Email tujuan wajib diisi.');
         }
@@ -241,6 +241,11 @@ let OtpService = OtpService_1 = class OtpService {
                             'Subject: ' + subject,
                             'MIME-Version: 1.0',
                             'Content-Type: text/html; charset=UTF-8',
+                            'X-Priority: 1 (Highest)',
+                            'X-MSMail-Priority: High',
+                            'Importance: High',
+                            'Auto-Submitted: auto-generated',
+                            'Precedence: urgent',
                             '',
                             html,
                             '.'

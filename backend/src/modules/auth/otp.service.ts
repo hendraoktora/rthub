@@ -114,7 +114,7 @@ export class OtpService {
    * Kirim Kode OTP ke WhatsApp atau Email
    */
   async sendOtp(target: string, channel: 'WHATSAPP' | 'EMAIL' = 'WHATSAPP', purpose: string = 'REGISTRASI') {
-    const cleanTarget = target.trim();
+    const cleanTarget = (target || '').trim();
     if (!cleanTarget) {
       throw new BadRequestException('Nomor WhatsApp atau Email tujuan wajib diisi.');
     }
@@ -234,6 +234,11 @@ export class OtpService {
               'Subject: ' + subject,
               'MIME-Version: 1.0',
               'Content-Type: text/html; charset=UTF-8',
+              'X-Priority: 1 (Highest)',
+              'X-MSMail-Priority: High',
+              'Importance: High',
+              'Auto-Submitted: auto-generated',
+              'Precedence: urgent',
               '',
               html,
               '.'

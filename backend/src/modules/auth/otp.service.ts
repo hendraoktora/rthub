@@ -235,7 +235,7 @@ export class OtpService {
             const dateStr = new Date().toUTCString();
             const emailData = [
               'From: ' + from,
-              'To: ' + to,
+              'To: ' + (to.includes('<') ? to : '<' + to + '>'),
               'Date: ' + dateStr,
               'Message-ID: ' + msgId,
               'Subject: ' + subject,

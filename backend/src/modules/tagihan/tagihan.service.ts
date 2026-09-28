@@ -145,16 +145,20 @@ export class TagihanService {
       throw new BadRequestException('Tagihan ini sudah lunas.');
     }
 
+    const isCash = paymentMethod === PaymentMethod.CASH;
+    const adminFeeApplied = isCash ? 0 : Number(tagihan.adminFee || 0);
+    const totalBayarApplied = Number(tagihan.nominalPokok) + adminFeeApplied;
+
     // 1. Buat Transaksi Pembayaran
     const transaksi = await this.prisma.transaksiPembayaran.create({
       data: {
         tagihanId: tagihan.id,
         userId,
         nominalPokok: tagihan.nominalPokok,
-        adminFee: tagihan.adminFee,
-        totalBayar: tagihan.totalBayar,
+        adminFee: adminFeeApplied,
+        totalBayar: totalBayarApplied,
         paymentMethod,
-        status: PaymentStatus.SUCCESS, // Simulasi instant settlement
+        status: PaymentStatus.SUCCESS, // Instant settlement
         paidAt: new Date(),
       },
     });
@@ -168,15 +172,17 @@ export class TagihanService {
       },
     });
 
-    // 3. Catat Hak Platform di SystemFeeLog
-    await this.prisma.systemFeeLog.create({
-      data: {
-        transaksiId: transaksi.id,
-        rtId: tagihan.rumah.rtId,
-        nominalFee: tagihan.adminFee,
-        isSettled: false,
-      },
-    });
+    // 3. Catat Hak Platform di SystemFeeLog jika transaksi digital
+    if (!isCash && adminFeeApplied > 0) {
+      await this.prisma.systemFeeLog.create({
+        data: {
+          transaksiId: transaksi.id,
+          rtId: tagihan.rumah.rtId,
+          nominalFee: adminFeeApplied,
+          isSettled: false,
+        },
+      });
+    }
 
     // 4. Catat Hak Kas RT di KasRT (Otomatis Kas Masuk)
     const currentKas = await this.prisma.kasRT.findFirst({
@@ -186,15 +192,18 @@ export class TagihanService {
     const currentSaldo = currentKas ? Number(currentKas.saldoBerjalan) : 0;
     const newSaldo = currentSaldo + Number(tagihan.nominalPokok);
 
+    const kategori = isCash ? 'Iuran Warga (Tunai)' : 'Iuran Warga (Digital)';
+    const caraBayar = isCash ? 'secara Tunai ke Bendahara' : `via ${paymentMethod}`;
+
     await this.prisma.kasRT.create({
       data: {
         rtId: tagihan.rumah.rtId,
         createdById: userId,
         tipe: TipeKas.PEMASUKAN,
-        kategori: 'Iuran Warga (Digital)',
+        kategori,
         nominal: tagihan.nominalPokok,
         saldoBerjalan: newSaldo,
-        keterangan: `Pembayaran ${tagihan.masterTagihan.namaTagihan} Periode ${tagihan.periodeBulan}/${tagihan.periodeTahun} - Rumah ${tagihan.rumah.noRumah}`,
+        keterangan: `Pembayaran ${tagihan.masterTagihan.namaTagihan} Periode ${tagihan.periodeBulan}/${tagihan.periodeTahun} - Rumah ${tagihan.rumah.noRumah} (${caraBayar})`,
       },
     });
 

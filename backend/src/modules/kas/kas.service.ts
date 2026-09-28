@@ -48,10 +48,31 @@ export class KasService implements OnModuleInit {
     const sumOut = Number(totalPengeluaran._sum.nominal || 0);
     const saldoKas = sumIn - sumOut;
 
+    // Rincian Saldo Kas Digital vs Kas Tunai
+    const digitalIn = await this.prisma.kasRT.aggregate({
+      where: { ...whereClause, tipe: TipeKas.PEMASUKAN, kategori: { contains: 'Digital' } },
+      _sum: { nominal: true },
+    });
+    const sumDigitalIn = Number(digitalIn._sum.nominal || 0);
+    const sumTunaiIn = Math.max(0, sumIn - sumDigitalIn);
+
+    // Penarikan kas digital yang sudah disetujui
+    KasService.loadFromDisk();
+    const wdApproved = KasService.withdrawalRequests
+      .filter((r) => r.rtId === rtId && r.status === 'APPROVED')
+      .reduce((acc, r) => acc + Number(r.totalDipotong || 0), 0);
+
+    const saldoKasDigital = Math.max(0, sumDigitalIn - wdApproved);
+    const saldoKasTunai = Math.max(0, saldoKas - saldoKasDigital);
+
     return {
       saldoKas,
+      saldoKasDigital,
+      saldoKasTunai,
       totalPemasukan: sumIn,
       totalPengeluaran: sumOut,
+      totalPemasukanTunai: sumTunaiIn,
+      totalPemasukanDigital: sumDigitalIn,
       recentTransactions: kasList,
     };
   }

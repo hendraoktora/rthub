@@ -55,6 +55,13 @@ export declare class WilayahController {
         ketua: string;
         phone: string;
         saldoKas: number;
+        totalSaldo: number;
+        saldoActive: number;
+        saldoCash: number;
+        totalPemasukan: number;
+        totalPengeluaran: number;
+        totalPemasukanDigital: number;
+        totalPemasukanTunai: number;
         createdAt: Date;
         paket: string;
         isPro: boolean;

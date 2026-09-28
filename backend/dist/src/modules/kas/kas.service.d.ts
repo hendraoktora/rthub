@@ -11,15 +11,28 @@ export declare class KasService implements OnModuleInit {
         saldoKas: number;
         totalPemasukan: number;
         totalPengeluaran: number;
+        recentTransactions: any[];
+        saldoKasDigital?: undefined;
+        saldoKasTunai?: undefined;
+        totalPemasukanTunai?: undefined;
+        totalPemasukanDigital?: undefined;
+    } | {
+        saldoKas: number;
+        saldoKasDigital: number;
+        saldoKasTunai: number;
+        totalPemasukan: number;
+        totalPengeluaran: number;
+        totalPemasukanTunai: number;
+        totalPemasukanDigital: number;
         recentTransactions: {
             rtId: string;
             id: string;
             createdAt: Date;
-            nominal: import("@prisma/client/runtime/library").Decimal;
-            saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
             createdById: string;
             tipe: import(".prisma/client").$Enums.TipeKas;
             kategori: string;
+            nominal: import("@prisma/client/runtime/library").Decimal;
+            saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
             keterangan: string;
             buktiNotaUrl: string | null;
         }[];
@@ -34,15 +47,16 @@ export declare class KasService implements OnModuleInit {
         rtId: string;
         id: string;
         createdAt: Date;
-        nominal: import("@prisma/client/runtime/library").Decimal;
-        saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
         createdById: string;
         tipe: import(".prisma/client").$Enums.TipeKas;
         kategori: string;
+        nominal: import("@prisma/client/runtime/library").Decimal;
+        saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
         keterangan: string;
         buktiNotaUrl: string | null;
     }>;
     private static withdrawalRequests;
+    static getApprovedWithdrawalSum(rtId: string): number;
     private static platformFeeConfig;
     getPlatformFeeConfig(): {
         feeTransaksiIuran: number;

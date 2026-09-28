@@ -239,9 +239,10 @@ export class KasService implements OnModuleInit {
     const biayaAdmin = KasService.platformFeeConfig.feePenarikanKas;
     const totalDipotong = nominalTarik + biayaAdmin;
 
-    if (kasSummary.saldoKas < totalDipotong) {
+    const maxBisaTarik = kasSummary.saldoKasDigital !== undefined ? kasSummary.saldoKasDigital : kasSummary.saldoKas;
+    if (maxBisaTarik < totalDipotong) {
       throw new BadRequestException(
-        `Saldo kas RT (Rp ${kasSummary.saldoKas.toLocaleString('id-ID')}) tidak mencukupi untuk penarikan Rp ${nominalTarik.toLocaleString('id-ID')} + Biaya Transfer Rp ${biayaAdmin.toLocaleString('id-ID')}.`
+        `Saldo kas digital aktif di Payment Gateway (Rp ${maxBisaTarik.toLocaleString('id-ID')}) tidak mencukupi untuk penarikan Rp ${nominalTarik.toLocaleString('id-ID')} + Biaya Transfer Rp ${biayaAdmin.toLocaleString('id-ID')}. Sisa kas lainnya sebesar Rp ${(kasSummary.saldoKasTunai || 0).toLocaleString('id-ID')} berupa uang tunai fisik yang dipegang langsung oleh bendahara.`
       );
     }
 

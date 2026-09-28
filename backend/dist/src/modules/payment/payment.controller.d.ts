@@ -19,6 +19,18 @@ export declare class PaymentController {
         fee: string;
         desc: string;
     }[]>;
+    checkoutSubscription(body: any): Promise<{
+        success: boolean;
+        merchantOrderId: string;
+        reference: any;
+        paymentUrl: any;
+        vaNumber: any;
+        qrString: any;
+        amount: number;
+        paymentMethod: string;
+        statusCode: any;
+        message: string;
+    }>;
     createInvoice(userId: string, dto: CreateInvoiceDto): Promise<{
         success: boolean;
         isSimulation: boolean;

@@ -1798,6 +1798,61 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFC7E8D8)),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Row(
+                                      children: [
+                                        Icon(Icons.verified_outlined, size: 12, color: Color(0xFF087252)),
+                                        SizedBox(width: 4),
+                                        Text('Kas Active (PG)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF087252))),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      hubRupiah(_data.kas?['saldoKasDigital'] ?? _data.kas?['saldoKas']),
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF0F5132)),
+                                    ),
+                                    const Text('Bisa ditarik ke bank', style: TextStyle(fontSize: 9, color: AppTheme.textSecondary)),
+                                  ],
+                                ),
+                              ),
+                              Container(height: 28, width: 1, color: const Color(0xFFC7E8D8)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Row(
+                                      children: [
+                                        Icon(Icons.payments_outlined, size: 12, color: Color(0xFF2563EB)),
+                                        SizedBox(width: 4),
+                                        Text('Uang Tunai (Cash)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      hubRupiah(_data.kas?['saldoKasTunai'] ?? 0),
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF1E40AF)),
+                                    ),
+                                    const Text('Fisik di bendahara', style: TextStyle(fontSize: 9, color: AppTheme.textSecondary)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         if (_isBendahara) ...[
                           const SizedBox(height: 12),
                           SizedBox(
@@ -2001,7 +2056,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showTarikKasModal() {
-    final saldoNum = (_data.kas?['saldoKas'] as num?)?.toDouble() ?? 0.0;
+    final saldoDigitalNum = ((_data.kas?['saldoKasDigital'] ?? _data.kas?['saldoKas']) as num?)?.toDouble() ?? 0.0;
+    final saldoTunaiNum = (_data.kas?['saldoKasTunai'] as num?)?.toDouble() ?? 0.0;
     final nominalController = TextEditingController();
     final noRekController = TextEditingController();
     final atasNamaController = TextEditingController();
@@ -2020,7 +2076,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (ctx, setModalState) {
           final nominalVal = double.tryParse(nominalController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0.0;
           final totalDipotong = nominalVal > 0 ? (nominalVal + withdrawalFee) : 0.0;
-          final isExceed = totalDipotong > saldoNum;
+          final isExceed = totalDipotong > saldoDigitalNum;
 
           return Padding(
             padding: EdgeInsets.only(
@@ -2055,20 +2111,43 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: const Color(0xFFE7F6EF),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Saldo Kas Tersedia:',
-                          style: TextStyle(fontSize: 12, color: Color(0xFF087252)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Kas Active di PG (Bisa Ditarik):',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF087252), fontWeight: FontWeight.w600),
+                            ),
+                            Text(
+                              hubRupiah(saldoDigitalNum),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF087252),
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          hubRupiah(saldoNum),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF087252),
-                          ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Uang Tunai / Cash (Di Bendahara):',
+                              style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                            ),
+                            Text(
+                              hubRupiah(saldoTunaiNum),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

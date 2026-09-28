@@ -84,10 +84,26 @@ let KasService = KasService_1 = class KasService {
         const sumIn = Number(totalPemasukan._sum.nominal || 0);
         const sumOut = Number(totalPengeluaran._sum.nominal || 0);
         const saldoKas = sumIn - sumOut;
+        const digitalIn = await this.prisma.kasRT.aggregate({
+            where: { ...whereClause, tipe: client_1.TipeKas.PEMASUKAN, kategori: { contains: 'Digital' } },
+            _sum: { nominal: true },
+        });
+        const sumDigitalIn = Number(digitalIn._sum.nominal || 0);
+        const sumTunaiIn = Math.max(0, sumIn - sumDigitalIn);
+        KasService_1.loadFromDisk();
+        const wdApproved = KasService_1.withdrawalRequests
+            .filter((r) => r.rtId === rtId && r.status === 'APPROVED')
+            .reduce((acc, r) => acc + Number(r.totalDipotong || 0), 0);
+        const saldoKasDigital = Math.max(0, sumDigitalIn - wdApproved);
+        const saldoKasTunai = Math.max(0, saldoKas - saldoKasDigital);
         return {
             saldoKas,
+            saldoKasDigital,
+            saldoKasTunai,
             totalPemasukan: sumIn,
             totalPengeluaran: sumOut,
+            totalPemasukanTunai: sumTunaiIn,
+            totalPemasukanDigital: sumDigitalIn,
             recentTransactions: kasList,
         };
     }
@@ -115,6 +131,12 @@ let KasService = KasService_1 = class KasService {
                 buktiNotaUrl: data.buktiNotaUrl || null,
             },
         });
+    }
+    static getApprovedWithdrawalSum(rtId) {
+        KasService_1.loadFromDisk();
+        return KasService_1.withdrawalRequests
+            .filter((r) => r.rtId === rtId && r.status === 'APPROVED')
+            .reduce((acc, r) => acc + Number(r.totalDipotong || 0), 0);
     }
     getPlatformFeeConfig() {
         return KasService_1.platformFeeConfig;
@@ -191,8 +213,9 @@ let KasService = KasService_1 = class KasService {
         const kasSummary = await this.getKasSummary(rtId);
         const biayaAdmin = KasService_1.platformFeeConfig.feePenarikanKas;
         const totalDipotong = nominalTarik + biayaAdmin;
-        if (kasSummary.saldoKas < totalDipotong) {
-            throw new common_1.BadRequestException(`Saldo kas RT (Rp ${kasSummary.saldoKas.toLocaleString('id-ID')}) tidak mencukupi untuk penarikan Rp ${nominalTarik.toLocaleString('id-ID')} + Biaya Transfer Rp ${biayaAdmin.toLocaleString('id-ID')}.`);
+        const maxBisaTarik = kasSummary.saldoKasDigital !== undefined ? kasSummary.saldoKasDigital : kasSummary.saldoKas;
+        if (maxBisaTarik < totalDipotong) {
+            throw new common_1.BadRequestException(`Saldo kas digital aktif di Payment Gateway (Rp ${maxBisaTarik.toLocaleString('id-ID')}) tidak mencukupi untuk penarikan Rp ${nominalTarik.toLocaleString('id-ID')} + Biaya Transfer Rp ${biayaAdmin.toLocaleString('id-ID')}. Sisa kas lainnya sebesar Rp ${(kasSummary.saldoKasTunai || 0).toLocaleString('id-ID')} berupa uang tunai fisik yang dipegang langsung oleh bendahara.`);
         }
         const rt = await this.prisma.rT.findUnique({
             where: { id: rtId },

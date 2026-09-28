@@ -132,13 +132,16 @@ let TagihanService = class TagihanService {
         if (tagihan.status === client_1.StatusTagihan.PAID) {
             throw new common_1.BadRequestException('Tagihan ini sudah lunas.');
         }
+        const isCash = paymentMethod === client_1.PaymentMethod.CASH;
+        const adminFeeApplied = isCash ? 0 : Number(tagihan.adminFee || 0);
+        const totalBayarApplied = Number(tagihan.nominalPokok) + adminFeeApplied;
         const transaksi = await this.prisma.transaksiPembayaran.create({
             data: {
                 tagihanId: tagihan.id,
                 userId,
                 nominalPokok: tagihan.nominalPokok,
-                adminFee: tagihan.adminFee,
-                totalBayar: tagihan.totalBayar,
+                adminFee: adminFeeApplied,
+                totalBayar: totalBayarApplied,
                 paymentMethod,
                 status: client_1.PaymentStatus.SUCCESS,
                 paidAt: new Date(),
@@ -151,29 +154,33 @@ let TagihanService = class TagihanService {
                 paidAt: new Date(),
             },
         });
-        await this.prisma.systemFeeLog.create({
-            data: {
-                transaksiId: transaksi.id,
-                rtId: tagihan.rumah.rtId,
-                nominalFee: tagihan.adminFee,
-                isSettled: false,
-            },
-        });
+        if (!isCash && adminFeeApplied > 0) {
+            await this.prisma.systemFeeLog.create({
+                data: {
+                    transaksiId: transaksi.id,
+                    rtId: tagihan.rumah.rtId,
+                    nominalFee: adminFeeApplied,
+                    isSettled: false,
+                },
+            });
+        }
         const currentKas = await this.prisma.kasRT.findFirst({
             where: { rtId: tagihan.rumah.rtId },
             orderBy: { createdAt: 'desc' },
         });
         const currentSaldo = currentKas ? Number(currentKas.saldoBerjalan) : 0;
         const newSaldo = currentSaldo + Number(tagihan.nominalPokok);
+        const kategori = isCash ? 'Iuran Warga (Tunai)' : 'Iuran Warga (Digital)';
+        const caraBayar = isCash ? 'secara Tunai ke Bendahara' : `via ${paymentMethod}`;
         await this.prisma.kasRT.create({
             data: {
                 rtId: tagihan.rumah.rtId,
                 createdById: userId,
                 tipe: client_1.TipeKas.PEMASUKAN,
-                kategori: 'Iuran Warga (Digital)',
+                kategori,
                 nominal: tagihan.nominalPokok,
                 saldoBerjalan: newSaldo,
-                keterangan: `Pembayaran ${tagihan.masterTagihan.namaTagihan} Periode ${tagihan.periodeBulan}/${tagihan.periodeTahun} - Rumah ${tagihan.rumah.noRumah}`,
+                keterangan: `Pembayaran ${tagihan.masterTagihan.namaTagihan} Periode ${tagihan.periodeBulan}/${tagihan.periodeTahun} - Rumah ${tagihan.rumah.noRumah} (${caraBayar})`,
             },
         });
         return {

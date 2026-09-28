@@ -16,6 +16,8 @@ class _TarikKasScreenState extends State<TarikKasScreen> {
 
   String _selectedBank = 'BCA';
   double _saldoKas = 0.0;
+  double _saldoKasDigital = 0.0;
+  double _saldoKasTunai = 0.0;
   bool _isLoading = true;
   bool _isSubmitting = false;
   List<dynamic> _riwayat = [];
@@ -57,6 +59,8 @@ class _TarikKasScreenState extends State<TarikKasScreen> {
         setState(() {
           _isBendahara = isBendahara;
           _saldoKas = (kasData['saldoKas'] as num?)?.toDouble() ?? 0.0;
+          _saldoKasDigital = (kasData['saldoKasDigital'] as num?)?.toDouble() ?? _saldoKas;
+          _saldoKasTunai = (kasData['saldoKasTunai'] as num?)?.toDouble() ?? 0.0;
           _riwayat = history;
           _isLoading = false;
         });
@@ -98,10 +102,10 @@ class _TarikKasScreenState extends State<TarikKasScreen> {
     }
 
     final totalDipotong = nominal + _biayaAdmin;
-    if (totalDipotong > _saldoKas) {
+    if (totalDipotong > _saldoKasDigital) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Saldo kas (${_formatRupiah(_saldoKas)}) tidak mencukupi untuk penarikan ${_formatRupiah(totalDipotong)}'),
+          content: Text('Saldo Kas Active di PG (${_formatRupiah(_saldoKasDigital)}) tidak mencukupi untuk penarikan ${_formatRupiah(totalDipotong)}. Uang kas tunai (${_formatRupiah(_saldoKasTunai)}) sudah dipegang langsung oleh bendahara.'),
           backgroundColor: AppTheme.alertRed,
         ),
       );
@@ -221,7 +225,7 @@ class _TarikKasScreenState extends State<TarikKasScreen> {
   Widget build(BuildContext context) {
     final nominalVal = double.tryParse(_nominalController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0.0;
     final totalDipotong = nominalVal > 0 ? (nominalVal + _biayaAdmin) : 0.0;
-    final isExceed = totalDipotong > _saldoKas;
+    final isExceed = totalDipotong > _saldoKasDigital;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -263,24 +267,88 @@ class _TarikKasScreenState extends State<TarikKasScreen> {
                               Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
                               SizedBox(width: 8),
                               Text(
-                                'Saldo Kas RT Tersedia',
+                                'Total Saldo Kas Lingkungan',
                                 style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
                             _formatRupiah(_saldoKas),
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 28,
+                              fontSize: 26,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Dana iuran warga yang dapat dicairkan ke rekening bank resmi pengurus',
-                            style: TextStyle(color: Colors.white60, fontSize: 11),
+                          const SizedBox(height: 14),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Row(
+                                        children: [
+                                          Icon(Icons.check_circle_rounded, color: Color(0xFF86EFAC), size: 14),
+                                          SizedBox(width: 5),
+                                          Text(
+                                            'Kas Active (PG)',
+                                            style: TextStyle(color: Color(0xFF86EFAC), fontSize: 11, fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _formatRupiah(_saldoKasDigital),
+                                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      const Text(
+                                        'Bisa ditarik ke bank',
+                                        style: TextStyle(color: Colors.white70, fontSize: 10),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(width: 1, height: 42, color: Colors.white24),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Row(
+                                        children: [
+                                          Icon(Icons.payments_rounded, color: Color(0xFFFDE047), size: 14),
+                                          SizedBox(width: 5),
+                                          Text(
+                                            'Uang Tunai (Cash)',
+                                            style: TextStyle(color: Color(0xFFFDE047), fontSize: 11, fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _formatRupiah(_saldoKasTunai),
+                                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      const Text(
+                                        'Fisik di bendahara',
+                                        style: TextStyle(color: Colors.white70, fontSize: 10),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

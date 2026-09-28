@@ -37,6 +37,26 @@ export declare class DuitkuService {
         statusCode: any;
         message: string;
     }>;
+    createSubscriptionCheckout(dto: {
+        planName?: string;
+        amount?: number;
+        rtName?: string;
+        customerName?: string;
+        customerEmail?: string;
+        customerPhone?: string;
+        paymentMethodCode?: string;
+    }): Promise<{
+        success: boolean;
+        merchantOrderId: string;
+        reference: any;
+        paymentUrl: any;
+        vaNumber: any;
+        qrString: any;
+        amount: number;
+        paymentMethod: string;
+        statusCode: any;
+        message: string;
+    }>;
     handleCallback(body: any): Promise<{
         status: string;
         message: string;

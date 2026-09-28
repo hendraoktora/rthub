@@ -48,6 +48,7 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcryptjs"));
 const addons_service_1 = require("../addons/addons.service");
+const kas_service_1 = require("../kas/kas.service");
 let WilayahService = class WilayahService {
     constructor(prisma, addonsService) {
         this.prisma = prisma;
@@ -112,6 +113,15 @@ let WilayahService = class WilayahService {
             const sumIn = Number(totalIn._sum.nominal || 0);
             const sumOut = Number(totalOut._sum.nominal || 0);
             const saldoKas = sumIn - sumOut;
+            const digitalIn = await this.prisma.kasRT.aggregate({
+                where: { rtId: rt.id, tipe: client_1.TipeKas.PEMASUKAN, kategori: { contains: 'Digital' } },
+                _sum: { nominal: true },
+            });
+            const sumDigitalIn = Number(digitalIn._sum.nominal || 0);
+            const sumTunaiIn = Math.max(0, sumIn - sumDigitalIn);
+            const wdApproved = kas_service_1.KasService.getApprovedWithdrawalSum(rt.id);
+            const saldoActive = Math.max(0, sumDigitalIn - wdApproved);
+            const saldoCash = Math.max(0, saldoKas - saldoActive);
             const ketua = rt.users[0]?.profile?.namaLengkap || 'Ketua RT Aktif';
             const phone = rt.users[0]?.phone || '-';
             const sub = await this.addonsService.getRtSubscription(rt.id);
@@ -129,6 +139,13 @@ let WilayahService = class WilayahService {
                 ketua,
                 phone,
                 saldoKas,
+                totalSaldo: saldoKas,
+                saldoActive,
+                saldoCash,
+                totalPemasukan: sumIn,
+                totalPengeluaran: sumOut,
+                totalPemasukanDigital: sumDigitalIn,
+                totalPemasukanTunai: sumTunaiIn,
                 createdAt: rt.createdAt,
                 paket: isPro ? 'PRO' : 'BASIC',
                 isPro,

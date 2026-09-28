@@ -236,6 +236,73 @@ let DuitkuService = DuitkuService_1 = class DuitkuService {
             throw new common_1.BadRequestException(`Gagal menghubungi gateway Duitku: ${err.message}`);
         }
     }
+    async createSubscriptionCheckout(dto) {
+        const nominalTotal = Math.round(Number(dto.amount) || 49000);
+        const planName = dto.planName || 'Paket RT Pro (Langganan 1 Bulan)';
+        const rtName = dto.rtName || 'RT 04 / RW 04 Kota Baru';
+        const customerName = dto.customerName || 'Pengurus RT';
+        const customerEmail = dto.customerEmail || 'support@rthub.id';
+        const customerPhone = dto.customerPhone || '085155163110';
+        const methodCode = dto.paymentMethodCode || 'SP';
+        const merchantOrderId = `SUB-${Date.now()}`;
+        const productDetails = `${planName} - ${rtName}`;
+        const rawSig = `${this.merchantCode}${merchantOrderId}${nominalTotal}${this.apiKey}`;
+        const signature = crypto.createHash('md5').update(rawSig).digest('hex');
+        const payload = {
+            merchantCode: this.merchantCode,
+            paymentAmount: nominalTotal,
+            paymentMethod: methodCode,
+            merchantOrderId,
+            productDetails,
+            email: customerEmail,
+            phoneNumber: customerPhone,
+            itemDetails: [
+                {
+                    name: planName,
+                    price: nominalTotal,
+                    quantity: 1,
+                },
+            ],
+            customerDetail: {
+                firstName: customerName,
+                lastName: '',
+                email: customerEmail,
+                phoneNumber: customerPhone,
+            },
+            callbackUrl: this.callbackUrl,
+            returnUrl: this.returnUrl,
+            signature,
+            expiryPeriod: 1440,
+        };
+        try {
+            const response = await fetch(`${this.baseUrl}/merchant/v2/inquiry`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const result = await response.json();
+            this.logger.log(`[DUITKU SUBSCRIPTION CHECKOUT] OrderId: ${merchantOrderId} -> ${JSON.stringify(result)}`);
+            if (result.statusCode !== '00') {
+                throw new common_1.BadRequestException(`Gagal membuat checkout Duitku: ${result.statusMessage || result.statusCode || 'Respon tidak valid'}`);
+            }
+            return {
+                success: true,
+                merchantOrderId,
+                reference: result.reference,
+                paymentUrl: result.paymentUrl,
+                vaNumber: result.vaNumber,
+                qrString: result.qrString,
+                amount: nominalTotal,
+                paymentMethod: methodCode,
+                statusCode: result.statusCode,
+                message: 'Invoice checkout berhasil diterbitkan via Duitku Sandbox. Silakan selesaikan pembayaran.',
+            };
+        }
+        catch (err) {
+            this.logger.error(`[DUITKU CHECKOUT ERROR] ${err.message}`, err.stack);
+            throw new common_1.BadRequestException(`Gagal menghubungi gateway Duitku: ${err.message}`);
+        }
+    }
     async handleCallback(body) {
         this.logger.log(`[DUITKU CALLBACK RECEIVED] ${JSON.stringify(body)}`);
         const { merchantCode, amount, merchantOrderId, signature, resultCode, reference, additionalParam, } = body;

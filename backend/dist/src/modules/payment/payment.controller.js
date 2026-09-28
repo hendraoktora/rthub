@@ -28,6 +28,9 @@ let PaymentController = class PaymentController {
     getChannels() {
         return this.duitkuService.getPaymentChannels();
     }
+    async checkoutSubscription(body) {
+        return this.duitkuService.createSubscriptionCheckout(body);
+    }
     async createInvoice(userId, dto) {
         return this.duitkuService.createInvoice(userId, dto);
     }
@@ -53,6 +56,14 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], PaymentController.prototype, "getChannels", null);
+__decorate([
+    (0, common_1.Post)('checkout-subscription'),
+    (0, swagger_1.ApiOperation)({ summary: 'Menerbitkan Checkout Pembayaran Langganan Paket RT Pro / Add-ons via Duitku' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "checkoutSubscription", null);
 __decorate([
     (0, common_1.Post)('create-invoice'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

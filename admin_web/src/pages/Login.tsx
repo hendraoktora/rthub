@@ -120,7 +120,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
         <div className="mt-6 pt-5 border-t border-slate-700/60 text-center text-[11px] text-slate-400 space-y-1">
           <p className="font-semibold text-slate-300">Bantuan &amp; Dukungan RT Hub</p>
           <p>Email: <a href="mailto:support@rthub.id" className="text-blue-400 hover:underline">support@rthub.id</a> &bull; WA: <a href="https://wa.me/6285155163110" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">0851-5516-3110</a></p>
-          <p className="text-[10px] text-slate-500">Jl. Cempedak Blok AH 1 No. 2 RT.004/RW.004 Kel. Kota Baru, Bekasi Barat 17133</p>
+          <p className="text-[10px] text-slate-500">Kel. Kota Baru, Kec. Bekasi Barat, Kota Bekasi, Jawa Barat 17133</p>
         </div>
       </div>
     </div>

@@ -31,6 +31,9 @@ interface RTOverviewItem {
   ketua: string;
   phone: string;
   saldoKas: number;
+  totalSaldo?: number;
+  saldoActive?: number;
+  saldoCash?: number;
   paket?: 'BASIC' | 'PRO';
   isPro?: boolean;
 }
@@ -66,6 +69,8 @@ export const SuperadminOverview: React.FC<SuperadminOverviewProps> = ({ onNaviga
   const totalWarga = rts.reduce((sum, r) => sum + (Number(r.wargaCount) || 0), 0);
   const totalKk = rts.reduce((sum, r) => sum + (Number(r.rumahCount) || 1), 0);
   const totalKas = rts.reduce((sum, r) => sum + (Number(r.saldoKas) || 0), 0);
+  const totalActiveKas = rts.reduce((sum, r) => sum + (Number(r.saldoActive ?? r.saldoKas) || 0), 0);
+  const totalCashKas = rts.reduce((sum, r) => sum + (Number(r.saldoCash || 0)), 0);
   const proRts = rts.filter((r) => r.isPro || r.paket === 'PRO');
   const totalPro = proRts.length;
   const totalBasic = totalRt - totalPro;
@@ -164,12 +169,17 @@ export const SuperadminOverview: React.FC<SuperadminOverviewProps> = ({ onNaviga
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl font-black text-emerald-600 truncate block">
+            <span className="text-xl font-black text-slate-900 truncate block">
               Rp {totalKas.toLocaleString('id-ID')}
             </span>
-            <p className="text-[11px] text-slate-400 font-medium mt-1">
-              Akumulasi Kas Seluruh RT
-            </p>
+            <div className="mt-1.5 flex flex-col gap-0.5 text-[10px]">
+              <span className="text-blue-600 font-bold">
+                • Active (PG): Rp {totalActiveKas.toLocaleString('id-ID')}
+              </span>
+              <span className="text-emerald-600 font-bold">
+                • Cash (Tunai): Rp {totalCashKas.toLocaleString('id-ID')}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -325,9 +335,14 @@ export const SuperadminOverview: React.FC<SuperadminOverviewProps> = ({ onNaviga
                 <div key={rt.id} className="space-y-1">
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-bold text-slate-800">{rt.label}</span>
-                    <span className="font-extrabold text-emerald-600">
-                      Rp {rt.saldoKas.toLocaleString('id-ID')}
-                    </span>
+                    <div className="text-right">
+                      <span className="font-extrabold text-slate-900 block">
+                        Rp {rt.saldoKas.toLocaleString('id-ID')}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        Active: <strong className="text-blue-600">Rp {(rt.saldoActive ?? rt.saldoKas).toLocaleString('id-ID')}</strong> | Cash: <strong className="text-emerald-600">Rp {(rt.saldoCash ?? 0).toLocaleString('id-ID')}</strong>
+                      </span>
+                    </div>
                   </div>
                   <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
                     <div 

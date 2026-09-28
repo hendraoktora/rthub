@@ -134,6 +134,13 @@ export class KasService implements OnModuleInit {
     approvedAt?: string;
   }> = [];
 
+  static getApprovedWithdrawalSum(rtId: string): number {
+    KasService.loadFromDisk();
+    return KasService.withdrawalRequests
+      .filter((r) => r.rtId === rtId && r.status === 'APPROVED')
+      .reduce((acc, r) => acc + Number(r.totalDipotong || 0), 0);
+  }
+
   // Konfigurasi Tarif Fee Platform RtHub (Superadmin Configurable)
   private static platformFeeConfig = {
     feeTransaksiIuran: 1500,

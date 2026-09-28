@@ -15,6 +15,9 @@ interface RTItem {
   ketua: string;
   phone: string;
   saldoKas: number;
+  totalSaldo?: number;
+  saldoActive?: number;
+  saldoCash?: number;
   createdAt: string;
   paket?: 'BASIC' | 'PRO';
   isPro?: boolean;
@@ -265,7 +268,7 @@ export const SuperadminDashboard: React.FC = () => {
                   <th className="py-3.5 px-4">Wilayah & Alamat</th>
                   <th className="py-3.5 px-4">Ketua RT & Kontak</th>
                   <th className="py-3.5 px-4 text-center">Penduduk (Jiwa / KK)</th>
-                  <th className="py-3.5 px-4 text-right">Saldo Kas RT</th>
+                  <th className="py-3.5 px-4 text-right">Rincian Saldo Kas</th>
                   <th className="py-3.5 px-4 text-center">Paket Ekosistem</th>
                   <th className="py-3.5 px-4 text-center">Aksi</th>
                 </tr>
@@ -329,10 +332,23 @@ export const SuperadminDashboard: React.FC = () => {
                     </td>
 
                     <td className="py-3.5 px-4 text-right">
-                      <span className="font-extrabold text-emerald-600 text-sm block">
-                        Rp {r.saldoKas.toLocaleString('id-ID')}
-                      </span>
-                      <span className="text-[10px] text-slate-400">Kas Terverifikasi</span>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span className="text-[10px] text-slate-400 font-semibold uppercase">Total:</span>
+                          <span className="font-extrabold text-slate-900 text-sm">
+                            Rp {(r.saldoKas || 0).toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-end gap-1.5 text-[10px]">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-100" title="Saldo kas digital aktif yang ada di PG dan siap ditarik">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                            Active: Rp {(r.saldoActive ?? r.saldoKas).toLocaleString('id-ID')}
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-100" title="Saldo tunai dipegang fisik oleh bendahara">
+                            Cash: Rp {(r.saldoCash ?? 0).toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      </div>
                     </td>
 
                     <td className="py-3.5 px-4 text-center">
@@ -395,17 +411,30 @@ export const SuperadminDashboard: React.FC = () => {
                 <span className="font-bold text-slate-800">{r.ketua}</span>
               </div>
 
-              <div className="flex justify-between items-end pt-1 bg-slate-50/70 p-3 rounded-xl">
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Total Warga</span>
-                  <p className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
-                    <Users size={16} className="text-blue-600" />
-                    {r.wargaCount} Jiwa ({r.rumahCount || 1} KK)
-                  </p>
+              <div className="pt-1 bg-slate-50/70 p-3 rounded-xl space-y-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold">Total Warga</span>
+                    <p className="text-sm font-bold text-slate-900 flex items-center gap-1">
+                      <Users size={14} className="text-blue-600" />
+                      {r.wargaCount} Jiwa ({r.rumahCount || 1} KK)
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold">Total Saldo Kas</span>
+                    <p className="text-base font-black text-slate-900">Rp {(r.saldoKas || 0).toLocaleString('id-ID')}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Saldo Kas RT</span>
-                  <p className="text-base font-extrabold text-emerald-600">Rp {r.saldoKas.toLocaleString('id-ID')}</p>
+
+                <div className="pt-2 border-t border-slate-200/60 grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="bg-blue-50/80 p-1.5 rounded-lg border border-blue-100">
+                    <span className="text-[9px] text-blue-600 font-bold block uppercase">Saldo Active (PG)</span>
+                    <strong className="text-blue-900 font-extrabold text-xs">Rp {(r.saldoActive ?? r.saldoKas).toLocaleString('id-ID')}</strong>
+                  </div>
+                  <div className="bg-emerald-50/80 p-1.5 rounded-lg border border-emerald-100 text-right">
+                    <span className="text-[9px] text-emerald-600 font-bold block uppercase">Saldo Cash (Tunai)</span>
+                    <strong className="text-emerald-900 font-extrabold text-xs">Rp {(r.saldoCash ?? 0).toLocaleString('id-ID')}</strong>
+                  </div>
                 </div>
               </div>
 
@@ -447,27 +476,34 @@ export const SuperadminDashboard: React.FC = () => {
             </div>
 
             {/* RT Quick Stats Bar */}
-            <div className="grid grid-cols-3 gap-3 p-4 bg-slate-50 border-b border-slate-200">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-slate-50 border-b border-slate-200">
               <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase">Total KK Terdata</span>
-                  <p className="text-lg font-black text-slate-900">{wargaList.length} KK</p>
+                  <p className="text-base font-black text-slate-900">{wargaList.length} KK</p>
                 </div>
-                <Home className="text-blue-600" size={24} />
+                <Home className="text-blue-600" size={20} />
               </div>
               <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Iuran Terbayar (Sep 2026)</span>
-                  <p className="text-lg font-black text-emerald-600">{totalLunas} / {wargaList.length} KK ({persenLunas}%)</p>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">Total Saldo Kas</span>
+                  <p className="text-base font-black text-slate-900">Rp {(modalRt.saldoKas || 0).toLocaleString('id-ID')}</p>
                 </div>
-                <CheckCircle2 className="text-emerald-600" size={24} />
+                <CreditCard className="text-slate-700" size={20} />
               </div>
-              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div className="bg-white p-3 rounded-xl border border-blue-200 bg-blue-50/50 shadow-sm flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Saldo Kas Lingkungan</span>
-                  <p className="text-lg font-black text-blue-700">Rp {modalRt.saldoKas.toLocaleString('id-ID')}</p>
+                  <span className="text-[10px] text-blue-600 font-bold uppercase">Saldo Active (PG)</span>
+                  <p className="text-base font-black text-blue-700">Rp {(modalRt.saldoActive ?? modalRt.saldoKas).toLocaleString('id-ID')}</p>
                 </div>
-                <CreditCard className="text-blue-700" size={24} />
+                <CheckCircle2 className="text-blue-600" size={20} />
+              </div>
+              <div className="bg-white p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-emerald-600 font-bold uppercase">Saldo Bayar Cash</span>
+                  <p className="text-base font-black text-emerald-700">Rp {(modalRt.saldoCash ?? 0).toLocaleString('id-ID')}</p>
+                </div>
+                <Receipt className="text-emerald-600" size={20} />
               </div>
             </div>
 

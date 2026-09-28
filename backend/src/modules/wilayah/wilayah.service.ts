@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Role, StatusTagihan, TipeKas } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { AddonsService } from '../addons/addons.service';
+import { KasService } from '../kas/kas.service';
 
 @Injectable()
 export class WilayahService {
@@ -78,6 +79,18 @@ export class WilayahService {
         const sumOut = Number(totalOut._sum.nominal || 0);
         const saldoKas = sumIn - sumOut;
 
+        // Rincian Saldo Kas Digital (Active di PG) vs Kas Tunai (Cash)
+        const digitalIn = await this.prisma.kasRT.aggregate({
+          where: { rtId: rt.id, tipe: TipeKas.PEMASUKAN, kategori: { contains: 'Digital' } },
+          _sum: { nominal: true },
+        });
+        const sumDigitalIn = Number(digitalIn._sum.nominal || 0);
+        const sumTunaiIn = Math.max(0, sumIn - sumDigitalIn);
+
+        const wdApproved = KasService.getApprovedWithdrawalSum(rt.id);
+        const saldoActive = Math.max(0, sumDigitalIn - wdApproved);
+        const saldoCash = Math.max(0, saldoKas - saldoActive);
+
         const ketua = rt.users[0]?.profile?.namaLengkap || 'Ketua RT Aktif';
         const phone = rt.users[0]?.phone || '-';
 
@@ -97,6 +110,13 @@ export class WilayahService {
           ketua,
           phone,
           saldoKas,
+          totalSaldo: saldoKas,
+          saldoActive,
+          saldoCash,
+          totalPemasukan: sumIn,
+          totalPengeluaran: sumOut,
+          totalPemasukanDigital: sumDigitalIn,
+          totalPemasukanTunai: sumTunaiIn,
           createdAt: rt.createdAt,
           paket: isPro ? 'PRO' : 'BASIC',
           isPro,

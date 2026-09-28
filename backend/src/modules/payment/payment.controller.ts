@@ -31,6 +31,12 @@ export class PaymentController {
     return this.duitkuService.getPaymentChannels();
   }
 
+  @Post('checkout-subscription')
+  @ApiOperation({ summary: 'Menerbitkan Checkout Pembayaran Langganan Paket RT Pro / Add-ons via Duitku' })
+  async checkoutSubscription(@Body() body: any) {
+    return this.duitkuService.createSubscriptionCheckout(body);
+  }
+
   @Post('create-invoice')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

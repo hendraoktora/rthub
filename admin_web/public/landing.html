@@ -98,7 +98,7 @@ function handleGoToLogin() {
   <!-- NAVBAR -->
   <header id="navbar"><div class="container nav-inner"><a class="logo" href="#beranda" aria-label="RtHub" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
       <img src="/rthub_logo.png" alt="RtHub" style="height:36px;width:auto;object-fit:contain;" onerror="this.onerror=null;this.src='rthub_logo.png';" />
-    </a><nav id="nav-menu" aria-label="Navigasi utama"><a href="#beranda">Beranda</a><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a><a href="#cerita-warga">Cerita Warga</a><a href="#harga">Paket & Biaya</a></nav><div class="nav-actions"><a class="nav-login" href="javascript:void(0)" onclick="handleGoToLogin()">Portal Pengurus ↗</a><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><button id="menu-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Buka menu"><svg class="icon"><use href="#i-menu"/></svg></button></div></div></header>
+    </a><nav id="nav-menu" aria-label="Navigasi utama"><a href="#beranda">Beranda</a><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a><a href="#cerita-warga">Cerita Warga</a><a href="#harga">Paket & Biaya</a><a href="#kontak">Kontak</a></nav><div class="nav-actions"><a class="nav-login" href="javascript:void(0)" onclick="handleGoToLogin()">Portal Pengurus ↗</a><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><button id="menu-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Buka menu"><svg class="icon"><use href="#i-menu"/></svg></button></div></div></header>
   <main id="main">
     <!-- HERO -->
     <section class="hero" id="beranda"><div class="container hero-inner"><div class="hero-copy"><div class="pill hero-tag"><span class="dot"></span> RUANG DIGITAL UNTUK HIDUP BERTETANGGA <span>RT Hub</span></div><h1 data-split>Satu kampung.<br><span class="green">Banyak cerita.</span></h1><p class="hero-description">Urusan RT, sekarang lebih sederhana. Dari kas warga sampai lapak tetangga, semuanya terhubung. Jadi, ada lebih banyak waktu untuk saling sapa.</p><div class="hero-buttons"><button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Coba Gratis <svg class="icon"><use href="#i-arrow"/></svg></button><a class="btn btn-secondary magnetic" href="/rthub-mobile.apk" target="_blank" rel="noopener noreferrer"><svg class="icon"><use href="#i-download"/></svg> Unduh Android</a></div><div class="hero-proof"><div class="avatar-stack" aria-hidden="true"><span class="avatar">BS</span><span class="avatar">SR</span><span class="avatar">DP</span><span class="avatar">+</span></div><div><strong>Untuk setiap peran di kampung.</strong><br>Ketua RT, pengurus, warga, dan pemilik usaha.</div></div></div>
@@ -175,7 +175,7 @@ function handleGoToLogin() {
               <li><strong>Prioritas Verifikasi &amp; Pencairan Kas RT</strong></li>
               <li>Bebas biaya langganan bulanan bagi warga</li>
             </ul>
-            <button class="btn btn-primary magnetic" onclick="handleGoToLogin()">Aktifkan Paket RT Pro <svg class="icon"><use href="#i-arrow"/></svg></button>
+            <button class="btn btn-primary magnetic" id="btn-checkout-pro" type="button">Aktifkan Paket RT Pro <svg class="icon"><use href="#i-arrow"/></svg></button>
           </article>
 
           <!-- Card 3: Kelurahan / RW Mandiri -->
@@ -202,14 +202,63 @@ function handleGoToLogin() {
         </div>
       </div>
     </section>
+    <!-- KONTAK RESMI & SUPPORT SECTION -->
+    <section class="section" id="kontak" style="background:#f4f8f3;padding:70px 0;">
+      <div class="container">
+        <div class="section-head" data-reveal style="margin-bottom:36px;">
+          <div>
+            <div class="eyebrow" style="color:#087252;">Layanan Pelanggan &amp; Bantuan</div>
+            <h2 data-split>Hubungi Kami</h2>
+          </div>
+          <p>Punya pertanyaan seputar integrasi RT Hub, pendaftaran lingkungan, atau payment gateway? Tim kami siap membantu Anda.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+          <!-- Card Alamat Usaha -->
+          <div style="background:#fff;border:1px solid #dbe6d6;border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,0.03);">
+            <div style="width:42px;height:42px;border-radius:12px;background:#e7f6ef;display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:#087252;font-size:20px;">📍</div>
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1e293b;">Alamat Usaha</h3>
+            <p style="font-size:13px;line-height:1.6;color:#64748b;margin:0;">
+              <strong>RT Hub Indonesia</strong><br>
+              Jl. Cempedak Blok AH 1 No. 2 RT.004/RW.004<br>
+              Kel. Kota Baru, Kec. Bekasi Barat<br>
+              Kota Bekasi, Jawa Barat 17133
+            </p>
+          </div>
+
+          <!-- Card Email Dukungan -->
+          <div style="background:#fff;border:1px solid #dbe6d6;border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,0.03);">
+            <div style="width:42px;height:42px;border-radius:12px;background:#ebf2ff;display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:#2563eb;font-size:20px;">✉️</div>
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1e293b;">Email Dukungan</h3>
+            <p style="font-size:13px;line-height:1.6;color:#64748b;margin-bottom:12px;">
+              Untuk pertanyaan resmi, kemitraan, verifikasi gateway, dan bantuan teknis.
+            </p>
+            <a href="mailto:support@rthub.id" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#2563eb;text-decoration:none;font-size:14px;">
+              support@rthub.id ↗
+            </a>
+          </div>
+
+          <!-- Card Telepon & WhatsApp -->
+          <div style="background:#fff;border:1px solid #dbe6d6;border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,0.03);">
+            <div style="width:42px;height:42px;border-radius:12px;background:#e7f6ef;display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:#10b981;font-size:20px;">💬</div>
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1e293b;">Telepon &amp; WhatsApp</h3>
+            <p style="font-size:13px;line-height:1.6;color:#64748b;margin-bottom:12px;">
+              Layanan respons cepat Senin – Minggu (08.00 – 20.00 WIB).
+            </p>
+            <a href="https://wa.me/6285155163110" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#087252;text-decoration:none;font-size:14px;">
+              0851-5516-3110 (WhatsApp) ↗
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
     <!-- FINAL CTA WITH SECOND PROCEDURAL THREE.JS SCENE -->
-    <section class="cta-section"><div class="container"><div class="cta-panel" data-reveal><div class="cta-grid"></div><div class="cta-copy"><div class="eyebrow">Kampung baik dimulai dari kita</div><h2 data-split>Waktunya RT Anda<br><span class="green">Naik Kelas.</span></h2><p>Lebih rapi administrasinya. Lebih hidup usahanya.<br>Lebih akrab warganya. Yuk, mulai dari RT Anda.</p><div class="cta-buttons"><button class="btn btn-primary magnetic" id="final-cta" onclick="handleGoToLogin()">Coba Gratis Sekarang <svg class="icon"><use href="#i-arrow"/></svg></button><a class="btn btn-secondary magnetic"  href="https://wa.me/6285280039433?text=Halo%20tim%20RT%20Hub%2C%20saya%20ingin%20tahu%20lebih%20lanjut%20tentang%20RT%20Hub%20untuk%20lingkungan%20saya." target="_blank" rel="noopener noreferrer">Hubungi Kami</a></div></div><div class="community-scene"><canvas id="community-canvas" aria-label="Rumah-rumah berkumpul menjadi satu komunitas"></canvas></div></div></div></section>
+    <section class="cta-section"><div class="container"><div class="cta-panel" data-reveal><div class="cta-grid"></div><div class="cta-copy"><div class="eyebrow">Kampung baik dimulai dari kita</div><h2 data-split>Waktunya RT Anda<br><span class="green">Naik Kelas.</span></h2><p>Lebih rapi administrasinya. Lebih hidup usahanya.<br>Lebih akrab warganya. Yuk, mulai dari RT Anda.</p><div class="cta-buttons"><button class="btn btn-primary magnetic" id="final-cta" onclick="handleGoToLogin()">Coba Gratis Sekarang <svg class="icon"><use href="#i-arrow"/></svg></button><a class="btn btn-secondary magnetic"  href="https://wa.me/6285155163110?text=Halo%20tim%20RT%20Hub%2C%20saya%20ingin%20tahu%20lebih%20lanjut%20tentang%20RT%20Hub%20untuk%20lingkungan%20saya." target="_blank" rel="noopener noreferrer">Hubungi Kami</a></div></div><div class="community-scene"><canvas id="community-canvas" aria-label="Rumah-rumah berkumpul menjadi satu komunitas"></canvas></div></div></div></section>
   </main>
   <!-- FOOTER -->
   
     <footer><div class="container"><div class="footer-top"><div class="footer-brand"><a class="logo" href="#beranda" aria-label="RtHub" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
       <img src="/rthub_logo.png" alt="RtHub" style="height:36px;width:auto;object-fit:contain;" onerror="this.onerror=null;this.src='rthub_logo.png';" />
-    </a><p>Teknologi yang mendekatkan.<br>Untuk kampung yang lebih hidup.</p></div><div class="footer-column"><h3>Jelajahi RT Hub</h3><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a></div><div class="footer-column"><h3>Mari terhubung</h3><a href="#cerita-warga">Cerita Warga</a><a  href="https://wa.me/6285280039433?text=Halo%20tim%20RT%20Hub%2C%20saya%20ingin%20tahu%20lebih%20lanjut%20tentang%20RT%20Hub%20untuk%20lingkungan%20saya." target="_blank" rel="noopener noreferrer">WhatsApp RT Hub</a><button data-open-signup="Enterprise">Untuk Kelurahan</button></div><div class="footer-column"><h3>Kabarkan ke tetangga</h3><div class="socials"><a href="https://wa.me/?text=Kenalan%20dengan%20RT%20Hub%3A%20https%3A%2F%2Frthub-dash.hendraoktora.com" target="_blank" rel="noopener noreferrer" aria-label="Bagikan cerita RT Hub melalui WhatsApp"><svg class="icon"><use href="#i-chat"/></svg></a><a href="mailto:?subject=Kenalan%20dengan%20RT%20Hub&body=RT%20Hub%20menyatukan%20urusan%20RT%2C%20lapak%20warga%2C%20dan%20keamanan%20lingkungan%20dalam%20satu%20tempat." aria-label="Bagikan cerita RT Hub melalui email"><svg class="icon"><use href="#i-mail"/></svg></a></div></div></div><div class="footer-big-word" aria-hidden="true">hidup bertetangga.</div><div class="footer-bottom"><span>© 2026 RT Hub. Bertumbuh bersama, bertetangga selamanya.</span><span>Dibuat &amp; Dikembangkan oleh <a href="https://hendraoktora.com" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;font-weight:600;">Hendra Oktora</a></span></div></div></footer>
+    </a><p>Teknologi yang mendekatkan.<br>Untuk kampung yang lebih hidup.</p></div><div class="footer-column"><h3>Jelajahi RT Hub</h3><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara Kerja</a><a href="#harga">Paket &amp; Biaya</a></div><div class="footer-column"><h3>Kontak &amp; Bantuan</h3><p style="font-size:11px;color:#819274;line-height:1.7;margin:4px 0 8px;"><strong>Alamat Usaha:</strong><br>Jl. Cempedak Blok AH 1 No. 2 RT.004/RW.004 Kel. Kota Baru, Kec. Bekasi Barat, Kota Bekasi 17133</p><p style="font-size:11px;color:#819274;line-height:1.7;margin:4px 0;"><strong>Email:</strong> <a href="mailto:support@rthub.id" style="color:#2261e8;text-decoration:underline;">support@rthub.id</a></p><p style="font-size:11px;color:#819274;line-height:1.7;margin:4px 0;"><strong>Telepon / WA:</strong> <a href="https://wa.me/6285155163110" target="_blank" rel="noopener noreferrer" style="color:#2261e8;text-decoration:underline;">0851-5516-3110</a></p></div><div class="footer-column"><h3>Mari Terhubung</h3><a href="https://wa.me/6285155163110?text=Halo%20tim%20RT%20Hub%2C%20saya%20ingin%20tahu%20lebih%20lanjut%20tentang%20RT%20Hub." target="_blank" rel="noopener noreferrer">WhatsApp Support</a><button data-open-signup="Enterprise">Untuk Kelurahan</button><div class="socials" style="margin-top:14px;"><a href="https://wa.me/?text=Kenalan%20dengan%20RT%20Hub%3A%20https%3A%2F%2Fwww.rthub.id" target="_blank" rel="noopener noreferrer" aria-label="Bagikan cerita RT Hub melalui WhatsApp"><svg class="icon"><use href="#i-chat"/></svg></a><a href="mailto:?subject=Kenalan%20dengan%20RT%20Hub&body=RT%20Hub%20menyatukan%20urusan%20RT%2C%20lapak%20warga%2C%20dan%20keamanan%20lingkungan%20dalam%20satu%20tempat." aria-label="Bagikan cerita RT Hub melalui email"><svg class="icon"><use href="#i-mail"/></svg></a></div></div></div><div class="footer-big-word" aria-hidden="true">hidup bertetangga.</div><div class="footer-bottom"><span>© 2026 RT Hub. Bertumbuh bersama, bertetangga selamanya.</span><span>Dibuat &amp; Dikembangkan oleh <a href="https://hendraoktora.com" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;font-weight:600;">Hendra Oktora</a></span></div></div></footer>
   <!-- START: VERIFIED LINKS TO THE EXISTING RT HUB APPLICATION -->
   <dialog id="signup-dialog" aria-labelledby="signup-title" data-lenis-prevent>
     <button class="dialog-close" id="dialog-close" aria-label="Tutup pilihan mulai">×</button>
@@ -287,6 +336,91 @@ function handleGoToLogin() {
       <a class="btn btn-primary" href="javascript:handleGoToLogin()" target="_blank" rel="noopener noreferrer">Buka Portal Pengurus ↗</a>
     </div>
     <p class="register-login">Sudah punya akun? <a href="javascript:handleGoToLogin()" target="_blank" rel="noopener noreferrer">Buka Portal Pengurus</a>, lalu pilih Login Pengurus RT.</p>
+  </dialog>
+
+  <!-- CHECKOUT SANDBOX MODAL (DUITKU INTEGRATION) -->
+  <dialog id="checkout-dialog" aria-labelledby="checkout-title" data-lenis-prevent style="width:min(500px,calc(100% - 32px));">
+    <button class="dialog-close" id="checkout-close" type="button" aria-label="Tutup checkout">×</button>
+    <div class="eyebrow" style="color:#2261e8;">Checkout Paket RT Hub</div>
+    <h2 id="checkout-title" style="font-size:26px;margin:10px 0 6px;">Langganan RT Pro</h2>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Aktifkan paket add-on resmi untuk pelayanan surat digital &amp; akuntansi RT (Dukungan Payment Gateway Duitku Sandbox).</p>
+    
+    <div style="background:#f4f7ee;border:1px solid #d6dfc9;border-radius:12px;padding:14px 16px;margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <strong style="font-size:13px;display:block;color:#354b2e;">Paket RT Pro (1 Bulan)</strong>
+          <span style="font-size:10px;color:#7a8a6e;">Fitur E-Surat Digital, Kwitansi Tunai Barcode, LPJ Excel/PDF</span>
+        </div>
+        <div style="text-align:right;">
+          <strong style="font-size:17px;color:#2261e8;font-family:var(--heading);">Rp 49.000</strong>
+          <span style="display:block;font-size:9px;color:#8a997b;">Testing Sandbox</span>
+        </div>
+      </div>
+    </div>
+
+    <form id="checkout-form">
+      <fieldset id="checkout-fields" style="border:0;padding:0;margin:0;display:grid;gap:12px;">
+        <label style="display:grid;gap:4px;font-size:11px;color:#5a6f50;">Nama RT / Lingkungan
+          <input name="rtName" required maxlength="100" value="RT 004 / RW 004 Kel. Kota Baru" placeholder="Contoh: RT 004 / RW 004 Kota Baru">
+        </label>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label style="display:grid;gap:4px;font-size:11px;color:#5a6f50;">Nama Pemesan
+            <input name="customerName" required maxlength="100" value="Tim Verifikator Duitku" placeholder="Nama Anda / Pengurus">
+          </label>
+          <label style="display:grid;gap:4px;font-size:11px;color:#5a6f50;">Nomor HP / WhatsApp
+            <input name="customerPhone" type="tel" required maxlength="20" value="085155163110" placeholder="081234567890">
+          </label>
+        </div>
+
+        <label style="display:grid;gap:4px;font-size:11px;color:#5a6f50;">Email Konfirmasi
+          <input name="customerEmail" type="email" required maxlength="120" value="support@rthub.id" placeholder="nama@email.com">
+        </label>
+
+        <label style="display:grid;gap:4px;font-size:11px;color:#5a6f50;">Pilihan Saluran Pembayaran (Duitku Sandbox)
+          <select name="paymentMethodCode" required style="cursor:pointer;">
+            <option value="SP">QRIS (ShopeePay / GoPay / OVO / Dana / LinkAja via Duitku)</option>
+            <option value="BC">BCA Virtual Account (Sandbox Simulator)</option>
+            <option value="M2">Mandiri Virtual Account (Sandbox Simulator)</option>
+            <option value="BR">BRI Virtual Account (Sandbox Simulator)</option>
+            <option value="B1">BNI Virtual Account (Sandbox Simulator)</option>
+          </select>
+        </label>
+
+        <div style="margin-top:4px;display:flex;gap:6px;align-items:center;font-size:10px;color:#677b58;">
+          <span style="display:inline-block;width:6px;height:6px;background:#2261e8;border-radius:50%;"></span>
+          <span>Diproses melalui Payment Gateway Duitku Sandbox (Test Environment).</span>
+        </div>
+
+        <button type="submit" id="checkout-submit" class="btn btn-primary" style="width:100%;margin-top:8px;">
+          Bayar Langganan via Duitku <svg class="icon"><use href="#i-arrow"/></svg>
+        </button>
+      </fieldset>
+      <p id="checkout-status" role="status" aria-live="polite" style="font-size:11px;color:#2261e8;margin-top:10px;"></p>
+      <div id="checkout-error" role="alert" style="padding:10px 12px;background:#fff0ed;border:1px solid #eac5bd;border-radius:8px;color:#8d3e34;font-size:11px;margin-top:10px;" hidden></div>
+    </form>
+
+    <!-- HASIL PEMBAYARAN / INVOICE -->
+    <div id="checkout-result" style="margin-top:16px;padding-top:16px;border-top:1px solid #dce3d2;" hidden>
+      <h3 style="font-size:18px;color:#2261e8;margin-bottom:6px;">Invoice Duitku Berhasil Diterbitkan!</h3>
+      <p style="font-size:11px;color:#5a6f50;margin-bottom:12px;">ID Pesanan: <strong id="res-order-id" style="font-family:monospace;"></strong></p>
+      
+      <div id="res-qris-container" style="text-align:center;background:#fff;border:1px solid #dce3d2;border-radius:12px;padding:16px;margin-bottom:14px;" hidden>
+        <p style="font-size:11px;font-weight:600;color:#354b2e;margin-bottom:8px;">Pindai QRIS Sandbox Berikut:</p>
+        <img id="res-qris-img" src="" alt="QRIS Duitku Sandbox" style="width:200px;height:200px;display:block;margin:0 auto;border-radius:8px;">
+        <p style="font-size:9px;color:#8a997b;margin-top:8px;">Scan dengan simulator Duitku atau aplikasi e-wallet Sandbox.</p>
+      </div>
+
+      <div id="res-va-container" style="background:#fff;border:1px solid #dce3d2;border-radius:12px;padding:14px;margin-bottom:14px;" hidden>
+        <span style="font-size:10px;color:#7a8a6e;display:block;">Nomor Virtual Account:</span>
+        <strong id="res-va-number" style="font-size:18px;letter-spacing:1px;color:#2261e8;font-family:monospace;display:block;margin:4px 0;"></strong>
+        <span id="res-va-bank" style="font-size:10px;color:#5a6f50;"></span>
+      </div>
+
+      <a id="res-payment-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;text-decoration:none;">
+        Buka Halaman Pembayaran Duitku ↗
+      </a>
+    </div>
   </dialog>
 
 <!-- END_REGISTRATION_INLINE -->
@@ -671,7 +805,8 @@ function handleGoToLogin() {
     const signup = $('#signup-dialog');
     const contact = $('#contact-dialog');
     const register = $('#register-dialog');
-    const dialogs = [signup, contact, register].filter(Boolean);
+    const checkout = $('#checkout-dialog');
+    const dialogs = [signup, contact, register, checkout].filter(Boolean);
     const openDialog = dialog => {
       if (!dialog) return;
       closeMenu();
@@ -683,9 +818,11 @@ function handleGoToLogin() {
     }));
     $$('[data-open-contact]').forEach(button => button.addEventListener('click', () => openDialog(contact)));
     $$('[data-open-register]').forEach(button => button.addEventListener('click', () => openDialog(register)));
+    $('#btn-checkout-pro')?.addEventListener('click', () => openDialog(checkout));
     $('#dialog-close')?.addEventListener('click', () => signup?.close());
     $('#contact-close')?.addEventListener('click', () => contact?.close());
     $('#register-close')?.addEventListener('click', () => register?.close());
+    $('#checkout-close')?.addEventListener('click', () => checkout?.close());
     dialogs.forEach(dialog => {
       dialog.setAttribute('data-lenis-prevent', '');
       dialog.addEventListener('click', event => {
@@ -796,6 +933,101 @@ function handleGoToLogin() {
         if (registrationRequest === request) {
           registrationRequest = null;
           setRegisterBusy(false);
+        }
+      }
+    });
+
+    /* Duitku Sandbox Subscription Checkout Handler */
+    const checkoutForm = $('#checkout-form');
+    const checkoutFields = $('#checkout-fields');
+    const checkoutSubmit = $('#checkout-submit');
+    const checkoutStatus = $('#checkout-status');
+    const checkoutError = $('#checkout-error');
+    const checkoutResult = $('#checkout-result');
+
+    checkoutForm?.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (checkoutError) { checkoutError.hidden = true; checkoutError.textContent = ''; }
+      if (checkoutResult) checkoutResult.hidden = true;
+      if (checkoutFields) checkoutFields.disabled = true;
+      if (checkoutSubmit) {
+        checkoutSubmit.disabled = true;
+        checkoutSubmit.textContent = 'Menghubungi Gateway Duitku…';
+      }
+      if (checkoutStatus) checkoutStatus.textContent = 'Menerbitkan invoice sandbox ke Duitku…';
+
+      const formData = new FormData(checkoutForm);
+      const payload = {
+        planName: 'Paket RT Pro (Langganan 1 Bulan)',
+        amount: 49000,
+        rtName: formData.get('rtName') || 'RT 004 / RW 004 Kota Baru',
+        customerName: formData.get('customerName') || 'Pengurus RT',
+        customerPhone: formData.get('customerPhone') || '085155163110',
+        customerEmail: formData.get('customerEmail') || 'support@rthub.id',
+        paymentMethodCode: formData.get('paymentMethodCode') || 'SP',
+      };
+
+      try {
+        let response = await fetch('https://api.rthub.id/payment/checkout-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (response.status === 404) {
+          response = await fetch('https://api.rthub.id/api/payment/checkout-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        }
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Gagal menerbitkan checkout Duitku Sandbox');
+        }
+
+        if (checkoutStatus) checkoutStatus.textContent = '';
+        if (checkoutResult) checkoutResult.hidden = false;
+        if ($('#res-order-id')) $('#res-order-id').textContent = data.merchantOrderId;
+
+        if (data.paymentUrl) {
+          const payLink = $('#res-payment-link');
+          if (payLink) {
+            payLink.href = data.paymentUrl;
+            payLink.hidden = false;
+          }
+        }
+
+        const qrisContainer = $('#res-qris-container');
+        const qrisImg = $('#res-qris-img');
+        if (data.qrString && qrisContainer && qrisImg) {
+          qrisContainer.hidden = false;
+          qrisImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.qrString)}`;
+        } else if (qrisContainer) {
+          qrisContainer.hidden = true;
+        }
+
+        const vaContainer = $('#res-va-container');
+        const vaNumber = $('#res-va-number');
+        const vaBank = $('#res-va-bank');
+        if (data.vaNumber && vaContainer && vaNumber) {
+          vaContainer.hidden = false;
+          vaNumber.textContent = data.vaNumber;
+          if (vaBank) vaBank.textContent = `Metode Bank: ${data.paymentMethod || 'Virtual Account'}`;
+        } else if (vaContainer) {
+          vaContainer.hidden = true;
+        }
+      } catch (err) {
+        if (checkoutError) {
+          checkoutError.textContent = err.message || 'Gagal terhubung ke gateway pembayaran Duitku.';
+          checkoutError.hidden = false;
+        }
+        if (checkoutStatus) checkoutStatus.textContent = '';
+      } finally {
+        if (checkoutFields) checkoutFields.disabled = false;
+        if (checkoutSubmit) {
+          checkoutSubmit.disabled = false;
+          checkoutSubmit.innerHTML = 'Bayar Langganan via Duitku <svg class="icon"><use href="#i-arrow"/></svg>';
         }
       }
     });

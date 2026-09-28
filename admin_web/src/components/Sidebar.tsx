@@ -25,12 +25,11 @@ interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   role: string;
-  setRole: (role: string) => void;
   user: { name: string; role: string; email?: string | null; wilayah: string };
   onLogout: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role, setRole, user, onLogout }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role, user, onLogout }) => {
   // STRICT RBAC MENU RULES:
   // SUPERADMIN: Global Platform, Financial Inflow, Withdrawal Approval & Add-ons
   // ADMIN_RT / KETUA RT: Full RT Operational (Kas, Warga, Pengurus, Ronda, Tagihan, Panic, Lapor RT, Lapak, Agenda, Berita)
@@ -47,25 +46,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role,
     { id: 'addons_rt', label: 'Paket Add-Ons RT', icon: Crown, roles: ['SUPERADMIN'] },
 
     // 2. RT Operational (Ketua RT, Sekretaris, Bendahara)
-    { id: 'dashboard', label: 'Buku Kas & Keuangan RT', icon: Wallet, roles: ['ADMIN_RT', 'BENDAHARA'] },
-    { id: 'agenda_rt', label: 'Agenda Kegiatan RT', icon: Calendar, roles: ['ADMIN_RT', 'SEKRETARIS'] },
-    { id: 'berita_rt', label: 'Informasi & Pengumuman', icon: Megaphone, roles: ['ADMIN_RT', 'SEKRETARIS'] },
-    { id: 'warga', label: 'Data Warga & Rumah', icon: Users, roles: ['ADMIN_RT', 'SEKRETARIS'] },
-    { id: 'pengurus', label: 'Struktur Pengurus RT', icon: UserCheck, roles: ['ADMIN_RT', 'SEKRETARIS'] },
-    { id: 'ronda', label: 'Jadwal Ronda Warga', icon: Moon, roles: ['ADMIN_RT', 'SEKRETARIS'] },
-    { id: 'tagihan', label: 'Tagihan & Billing IPL', icon: Receipt, roles: ['ADMIN_RT', 'BENDAHARA'] },
-    { id: 'setting_iuran', label: 'Atur Nilai Iuran', icon: Sliders, roles: ['BENDAHARA'] },
+    { id: 'dashboard', label: 'Buku Kas & Keuangan RT', icon: Wallet, roles: ['ADMIN_RT', 'BENDAHARA', 'BENDAHARA_RT'] },
+    { id: 'agenda_rt', label: 'Agenda Kegiatan RT', icon: Calendar, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT'] },
+    { id: 'berita_rt', label: 'Informasi & Pengumuman', icon: Megaphone, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT'] },
+    { id: 'warga', label: 'Data Warga & Rumah', icon: Users, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT'] },
+    { id: 'pengurus', label: 'Struktur Pengurus RT', icon: UserCheck, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT'] },
+    { id: 'ronda', label: 'Jadwal Ronda Warga', icon: Moon, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT'] },
+    { id: 'tagihan', label: 'Tagihan & Billing IPL', icon: Receipt, roles: ['ADMIN_RT', 'BENDAHARA', 'BENDAHARA_RT'] },
+    { id: 'setting_iuran', label: 'Atur Nilai Iuran', icon: Sliders, roles: ['BENDAHARA', 'BENDAHARA_RT'] },
 
     // 3. Layanan Komunitas & UMKM (Semua role kecuali Superadmin)
-    { id: 'lapor_rt', label: 'Lapor & Keluhan RT', icon: MessageSquarePlus, roles: ['ADMIN_RT', 'SEKRETARIS', 'BENDAHARA', 'SECURITY'] },
-    { id: 'lapak_warga', label: 'Lapak UMKM Warga', icon: Store, roles: ['ADMIN_RT', 'SEKRETARIS', 'BENDAHARA', 'SECURITY'] },
+    { id: 'lapor_rt', label: 'Lapor & Keluhan RT', icon: MessageSquarePlus, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT', 'BENDAHARA', 'BENDAHARA_RT', 'SECURITY'] },
+    { id: 'lapak_warga', label: 'Lapak UMKM Warga', icon: Store, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT', 'BENDAHARA', 'BENDAHARA_RT', 'SECURITY'] },
 
     // 4. Security / Satpam
     { id: 'security', label: 'Absensi & Lapor Patroli', icon: Shield, roles: ['SECURITY'] },
 
     // 5. Emergency Panic Alert (Ketua RT, Satpam, Bendahara)
-    { id: 'panic_alert', label: '🚨 Panic Alert Warga', icon: BellRing, roles: ['ADMIN_RT', 'SECURITY', 'BENDAHARA'] },
+    { id: 'panic_alert', label: '🚨 Panic Alert Warga', icon: BellRing, roles: ['ADMIN_RT', 'SECURITY', 'BENDAHARA', 'BENDAHARA_RT'] },
   ];
+
+  const getRoleLabel = (r: string) => {
+    switch (r) {
+      case 'SUPERADMIN': return '👑 Superadmin Platform';
+      case 'ADMIN_RT': return '🏛️ Ketua / Pengurus RT';
+      case 'SEKRETARIS':
+      case 'SEKRETARIS_RT': return '📋 Sekretaris RT';
+      case 'BENDAHARA':
+      case 'BENDAHARA_RT': return '💰 Bendahara RT';
+      case 'SECURITY': return '🛡️ Petugas Keamanan';
+      default: return '👤 Warga Lingkungan';
+    }
+  };
 
   return (
     <aside className="w-64 bg-slate-900 text-white flex flex-col justify-between shrink-0 min-h-screen">
@@ -75,20 +87,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role,
           <RtHubLogo size={38} theme="dark" subtext="Smart Neighborhood OS" />
         </div>
 
-        {/* Role Switcher */}
-        <div className="px-4 py-3 bg-slate-800/60 m-4 rounded-xl border border-slate-700/50">
-          <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1.5">Role Aktif Saat Ini</label>
-          <select 
-            value={role} 
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 font-semibold"
-          >
-            <option value="SUPERADMIN">👑 1. Superadmin Platform</option>
-            <option value="ADMIN_RT">🏛️ 2. Ketua RT 03</option>
-            <option value="SEKRETARIS">📋 3. Sekretaris RT</option>
-            <option value="BENDAHARA">💰 4. Bendahara RT</option>
-            <option value="SECURITY">🛡️ 5. Satpam Pos Ronda</option>
-          </select>
+        {/* User Role Badge (Read-Only) */}
+        <div className="px-4 py-2.5 bg-slate-800/60 mx-3.5 my-3 rounded-xl border border-slate-700/50 flex items-center gap-2.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+          <div className="overflow-hidden">
+            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Akses Otoritas</span>
+            <span className="text-xs font-bold text-white truncate block">{getRoleLabel(role)}</span>
+          </div>
         </div>
 
         {/* Nav Links */}

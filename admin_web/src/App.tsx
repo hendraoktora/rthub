@@ -119,11 +119,6 @@ export default function App() {
         role={user.role} 
         user={user}
         onLogout={handleLogout}
-        setRole={(newRole) => {
-          const updated = { ...user, role: newRole };
-          api.setUser(updated);
-          setUser(updated);
-        }} 
       />
       
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

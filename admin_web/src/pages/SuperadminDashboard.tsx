@@ -122,14 +122,16 @@ export const SuperadminDashboard: React.FC = () => {
   const totalBelum = wargaList.filter(w => w.statusIuran === 'BELUM_BAYAR').length;
   const persenLunas = wargaList.length > 0 ? Math.round((totalLunas / wargaList.length) * 100) : 0;
 
-  const transactions = [
-    { id: 't1', rt: 'RT 03', tanggal: '8 Sep 2026, 14:20', warga: 'Bpk. Hendra Gunawan (Blok C3/12)', nominal: 50000, fee: 2000, tipe: 'Iuran Kas & Sampah', status: 'SUCCESS' },
-    { id: 't2', rt: 'RT 03', tanggal: '8 Sep 2026, 11:05', warga: 'Bpk. Ahmad Fauzi (Blok C3/01)', nominal: 50000, fee: 2000, tipe: 'Iuran Kas & Sampah', status: 'SUCCESS' },
-    { id: 't3', rt: 'RT 04', tanggal: '8 Sep 2026, 16:03', warga: 'Pendaftaran Mandiri (RT 04/04)', nominal: 50000, fee: 2000, tipe: 'Set Up Tagihan Awal', status: 'SUCCESS' },
-    { id: 't4', rt: 'RT 03', tanggal: '8 Sep 2026, 09:15', warga: 'Bpk. Bambang Soediro (Blok C3/02)', nominal: 50000, fee: 2000, tipe: 'Iuran Kas & Sampah', status: 'SUCCESS' },
+  const platformPayments = [
+    { id: 'sub-1', rt: 'RT 04', tanggal: '2 Okt 2026, 14:20', pembayar: 'Pengurus RT 04 (Ketua RT)', nominal: 99000, tipe: 'Langganan RT Pro (1 Bulan)' },
+    { id: 'ads-1', rt: 'RT 04', tanggal: '2 Okt 2026, 21:27', pembayar: 'Bambang Wijaya (Es Kopi)', nominal: 25000, tipe: 'Iklan Sponsor Lapak (Paket RW)' },
+    { id: 'ads-2', rt: 'RT 03', tanggal: '2 Okt 2026, 20:13', pembayar: 'Sego (Es Kopi)', nominal: 25000, tipe: 'Iklan Sponsor Lapak (Paket RW)' },
+    { id: 'sub-2', rt: 'RT 03', tanggal: '28 Sep 2026, 10:15', pembayar: 'Pengurus RT 03 (Bendahara)', nominal: 99000, tipe: 'Langganan RT Pro (1 Bulan)' },
   ];
 
-  const filteredTransactions = selectedRt === 'ALL' ? transactions : transactions.filter(t => t.rt === selectedRt);
+  const filteredPlatformPayments = selectedRt === 'ALL'
+    ? platformPayments
+    : platformPayments.filter(t => t.rt === selectedRt);
 
   const filteredRts = rts.filter(r => {
     const q = searchRtQuery.toLowerCase();
@@ -138,11 +140,11 @@ export const SuperadminDashboard: React.FC = () => {
       r.nomor.toLowerCase().includes(q) ||
       r.rwNomor.toLowerCase().includes(q) ||
       r.kelurahanNama.toLowerCase().includes(q) ||
-      r.ketua.toLowerCase().includes(q) ||
-      r.namaJalan.toLowerCase().includes(q);
-    
-    if (selectedRt === 'ALL') return matchesSearch;
-    return matchesSearch && `RT ${r.nomor}` === selectedRt;
+      (r.namaJalan && r.namaJalan.toLowerCase().includes(q)) ||
+      (r.ketua && r.ketua.toLowerCase().includes(q));
+
+    const matchesRt = selectedRt === 'ALL' || `RT ${r.nomor}` === selectedRt;
+    return matchesSearch && matchesRt;
   });
 
   return (
@@ -215,32 +217,30 @@ export const SuperadminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* RT Filter Strip */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-        <div className="flex items-center gap-2 shrink-0">
-          <Filter size={18} className="text-blue-600" />
-          <span className="text-xs font-bold text-slate-700">Filter Log RT:</span>
+      {/* RT Filter Dropdown Select */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+            <Filter size={18} />
+          </div>
+          <div>
+            <span className="text-xs font-extrabold text-slate-900 block">Filter Wilayah RT</span>
+            <span className="text-[11px] text-slate-400">Pilih unit lingkungan untuk menyaring data tabel dan log transaksi</span>
+          </div>
         </div>
-        <div className="flex gap-2 shrink-0">
-          <button 
-            onClick={() => setSelectedRt('ALL')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-              selectedRt === 'ALL' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+        <div className="w-full sm:w-80">
+          <select
+            value={selectedRt}
+            onChange={(e) => setSelectedRt(e.target.value)}
+            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition cursor-pointer shadow-sm"
           >
-            Semua RT ({rts.length})
-          </button>
-          {rts.map(r => (
-            <button
-              key={r.id}
-              onClick={() => setSelectedRt(`RT ${r.nomor}`)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                selectedRt === `RT ${r.nomor}` ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              RT {r.nomor} ({r.kelurahanNama})
-            </button>
-          ))}
+            <option value="ALL">🌐 Tampilkan Semua Wilayah RT ({rts.length} Lingkungan)</option>
+            {rts.map((r) => (
+              <option key={r.id} value={`RT ${r.nomor}`}>
+                RT {r.nomor} / RW {r.rwNomor} - {r.namaJalan || `Kel. ${r.kelurahanNama}`}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -666,41 +666,64 @@ export const SuperadminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Transaksi Filtered */}
+      {/* Log Pembayaran Langganan RT Pro & Iklan Sponsor (100% Hak Platform) */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex justify-between items-center">
-          <h4 className="font-bold text-slate-900 text-sm">Log Transaksi Pembayaran & Fee Admin ({selectedRt === 'ALL' ? 'Semua RT' : selectedRt})</h4>
-          <span className="text-xs font-bold text-blue-600">Fee Admin Rp 2.000 / Trx</span>
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+              <CreditCard size={18} />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-slate-900 text-sm">
+                Riwayat Pembayaran Langganan RT Pro & Iklan Sponsor ({selectedRt === 'ALL' ? 'Semua RT' : selectedRt})
+              </h4>
+              <p className="text-[11px] text-slate-400">Pemasukan 100% milik platform RtHub dari langganan Pro dan promosi lapak</p>
+            </div>
+          </div>
+          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 self-start sm:self-auto">
+            ✓ 100% Hak Platform RtHub
+          </span>
         </div>
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
-            <tr>
-              <th className="px-6 py-4">Wilayah RT</th>
-              <th className="px-6 py-4">Warga & Keterangan</th>
-              <th className="px-6 py-4">Kategori Tagihan</th>
-              <th className="px-6 py-4">Nominal Pokok RT</th>
-              <th className="px-6 py-4">Fee Admin RtHub</th>
-              <th className="px-6 py-4">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredTransactions.map(t => (
-              <tr key={t.id} className="hover:bg-slate-50/50">
-                <td className="px-6 py-4 font-bold text-blue-700 text-xs">{t.rt}</td>
-                <td className="px-6 py-4">
-                  <p className="font-bold text-slate-900 text-xs">{t.warga}</p>
-                  <p className="text-[11px] text-slate-400">{t.tanggal}</p>
-                </td>
-                <td className="px-6 py-4 text-xs font-medium text-slate-700">{t.tipe}</td>
-                <td className="px-6 py-4 font-bold text-slate-900 text-xs">Rp {t.nominal.toLocaleString('id-ID')}</td>
-                <td className="px-6 py-4 font-extrabold text-blue-600 text-xs">+Rp {t.fee.toLocaleString('id-ID')}</td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">✓ Settle</span>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-500 text-[10px] uppercase font-bold border-b border-slate-200">
+              <tr>
+                <th className="px-5 py-3.5">Wilayah RT</th>
+                <th className="px-5 py-3.5">Waktu Transaksi</th>
+                <th className="px-5 py-3.5">Jenis Pembayaran</th>
+                <th className="px-5 py-3.5">Pembayar</th>
+                <th className="px-5 py-3.5 text-right">Nominal</th>
+                <th className="px-5 py-3.5 text-center">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {filteredPlatformPayments.map((t) => (
+                <tr key={t.id} className="hover:bg-slate-50 transition">
+                  <td className="px-5 py-3.5 font-bold text-blue-700 text-xs">{t.rt}</td>
+                  <td className="px-5 py-3.5 text-slate-500">{t.tanggal}</td>
+                  <td className="px-5 py-3.5">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                      t.tipe.includes('Pro')
+                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    }`}>
+                      {t.tipe}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5 font-semibold text-slate-900">{t.pembayar}</td>
+                  <td className="px-5 py-3.5 text-right font-black text-slate-900 text-sm">
+                    Rp {t.nominal.toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-5 py-3.5 text-center">
+                    <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-extrabold rounded-full border border-emerald-200">
+                      ✓ Settled
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

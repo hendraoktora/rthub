@@ -392,7 +392,13 @@ let KasService = KasService_1 = class KasService {
             take: 50,
         });
         const boostedAds = await this.prisma.lapakProduk.findMany({
-            where: { isPromoted: true },
+            where: {
+                OR: [
+                    { isPromoted: true },
+                    { promotedBadge: 'SPONSORED' },
+                    { paketIklan: { not: null } },
+                ],
+            },
             include: {
                 seller: { include: { profile: true } },
                 rt: { include: { rw: { include: { kelurahan: true } } } },

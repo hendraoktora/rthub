@@ -467,7 +467,13 @@ export class KasService implements OnModuleInit {
 
     // 2. Ambil transaksi iklan lapak sponsor (Promoted)
     const boostedAds = await this.prisma.lapakProduk.findMany({
-      where: { isPromoted: true },
+      where: {
+        OR: [
+          { isPromoted: true },
+          { promotedBadge: 'SPONSORED' },
+          { paketIklan: { not: null } },
+        ],
+      },
       include: {
         seller: { include: { profile: true } },
         rt: { include: { rw: { include: { kelurahan: true } } } },

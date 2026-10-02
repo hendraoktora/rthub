@@ -158,7 +158,7 @@ class _AturIuranScreenState extends State<AturIuranScreen> {
   @override
   Widget build(BuildContext context) {
     final nominalClean = int.tryParse(_nominalController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-    final totalWarga = nominalClean + 2000;
+    final totalWarga = nominalClean;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -277,19 +277,11 @@ class _AturIuranScreenState extends State<AturIuranScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('• Hak Kas Masuk RT (Pokok):', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                              const Text('• Kas Lingkungan RT (100% Kas Masuk):', style: TextStyle(color: Colors.white70, fontSize: 12)),
                               Text(
                                 'Rp ${nominalClean.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
                                 style: const TextStyle(color: AppTheme.successGreen, fontSize: 13, fontWeight: FontWeight.bold),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('• Fee Pemeliharaan Sistem / Payment:', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                              Text('Rp 2.000', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ],

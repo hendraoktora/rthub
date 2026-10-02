@@ -670,12 +670,6 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
                   child: Column(
                     children: [
                       _buildPriceRow('Iuran Pokok Kas & Kebersihan RT', 'Rp ${nominalPokok.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}'),
-                      const Divider(height: 20, color: AppTheme.slateLight),
-                      _buildPriceRow(
-                        'Biaya Admin Platform',
-                        'Rp 0 (Gratis)',
-                        info: '100% iuran disalurkan langsung ke kas RT Anda tanpa potongan',
-                      ),
                       const Divider(height: 24, thickness: 1.5, color: AppTheme.slateBorder),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -717,7 +711,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
                     'TRANSFER_MANUAL',
                     'Transfer Bank Kas RT',
                     Icons.account_balance_rounded,
-                    subtitle: 'Transfer langsung ke rekening kas RT tanpa biaya platform',
+                    subtitle: 'Transfer langsung ke rekening kas RT lingkungan',
                   ),
                   const SizedBox(height: 10),
                   _buildPaymentOption(

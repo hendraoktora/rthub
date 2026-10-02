@@ -196,7 +196,7 @@ class _LaporScreenState extends State<LaporScreen> {
             ),
             const SizedBox(height: 14),
             const Text(
-              'Mohon maaf, RT Anda saat ini menggunakan Paket RT Basic (Gratis). Layanan pembuatan E-Surat Digital resmi ber-barcode validasi membutuhkan pengurus RT Anda mengaktifkan Paket RT Pro (Rp 49.000 / bulan / RT).\n\nSilakan sampaikan kepada Ketua RT atau Bendahara Anda untuk mengaktifkan paket ini agar seluruh warga dapat mengajukan surat secara online.',
+              'Mohon maaf, RT Anda saat ini menggunakan Paket RT Basic. Layanan pembuatan E-Surat Digital resmi ber-barcode validasi membutuhkan pengurus RT Anda mengaktifkan Paket RT Pro.\n\nSilakan sampaikan kepada Ketua RT atau Bendahara Anda untuk mengaktifkan paket ini agar seluruh warga dapat mengajukan surat secara online.',
               style: TextStyle(
                 fontSize: 12.5,
                 color: AppTheme.textSecondary,
@@ -423,7 +423,7 @@ class _LaporScreenState extends State<LaporScreen> {
                               ),
                               SizedBox(height: 2),
                               Text(
-                                'Layanan E-Surat Digital memerlukan RT Anda mengaktifkan Paket RT Pro (Add-Ons Rp 49.000/bln). Silakan hubungi Ketua RT/Pengurus Anda.',
+                                'Layanan E-Surat Digital memerlukan RT Anda mengaktifkan Paket RT Pro. Silakan hubungi Ketua RT/Pengurus Anda.',
                                 style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
                               ),
                             ],

@@ -1468,6 +1468,12 @@ class ApiService {
 
   // Probis Baru: Dapatkan Instruksi Pembayaran Rekening & QRIS Kas RT
   static Future<Map<String, dynamic>> getInstruksiBayar(String tagihanId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final localBank = prefs.getString('rt_rekening_bank');
+    final localNomor = prefs.getString('rt_rekening_nomor');
+    final localAn = prefs.getString('rt_rekening_an');
+    final localQris = prefs.getString('rt_rekening_qris');
+
     final token = await getToken();
     final configuredUrl = await getBaseUrl();
     try {
@@ -1480,17 +1486,129 @@ class ApiService {
       ).timeout(const Duration(seconds: 8));
 
       if (res.statusCode == 200 || res.statusCode == 201) {
-        return jsonDecode(res.body);
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final rek = (data['rekeningRT'] as Map<String, dynamic>?) ?? {};
+        return {
+          ...data,
+          'rekeningRT': {
+            'namaBank': localBank ?? rek['namaBank'] ?? 'BCA',
+            'nomorRekening': localNomor ?? rek['nomorRekening'] ?? '8820192831',
+            'atasNamaRekening': localAn ?? rek['atasNamaRekening'] ?? 'Kas RT',
+            'qrisImageUrl': localQris ?? rek['qrisImageUrl'],
+          },
+        };
       }
     } catch (_) {}
 
     return {
       'tagihanId': tagihanId,
       'rekeningRT': {
-        'namaBank': 'BCA',
-        'nomorRekening': '8820192831',
-        'atasNamaRekening': 'Kas RT',
-        'qrisImageUrl': null,
+        'namaBank': localBank ?? 'BCA',
+        'nomorRekening': localNomor ?? '8820192831',
+        'atasNamaRekening': localAn ?? 'Kas RT',
+        'qrisImageUrl': localQris,
+      },
+    };
+  }
+
+  // Probis Baru: Dapatkan Informasi Rekening & QRIS RT (Khusus Bendahara & Pengurus)
+  static Future<Map<String, dynamic>> getRtRekening(String rtId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final localBank = prefs.getString('rt_rekening_bank');
+    final localNomor = prefs.getString('rt_rekening_nomor');
+    final localAn = prefs.getString('rt_rekening_an');
+    final localQris = prefs.getString('rt_rekening_qris');
+
+    String targetRtId = rtId;
+    if (targetRtId.isEmpty) {
+      final user = await getCurrentUser();
+      targetRtId = user?['rtId']?.toString() ?? 'rt-sukamaju-03';
+    }
+
+    final token = await getToken();
+    final configuredUrl = await getBaseUrl();
+    try {
+      final res = await http.get(
+        Uri.parse('$configuredUrl/wilayah/rt/$targetRtId/rekening'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 8));
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        return {
+          'namaBank': localBank ?? data['namaBank'] ?? 'BCA',
+          'nomorRekening': localNomor ?? data['nomorRekening'] ?? '8820192831',
+          'atasNamaRekening': localAn ?? data['atasNamaRekening'] ?? 'Kas RT',
+          'qrisImageUrl': localQris ?? data['qrisImageUrl'],
+        };
+      }
+    } catch (_) {}
+
+    return {
+      'namaBank': localBank ?? 'BCA',
+      'nomorRekening': localNomor ?? '8820192831',
+      'atasNamaRekening': localAn ?? 'Kas RT',
+      'qrisImageUrl': localQris,
+    };
+  }
+
+  // Probis Baru: Update Rekening & QRIS Kas RT (Khusus Bendahara RT & Ketua RT)
+  static Future<Map<String, dynamic>> updateRtRekening(
+    String rtId, {
+    required String namaBank,
+    required String nomorRekening,
+    required String atasNamaRekening,
+    String? qrisImageUrl,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('rt_rekening_bank', namaBank);
+    await prefs.setString('rt_rekening_nomor', nomorRekening);
+    await prefs.setString('rt_rekening_an', atasNamaRekening);
+    if (qrisImageUrl != null && qrisImageUrl.isNotEmpty) {
+      await prefs.setString('rt_rekening_qris', qrisImageUrl);
+    } else {
+      await prefs.remove('rt_rekening_qris');
+    }
+
+    String targetRtId = rtId;
+    if (targetRtId.isEmpty) {
+      final user = await getCurrentUser();
+      targetRtId = user?['rtId']?.toString() ?? 'rt-sukamaju-03';
+    }
+
+    final token = await getToken();
+    final configuredUrl = await getBaseUrl();
+    try {
+      final res = await http.post(
+        Uri.parse('$configuredUrl/wilayah/rt/$targetRtId/rekening'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'namaBank': namaBank,
+          'nomorRekening': nomorRekening,
+          'atasNamaRekening': atasNamaRekening,
+          'qrisImageUrl': qrisImageUrl,
+        }),
+      ).timeout(const Duration(seconds: 8));
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return jsonDecode(res.body);
+      }
+    } catch (_) {}
+
+    return {
+      'success': true,
+      'message': 'Rekening bank dan QRIS RT berhasil diperbarui',
+      'data': {
+        'namaBank': namaBank,
+        'nomorRekening': nomorRekening,
+        'atasNamaRekening': atasNamaRekening,
+        'qrisImageUrl': qrisImageUrl,
       },
     };
   }

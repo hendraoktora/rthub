@@ -30,12 +30,12 @@ export declare class KasService implements OnModuleInit {
         buktiNotaUrl?: string;
     }): Promise<{
         id: string;
-        createdAt: Date;
         rtId: string;
+        createdAt: Date;
+        kategori: string;
         createdById: string;
         tipe: import(".prisma/client").$Enums.TipeKas;
         metodeKas: string;
-        kategori: string;
         nominal: import("@prisma/client/runtime/library").Decimal;
         saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
         keterangan: string;

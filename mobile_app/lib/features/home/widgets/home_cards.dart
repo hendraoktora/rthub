@@ -141,16 +141,18 @@ class HomeKasCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: TextButton(
+                  child: TextButton.icon(
                     onPressed: onInvoices,
                     style: TextButton.styleFrom(
                       alignment: Alignment.centerLeft,
                       padding: EdgeInsets.zero,
                       foregroundColor: const Color(0xFF087252),
                     ),
-                    child: Text(
+                    icon: const Icon(Icons.receipt_long_rounded, size: 15),
+                    label: Text(
                       billLabel,
-                      maxLines: 2,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -158,14 +160,33 @@ class HomeKasCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(width: 6),
+                ElevatedButton.icon(
+                  onPressed: onInvoices,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF087252),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  icon: const Icon(Icons.payments_rounded, size: 13),
+                  label: const Text(
+                    'Bayar Kas',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 4),
                 IconButton.filledTonal(
                   onPressed: onDetails,
                   tooltip: 'Lihat rincian buku kas',
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: AppTheme.primaryNavy,
+                    visualDensity: VisualDensity.compact,
                   ),
-                  icon: const Icon(Icons.north_east_rounded, size: 20),
+                  icon: const Icon(Icons.north_east_rounded, size: 18),
                 ),
               ],
             ),

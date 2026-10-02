@@ -7,18 +7,18 @@ export declare class BeritaService {
     constructor(prisma: PrismaService, notificationService: NotificationService);
     getFeed(user: any): Promise<({
         author: {
+            role: import(".prisma/client").$Enums.Role;
             profile: {
                 namaLengkap: string;
             };
-            role: import(".prisma/client").$Enums.Role;
         };
     } & {
         id: string;
+        kelurahanId: string | null;
         rwId: string | null;
+        rtId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        rtId: string | null;
-        kelurahanId: string | null;
         judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;
@@ -34,11 +34,11 @@ export declare class BeritaService {
         isPinned?: boolean;
     }): Promise<{
         id: string;
+        kelurahanId: string | null;
         rwId: string | null;
+        rtId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        rtId: string | null;
-        kelurahanId: string | null;
         judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;
@@ -54,11 +54,11 @@ export declare class BeritaService {
         isPinned?: boolean;
     }): Promise<{
         id: string;
+        kelurahanId: string | null;
         rwId: string | null;
+        rtId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        rtId: string | null;
-        kelurahanId: string | null;
         judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;
@@ -68,11 +68,11 @@ export declare class BeritaService {
     }>;
     deleteBerita(id: string, user: any): Promise<{
         id: string;
+        kelurahanId: string | null;
         rwId: string | null;
+        rtId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        rtId: string | null;
-        kelurahanId: string | null;
         judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;

@@ -51,11 +51,11 @@ class _DuitkuPaymentScreenState extends State<DuitkuPaymentScreen> {
           },
           onPageStarted: (url) {
             if (mounted) setState(() => _isLoading = true);
-            _checkSuccessUrl(url);
+            _checkRedirectUrl(url);
           },
           onPageFinished: (url) {
             if (mounted) setState(() => _isLoading = false);
-            _checkSuccessUrl(url);
+            _checkRedirectUrl(url);
           },
           onWebResourceError: (error) {
             debugPrint('Duitku WebView error: ${error.description}');
@@ -73,7 +73,7 @@ class _DuitkuPaymentScreenState extends State<DuitkuPaymentScreen> {
               } catch (_) {}
             }
 
-            if (_checkSuccessUrl(request.url)) {
+            if (_checkRedirectUrl(request.url)) {
               return NavigationDecision.prevent;
             }
 
@@ -85,19 +85,118 @@ class _DuitkuPaymentScreenState extends State<DuitkuPaymentScreen> {
     _controller.loadRequest(Uri.parse(widget.paymentUrl));
   }
 
-  bool _checkSuccessUrl(String url) {
+  bool _checkRedirectUrl(String url) {
     final lower = url.toLowerCase();
-    if (lower.contains('payment-success') ||
-        lower.contains('status=success') ||
+    final uri = Uri.tryParse(url);
+    final resultCode = uri?.queryParameters['resultCode'];
+    final status = uri?.queryParameters['status']?.toLowerCase();
+
+    final isReturnRedirect = lower.contains('payment-success') ||
+        lower.contains('duitku-finish') ||
+        lower.contains('rthub.id/payment-success') ||
+        lower.contains('rthub.id');
+
+    if (!isReturnRedirect && resultCode == null && status == null) {
+      return false;
+    }
+
+    // Deteksi pembatalan atau kegagalan
+    final isCanceledOrFailed = resultCode == '01' ||
+        resultCode == '02' ||
+        status == 'canceled' ||
+        status == 'failed' ||
+        status == 'batal' ||
+        lower.contains('status=canceled') ||
+        lower.contains('status=failed') ||
+        lower.contains('resultcode=01') ||
+        lower.contains('resultcode=02');
+
+    if (isCanceledOrFailed) {
+      _showCanceledDialog();
+      return true;
+    }
+
+    // Deteksi sukses pembayaran
+    final isSuccess = resultCode == '00' ||
+        status == 'success' ||
         lower.contains('resultcode=00') ||
-        lower.contains('duitku-finish')) {
+        lower.contains('status=success');
+
+    if (isSuccess) {
       if (!_isSuccess) {
         _isSuccess = true;
         _showSuccessDialog();
       }
       return true;
     }
+
+    if (isReturnRedirect) {
+      // Default jika diarahkan ke payment-success tanpa kode error
+      if (resultCode == null && status == null) {
+        if (!_isSuccess) {
+          _isSuccess = true;
+          _showSuccessDialog();
+        }
+      } else {
+        _showCanceledDialog();
+      }
+      return true;
+    }
+
     return false;
+  }
+
+  void _showCanceledDialog() {
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFEF2F2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.cancel_outlined, color: Color(0xFFDC2626), size: 48),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Pembayaran Dibatalkan',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Transaksi pembayaran telah dibatalkan atau tidak diselesaikan. Tagihan / langganan belum diperpanjang.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+            ),
+            const SizedBox(height: 22),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryNavy,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.pop(context, false);
+                },
+                child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showSuccessDialog() {

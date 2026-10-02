@@ -15,25 +15,25 @@ export declare class LaporanController {
     }): Promise<{
         user: {
             id: string;
+            phone: string;
             profile: {
                 namaLengkap: string;
                 nik: string;
                 noRumah: string;
             };
-            phone: string;
         };
     } & {
         id: string;
+        kelurahanId: string | null;
         rwId: string | null;
+        rtId: string;
         createdAt: Date;
         updatedAt: Date;
-        rtId: string;
-        kategori: string;
-        kelurahanId: string | null;
         userId: string;
         status: import(".prisma/client").$Enums.StatusLaporan;
-        judul: string;
         deskripsi: string;
+        judul: string;
+        kategori: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
         tujuan: string;
@@ -45,40 +45,40 @@ export declare class LaporanController {
         respondedAt: Date | null;
     }>;
     getLaporanList(user: any): Promise<({
-        rt: {
-            id: string;
-            nomor: string;
-            namaJalan: string | null;
-            skDokumenUrl: string | null;
-            rwId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            namaBank: string | null;
-            nomorRekening: string | null;
-            atasNamaRekening: string | null;
-            qrisImageUrl: string | null;
-        };
         user: {
             id: string;
+            phone: string;
             profile: {
                 namaLengkap: string;
                 nik: string;
                 noRumah: string;
             };
-            phone: string;
+        };
+        rt: {
+            id: string;
+            rwId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            skDokumenUrl: string | null;
+            namaJalan: string | null;
+            nomor: string;
+            namaBank: string | null;
+            nomorRekening: string | null;
+            atasNamaRekening: string | null;
+            qrisImageUrl: string | null;
         };
     } & {
         id: string;
+        kelurahanId: string | null;
         rwId: string | null;
+        rtId: string;
         createdAt: Date;
         updatedAt: Date;
-        rtId: string;
-        kategori: string;
-        kelurahanId: string | null;
         userId: string;
         status: import(".prisma/client").$Enums.StatusLaporan;
-        judul: string;
         deskripsi: string;
+        judul: string;
+        kategori: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
         tujuan: string;
@@ -95,40 +95,40 @@ export declare class LaporanController {
         tanggapanBy?: string;
         nomorSurat?: string;
     }): Promise<{
-        rt: {
-            id: string;
-            nomor: string;
-            namaJalan: string | null;
-            skDokumenUrl: string | null;
-            rwId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            namaBank: string | null;
-            nomorRekening: string | null;
-            atasNamaRekening: string | null;
-            qrisImageUrl: string | null;
-        };
         user: {
             id: string;
+            phone: string;
             profile: {
                 namaLengkap: string;
                 nik: string;
                 noRumah: string;
             };
-            phone: string;
+        };
+        rt: {
+            id: string;
+            rwId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            skDokumenUrl: string | null;
+            namaJalan: string | null;
+            nomor: string;
+            namaBank: string | null;
+            nomorRekening: string | null;
+            atasNamaRekening: string | null;
+            qrisImageUrl: string | null;
         };
     } & {
         id: string;
+        kelurahanId: string | null;
         rwId: string | null;
+        rtId: string;
         createdAt: Date;
         updatedAt: Date;
-        rtId: string;
-        kategori: string;
-        kelurahanId: string | null;
         userId: string;
         status: import(".prisma/client").$Enums.StatusLaporan;
-        judul: string;
         deskripsi: string;
+        judul: string;
+        kategori: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
         tujuan: string;

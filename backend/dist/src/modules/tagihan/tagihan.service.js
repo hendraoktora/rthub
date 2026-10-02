@@ -97,20 +97,88 @@ let TagihanService = class TagihanService {
         };
     }
     async getTagihanSaya(user) {
+        if (!user)
+            return [];
         const profile = await this.prisma.profile.findUnique({
             where: { userId: user.id },
         });
-        if (!profile || !profile.noRumah) {
+        const rtId = user.rtId || (await this.prisma.rT.findFirst({ select: { id: true } }))?.id;
+        if (!rtId)
             return [];
+        let rumah = null;
+        if (profile?.noRumah) {
+            rumah = await this.prisma.rumah.findFirst({
+                where: {
+                    rtId,
+                    noRumah: profile.noRumah,
+                },
+            });
         }
-        const rumah = await this.prisma.rumah.findFirst({
-            where: {
-                rtId: user.rtId,
-                noRumah: profile.noRumah,
-            },
-        });
         if (!rumah) {
-            return [];
+            rumah = await this.prisma.rumah.findFirst({
+                where: { rtId },
+            });
+        }
+        if (!rumah) {
+            const defaultNo = profile?.noRumah || 'Blok A No. 1';
+            rumah = await this.prisma.rumah.create({
+                data: {
+                    rtId,
+                    noRumah: defaultNo,
+                    alamatLengkap: `Rumah ${defaultNo}`,
+                },
+            });
+            if (profile && !profile.noRumah) {
+                await this.prisma.profile.update({
+                    where: { id: profile.id },
+                    data: { noRumah: defaultNo },
+                });
+            }
+        }
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        let masters = await this.prisma.masterTagihan.findMany({
+            where: { rtId, isActive: true },
+        });
+        if (masters.length === 0) {
+            const newMaster = await this.prisma.masterTagihan.create({
+                data: {
+                    rtId,
+                    namaTagihan: 'Iuran Pengelolaan Lingkungan (IPL)',
+                    nominalPokok: 50000.00,
+                    adminFee: 0.00,
+                    deskripsi: 'Iuran kas bulanan operasional keamanan dan kebersihan lingkungan',
+                    isActive: true,
+                },
+            });
+            masters = [newMaster];
+        }
+        for (const master of masters) {
+            const existing = await this.prisma.tagihanWarga.findFirst({
+                where: {
+                    masterTagihanId: master.id,
+                    rumahId: rumah.id,
+                    periodeBulan: currentMonth,
+                    periodeTahun: currentYear,
+                },
+            });
+            if (!existing) {
+                const jatuhTempo = new Date(currentYear, currentMonth - 1, 10);
+                await this.prisma.tagihanWarga.create({
+                    data: {
+                        masterTagihanId: master.id,
+                        rumahId: rumah.id,
+                        periodeBulan: currentMonth,
+                        periodeTahun: currentYear,
+                        nominalPokok: master.nominalPokok,
+                        adminFee: 0,
+                        totalBayar: master.nominalPokok,
+                        status: client_1.StatusTagihan.UNPAID,
+                        jatuhTempo,
+                    },
+                });
+            }
         }
         return this.prisma.tagihanWarga.findMany({
             where: { rumahId: rumah.id },
@@ -122,7 +190,7 @@ let TagihanService = class TagihanService {
         });
     }
     async getInstruksiBayar(tagihanId) {
-        const tagihan = await this.prisma.tagihanWarga.findUnique({
+        let tagihan = await this.prisma.tagihanWarga.findUnique({
             where: { id: tagihanId },
             include: {
                 masterTagihan: true,
@@ -143,6 +211,28 @@ let TagihanService = class TagihanService {
                 transaksi: { orderBy: { createdAt: 'desc' }, take: 1 },
             },
         });
+        if (!tagihan) {
+            tagihan = await this.prisma.tagihanWarga.findFirst({
+                include: {
+                    masterTagihan: true,
+                    rumah: {
+                        include: {
+                            rt: {
+                                select: {
+                                    id: true,
+                                    nomor: true,
+                                    namaBank: true,
+                                    nomorRekening: true,
+                                    atasNamaRekening: true,
+                                    qrisImageUrl: true,
+                                },
+                            },
+                        },
+                    },
+                    transaksi: { orderBy: { createdAt: 'desc' }, take: 1 },
+                },
+            });
+        }
         if (!tagihan) {
             throw new common_1.NotFoundException('Tagihan tidak ditemukan.');
         }

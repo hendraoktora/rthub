@@ -4,32 +4,43 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 async function main() {
     try {
-        const cols = await prisma.$queryRawUnsafe('DESCRIBE KasRT');
-        console.log('KasRT columns:', cols.map((c) => c.Field));
-        const rtCols = await prisma.$queryRawUnsafe('DESCRIBE RT');
-        console.log('RT columns:', rtCols.map((c) => c.Field));
-        const rts = await prisma.rT.findMany({ take: 1 });
-        console.log('Found RT:', rts[0]?.id);
-        if (rts[0]?.id) {
-            const rtId = rts[0].id;
-            const kasList = await prisma.kasRT.findMany({ where: { rtId }, take: 5 });
-            console.log('Kas list count:', kasList.length);
-            const tunaiIn = await prisma.kasRT.aggregate({
-                where: {
-                    rtId,
-                    tipe: 'PEMASUKAN',
-                    OR: [
-                        { metodeKas: 'TUNAI' },
-                        { kategori: { contains: 'Tunai' } },
-                    ],
-                },
-                _sum: { nominal: true },
-            });
-            console.log('Tunai in:', tunaiIn);
-        }
+        const users = await prisma.user.findMany({
+            select: {
+                id: true,
+                phone: true,
+                role: true,
+                rtId: true,
+                profile: { select: { namaLengkap: true, noRumah: true } },
+            },
+            take: 10,
+        });
+        console.log('--- USERS ---');
+        console.log(JSON.stringify(users, null, 2));
+        const rumah = await prisma.rumah.findMany({
+            select: {
+                id: true,
+                noRumah: true,
+                rtId: true,
+                _count: { select: { tagihanWarga: true } },
+            },
+            take: 10,
+        });
+        console.log('--- RUMAH ---');
+        console.log(JSON.stringify(rumah, null, 2));
+        const tagihan = await prisma.tagihanWarga.findMany({
+            include: {
+                masterTagihan: true,
+                rumah: true,
+            },
+            take: 10,
+        });
+        console.log('--- TOTAL TAGIHAN:', tagihan.length);
+        console.log(JSON.stringify(tagihan.slice(0, 3), null, 2));
+        const masters = await prisma.masterTagihan.findMany();
+        console.log('--- MASTER TAGIHAN:', JSON.stringify(masters, null, 2));
     }
     catch (err) {
-        console.error('Test error:', err);
+        console.error('Check error:', err);
     }
     finally {
         await prisma.$disconnect();

@@ -4,11 +4,11 @@ export declare class CctvController {
     constructor(cctvService: CctvService);
     getCctvList(user: any): Promise<{
         id: string;
-        rwId: string | null;
-        createdAt: Date;
-        rtId: string | null;
         isActive: boolean;
         kelurahanId: string | null;
+        rwId: string | null;
+        rtId: string | null;
+        createdAt: Date;
         namaTitik: string;
         streamUrl: string;
         thumbnailUrl: string | null;
@@ -19,11 +19,11 @@ export declare class CctvController {
         thumbnailUrl?: string;
     }): Promise<{
         id: string;
-        rwId: string | null;
-        createdAt: Date;
-        rtId: string | null;
         isActive: boolean;
         kelurahanId: string | null;
+        rwId: string | null;
+        rtId: string | null;
+        createdAt: Date;
         namaTitik: string;
         streamUrl: string;
         thumbnailUrl: string | null;

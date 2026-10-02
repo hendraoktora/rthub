@@ -10,20 +10,20 @@ export declare class AlertController {
         message: string;
         alert: {
             user: {
+                phone: string;
                 profile: {
                     namaLengkap: string;
                     noRumah: string;
                 };
-                phone: string;
             };
         } & {
             id: string;
+            kelurahanId: string | null;
             rwId: string | null;
             rtId: string;
-            kelurahanId: string | null;
             userId: string;
-            status: import(".prisma/client").$Enums.StatusAlert;
             rumahId: string | null;
+            status: import(".prisma/client").$Enums.StatusAlert;
             latitude: number | null;
             longitude: number | null;
             catatan: string | null;
@@ -32,24 +32,24 @@ export declare class AlertController {
         };
     }>;
     getActive(user: any, lat?: string, lng?: string): Promise<({
-        rt: {
-            nomor: string;
-        };
         user: {
+            phone: string;
             profile: {
                 namaLengkap: string;
                 noRumah: string;
             };
-            phone: string;
+        };
+        rt: {
+            nomor: string;
         };
     } & {
         id: string;
+        kelurahanId: string | null;
         rwId: string | null;
         rtId: string;
-        kelurahanId: string | null;
         userId: string;
-        status: import(".prisma/client").$Enums.StatusAlert;
         rumahId: string | null;
+        status: import(".prisma/client").$Enums.StatusAlert;
         latitude: number | null;
         longitude: number | null;
         catatan: string | null;
@@ -58,12 +58,12 @@ export declare class AlertController {
     })[]>;
     resolve(id: string): Promise<{
         id: string;
+        kelurahanId: string | null;
         rwId: string | null;
         rtId: string;
-        kelurahanId: string | null;
         userId: string;
-        status: import(".prisma/client").$Enums.StatusAlert;
         rumahId: string | null;
+        status: import(".prisma/client").$Enums.StatusAlert;
         latitude: number | null;
         longitude: number | null;
         catatan: string | null;

@@ -9,14 +9,14 @@ export declare class LapakService {
         };
     } & {
         id: string;
+        kelurahanId: string;
         rwId: string;
+        rtId: string;
         createdAt: Date;
         updatedAt: Date;
-        rtId: string;
-        kelurahanId: string;
         status: string;
-        judul: string;
         deskripsi: string;
+        judul: string;
         fotoUrl: string | null;
         kontakWa: string;
         ownerId: string;
@@ -34,17 +34,17 @@ export declare class LapakService {
         fotoUrl?: string;
     }): Promise<{
         id: string;
-        rwId: string;
-        createdAt: Date;
-        updatedAt: Date;
-        rtId: string;
-        kategori: string;
         isActive: boolean;
         kelurahanId: string;
+        rwId: string;
+        rtId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deskripsi: string;
         sellerId: string;
         judul: string;
-        deskripsi: string;
         harga: import("@prisma/client/runtime/library").Decimal;
+        kategori: string;
         fotoUrl: string | null;
         kontakWa: string;
         isPromoted: boolean;
@@ -85,24 +85,24 @@ export declare class LapakService {
         };
         seller: {
             id: string;
+            phone: string;
             profile: {
                 namaLengkap: string;
                 noRumah: string;
             };
-            phone: string;
         };
         id: string;
-        rwId: string;
-        createdAt: Date;
-        updatedAt: Date;
-        rtId: string;
-        kategori: string;
         isActive: boolean;
         kelurahanId: string;
+        rwId: string;
+        rtId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deskripsi: string;
         sellerId: string;
         judul: string;
-        deskripsi: string;
         harga: import("@prisma/client/runtime/library").Decimal;
+        kategori: string;
         fotoUrl: string | null;
         kontakWa: string;
         isPromoted: boolean;
@@ -113,17 +113,17 @@ export declare class LapakService {
     }>;
     deleteProduk(id: string, user: any): Promise<{
         id: string;
-        rwId: string;
-        createdAt: Date;
-        updatedAt: Date;
-        rtId: string;
-        kategori: string;
         isActive: boolean;
         kelurahanId: string;
+        rwId: string;
+        rtId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deskripsi: string;
         sellerId: string;
         judul: string;
-        deskripsi: string;
         harga: import("@prisma/client/runtime/library").Decimal;
+        kategori: string;
         fotoUrl: string | null;
         kontakWa: string;
         isPromoted: boolean;

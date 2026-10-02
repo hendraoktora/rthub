@@ -5,14 +5,14 @@ export declare class TagihanController {
     constructor(tagihanService: TagihanService);
     getMaster(user: any): Promise<{
         id: string;
+        isActive: boolean;
+        rtId: string;
         createdAt: Date;
         updatedAt: Date;
-        rtId: string;
-        isActive: boolean;
-        deskripsi: string | null;
         nominalPokok: import("@prisma/client/runtime/library").Decimal;
         adminFee: import("@prisma/client/runtime/library").Decimal;
         namaTagihan: string;
+        deskripsi: string | null;
     }[]>;
     setMaster(user: any, body: {
         namaTagihan?: string;
@@ -20,14 +20,14 @@ export declare class TagihanController {
         deskripsi?: string;
     }): Promise<{
         id: string;
+        isActive: boolean;
+        rtId: string;
         createdAt: Date;
         updatedAt: Date;
-        rtId: string;
-        isActive: boolean;
-        deskripsi: string | null;
         nominalPokok: import("@prisma/client/runtime/library").Decimal;
         adminFee: import("@prisma/client/runtime/library").Decimal;
         namaTagihan: string;
+        deskripsi: string | null;
     }>;
     generateBulanan(user: any, body: {
         masterTagihanId: string;
@@ -41,26 +41,15 @@ export declare class TagihanController {
         adminFee: string | number;
     }>;
     getTagihanSaya(user: any): Promise<({
-        masterTagihan: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            rtId: string;
-            isActive: boolean;
-            deskripsi: string | null;
-            nominalPokok: import("@prisma/client/runtime/library").Decimal;
-            adminFee: import("@prisma/client/runtime/library").Decimal;
-            namaTagihan: string;
-        };
         transaksi: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
             userId: string;
-            status: import(".prisma/client").$Enums.PaymentStatus;
             nominalPokok: import("@prisma/client/runtime/library").Decimal;
             adminFee: import("@prisma/client/runtime/library").Decimal;
             totalBayar: import("@prisma/client/runtime/library").Decimal;
+            status: import(".prisma/client").$Enums.PaymentStatus;
             paidAt: Date | null;
             paymentMethod: import(".prisma/client").$Enums.PaymentMethod;
             paymentCode: string | null;
@@ -68,11 +57,21 @@ export declare class TagihanController {
             buktiBayarUrl: string | null;
             tagihanId: string;
         }[];
+        masterTagihan: {
+            id: string;
+            isActive: boolean;
+            rtId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            nominalPokok: import("@prisma/client/runtime/library").Decimal;
+            adminFee: import("@prisma/client/runtime/library").Decimal;
+            namaTagihan: string;
+            deskripsi: string | null;
+        };
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.StatusTagihan;
         masterTagihanId: string;
         rumahId: string;
         periodeBulan: number;
@@ -80,6 +79,7 @@ export declare class TagihanController {
         nominalPokok: import("@prisma/client/runtime/library").Decimal;
         adminFee: import("@prisma/client/runtime/library").Decimal;
         totalBayar: import("@prisma/client/runtime/library").Decimal;
+        status: import(".prisma/client").$Enums.StatusTagihan;
         jatuhTempo: Date;
         paidAt: Date | null;
     })[]>;
@@ -87,56 +87,55 @@ export declare class TagihanController {
         user: {
             profile: {
                 id: string;
-                skDokumenUrl: string | null;
                 createdAt: Date;
                 updatedAt: Date;
+                userId: string;
                 namaLengkap: string;
                 nik: string | null;
-                noRumah: string | null;
                 noKk: string | null;
-                userId: string;
+                noRumah: string | null;
                 avatarUrl: string | null;
+                skDokumenUrl: string | null;
                 dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
             };
         } & {
             id: string;
-            rwId: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-            rtId: string | null;
             phone: string;
             email: string | null;
             passwordHash: string;
             role: import(".prisma/client").$Enums.Role;
             isActive: boolean;
             kelurahanId: string | null;
+            rwId: string | null;
+            rtId: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         };
         tagihan: {
             rumah: {
                 id: string;
+                rtId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                rtId: string;
                 noRumah: string;
                 alamatLengkap: string | null;
                 statusHunian: string | null;
             };
             masterTagihan: {
                 id: string;
+                isActive: boolean;
+                rtId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                rtId: string;
-                isActive: boolean;
-                deskripsi: string | null;
                 nominalPokok: import("@prisma/client/runtime/library").Decimal;
                 adminFee: import("@prisma/client/runtime/library").Decimal;
                 namaTagihan: string;
+                deskripsi: string | null;
             };
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            status: import(".prisma/client").$Enums.StatusTagihan;
             masterTagihanId: string;
             rumahId: string;
             periodeBulan: number;
@@ -144,6 +143,7 @@ export declare class TagihanController {
             nominalPokok: import("@prisma/client/runtime/library").Decimal;
             adminFee: import("@prisma/client/runtime/library").Decimal;
             totalBayar: import("@prisma/client/runtime/library").Decimal;
+            status: import(".prisma/client").$Enums.StatusTagihan;
             jatuhTempo: Date;
             paidAt: Date | null;
         };
@@ -152,10 +152,10 @@ export declare class TagihanController {
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        status: import(".prisma/client").$Enums.PaymentStatus;
         nominalPokok: import("@prisma/client/runtime/library").Decimal;
         adminFee: import("@prisma/client/runtime/library").Decimal;
         totalBayar: import("@prisma/client/runtime/library").Decimal;
+        status: import(".prisma/client").$Enums.PaymentStatus;
         paidAt: Date | null;
         paymentMethod: import(".prisma/client").$Enums.PaymentMethod;
         paymentCode: string | null;
@@ -182,10 +182,10 @@ export declare class TagihanController {
             createdAt: Date;
             updatedAt: Date;
             userId: string;
-            status: import(".prisma/client").$Enums.PaymentStatus;
             nominalPokok: import("@prisma/client/runtime/library").Decimal;
             adminFee: import("@prisma/client/runtime/library").Decimal;
             totalBayar: import("@prisma/client/runtime/library").Decimal;
+            status: import(".prisma/client").$Enums.PaymentStatus;
             paidAt: Date | null;
             paymentMethod: import(".prisma/client").$Enums.PaymentMethod;
             paymentCode: string | null;

@@ -564,9 +564,27 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Pengurus RT Anda belum menerbitkan tagihan iuran bulanan untuk periode ini.',
+                      'Belum ada tagihan terbit, atau Anda ingin melakukan pembayaran iuran kas langsung ke rekening RT?',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF087252),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () => _handlePayTagihan(null, 50000),
+                      icon: const Icon(Icons.payments_rounded, size: 18),
+                      label: const Text('Bayar Kas RT Sekarang (Rp 50.000)', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: () => _loadTagihan(),
+                      icon: const Icon(Icons.refresh_rounded, size: 16),
+                      label: const Text('Sinkronkan Ulang Tagihan'),
                     ),
                   ],
                 ),

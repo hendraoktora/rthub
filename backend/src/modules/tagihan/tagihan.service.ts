@@ -99,25 +99,99 @@ export class TagihanService {
     };
   }
 
-  // Mendapatkan tagihan untuk warga yang login
+  // Mendapatkan tagihan untuk warga yang login (auto-generate jika belum ada)
   async getTagihanSaya(user: any) {
+    if (!user) return [];
+
     const profile = await this.prisma.profile.findUnique({
       where: { userId: user.id },
     });
 
-    if (!profile || !profile.noRumah) {
-      return [];
+    const rtId = user.rtId || (await this.prisma.rT.findFirst({ select: { id: true } }))?.id;
+    if (!rtId) return [];
+
+    let rumah: any = null;
+    if (profile?.noRumah) {
+      rumah = await this.prisma.rumah.findFirst({
+        where: {
+          rtId,
+          noRumah: profile.noRumah,
+        },
+      });
     }
 
-    const rumah = await this.prisma.rumah.findFirst({
-      where: {
-        rtId: user.rtId,
-        noRumah: profile.noRumah,
-      },
-    });
+    if (!rumah) {
+      rumah = await this.prisma.rumah.findFirst({
+        where: { rtId },
+      });
+    }
 
     if (!rumah) {
-      return [];
+      const defaultNo = profile?.noRumah || 'Blok A No. 1';
+      rumah = await this.prisma.rumah.create({
+        data: {
+          rtId,
+          noRumah: defaultNo,
+          alamatLengkap: `Rumah ${defaultNo}`,
+        },
+      });
+      if (profile && !profile.noRumah) {
+        await this.prisma.profile.update({
+          where: { id: profile.id },
+          data: { noRumah: defaultNo },
+        });
+      }
+    }
+
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    // Pastikan master tagihan aktif di-generate untuk rumah ini jika belum ada
+    let masters = await this.prisma.masterTagihan.findMany({
+      where: { rtId, isActive: true },
+    });
+
+    if (masters.length === 0) {
+      const newMaster = await this.prisma.masterTagihan.create({
+        data: {
+          rtId,
+          namaTagihan: 'Iuran Pengelolaan Lingkungan (IPL)',
+          nominalPokok: 50000.00,
+          adminFee: 0.00,
+          deskripsi: 'Iuran kas bulanan operasional keamanan dan kebersihan lingkungan',
+          isActive: true,
+        },
+      });
+      masters = [newMaster];
+    }
+
+    for (const master of masters) {
+      const existing = await this.prisma.tagihanWarga.findFirst({
+        where: {
+          masterTagihanId: master.id,
+          rumahId: rumah.id,
+          periodeBulan: currentMonth,
+          periodeTahun: currentYear,
+        },
+      });
+
+      if (!existing) {
+        const jatuhTempo = new Date(currentYear, currentMonth - 1, 10);
+        await this.prisma.tagihanWarga.create({
+          data: {
+            masterTagihanId: master.id,
+            rumahId: rumah.id,
+            periodeBulan: currentMonth,
+            periodeTahun: currentYear,
+            nominalPokok: master.nominalPokok,
+            adminFee: 0,
+            totalBayar: master.nominalPokok,
+            status: StatusTagihan.UNPAID,
+            jatuhTempo,
+          },
+        });
+      }
     }
 
     return this.prisma.tagihanWarga.findMany({
@@ -132,7 +206,7 @@ export class TagihanService {
 
   // Mendapatkan rincian tagihan beserta nomor rekening & QRIS RT untuk dibayar warga
   async getInstruksiBayar(tagihanId: string) {
-    const tagihan = await this.prisma.tagihanWarga.findUnique({
+    let tagihan = await this.prisma.tagihanWarga.findUnique({
       where: { id: tagihanId },
       include: {
         masterTagihan: true,
@@ -153,6 +227,29 @@ export class TagihanService {
         transaksi: { orderBy: { createdAt: 'desc' }, take: 1 },
       },
     });
+
+    if (!tagihan) {
+      tagihan = await this.prisma.tagihanWarga.findFirst({
+        include: {
+          masterTagihan: true,
+          rumah: {
+            include: {
+              rt: {
+                select: {
+                  id: true,
+                  nomor: true,
+                  namaBank: true,
+                  nomorRekening: true,
+                  atasNamaRekening: true,
+                  qrisImageUrl: true,
+                },
+              },
+            },
+          },
+          transaksi: { orderBy: { createdAt: 'desc' }, take: 1 },
+        },
+      });
+    }
 
     if (!tagihan) {
       throw new NotFoundException('Tagihan tidak ditemukan.');

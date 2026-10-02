@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pembayaran Diterima - RtHub</title>
+  <link rel="icon" type="image/png" href="/rthub_icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #ffffff;
+      max-width: 440px;
+      width: 100%;
+      border-radius: 24px;
+      padding: 36px 28px;
+      text-align: center;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      border: 1px solid #e2e8f0;
+    }
+    .icon-box {
+      width: 72px;
+      height: 72px;
+      background: #ecfdf5;
+      color: #059669;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 36px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0 0 10px 0;
+      color: #0f172a;
+    }
+    p {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #64748b;
+      margin: 0 0 24px 0;
+    }
+    .btn {
+      display: inline-block;
+      width: 100%;
+      background: #2563eb;
+      color: #ffffff;
+      padding: 14px 20px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      box-sizing: border-box;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-box">✓</div>
+    <h1 id="title">Status Transaksi Diterima</h1>
+    <p id="desc">Terima kasih! Gateway Duitku telah menerima informasi pembayaran Anda. Status akun dan transaksi telah otomatis diperbarui di aplikasi RtHub.</p>
+    <a href="/" class="btn">Kembali ke Beranda RtHub</a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('resultCode');
+    if (code && code !== '00') {
+      document.querySelector('.icon-box').textContent = '✕';
+      document.querySelector('.icon-box').style.background = '#fef2f2';
+      document.querySelector('.icon-box').style.color = '#dc2626';
+      document.getElementById('title').textContent = 'Pembayaran Dibatalkan';
+      document.getElementById('desc').textContent = 'Transaksi telah dibatalkan atau tidak terselesaikan. Silakan ulangi pembayaran dari aplikasi bila Anda ingin melanjutkan.';
+    }
+  </script>
+</body>
+</html>

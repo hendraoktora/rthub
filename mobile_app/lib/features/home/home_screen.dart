@@ -130,6 +130,56 @@ class _HomeScreenState extends State<HomeScreen> {
     'BENDAHARA',
   }.contains(_data.user?['role']?.toString().toUpperCase());
 
+  bool get _canViewSubscriptionInfo {
+    final role = (_data.user?['role'] ?? '').toString().trim().toUpperCase();
+    const allowed = {
+      'ADMIN_RT',
+      'KETUA_RT',
+      'RT',
+      'WAKIL_RT',
+      'WAKIL_KETUA_RT',
+      'WAKIL',
+      'SEKRETARIS_RT',
+      'SEKRETARIS',
+      'BENDAHARA_RT',
+      'BENDAHARA',
+      'SUPERADMIN',
+    };
+    if (allowed.contains(role)) return true;
+    if (role.contains('KETUA') ||
+        role.contains('WAKIL') ||
+        role.contains('SEKRETARIS') ||
+        role.contains('BENDAHARA')) {
+      return true;
+    }
+
+    final ket = (_data.user?['keterangan'] ??
+            _data.user?['profile']?['keterangan'] ??
+            '')
+        .toString()
+        .toUpperCase();
+    final name = (_data.user?['name'] ??
+            _data.user?['nama'] ??
+            _data.user?['profile']?['namaLengkap'] ??
+            '')
+        .toString()
+        .toUpperCase();
+    if (ket.contains('KETUA') ||
+        ket.contains('WAKIL') ||
+        ket.contains('SEKRETARIS') ||
+        ket.contains('BENDAHARA')) {
+      return true;
+    }
+    if (name.contains('KETUA RT') ||
+        name.contains('WAKIL RT') ||
+        name.contains('SEKRETARIS') ||
+        name.contains('BENDAHARA')) {
+      return true;
+    }
+
+    return false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -431,11 +481,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       onInvoices: () =>
                           _navigate(const InvoiceScreen(), refresh: true),
                     ),
-                    HomeSubscriptionCard(
-                      membership: _data.membership ?? _membershipSummary,
-                      scrollTilt: tilt,
-                      onUpgrade: _handleUpgradePro,
-                    ),
+                    if (_canViewSubscriptionInfo)
+                      HomeSubscriptionCard(
+                        membership: _data.membership ?? _membershipSummary,
+                        scrollTilt: tilt,
+                        onUpgrade: _handleUpgradePro,
+                      ),
                     HomeQuakeCard(
                       data: _data.earthquake,
                       scrollTilt: tilt,
@@ -743,7 +794,16 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   Widget _buildExpiryAlertBanners() {
-    final alerts = _membershipSummary?['alerts'] as List<dynamic>? ?? [];
+    final rawAlerts = _membershipSummary?['alerts'] as List<dynamic>? ?? [];
+    if (rawAlerts.isEmpty) return const SizedBox.shrink();
+
+    final alerts = rawAlerts.where((alert) {
+      if (alert['type'] == 'SUBSCRIPTION') {
+        return _canViewSubscriptionInfo;
+      }
+      return true;
+    }).toList();
+
     if (alerts.isEmpty) return const SizedBox.shrink();
 
     return Column(

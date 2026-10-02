@@ -609,7 +609,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  bool _canViewSubscriptionInfo(String role) {
+    final r = role.trim().toUpperCase();
+    const allowed = {
+      'ADMIN_RT',
+      'KETUA_RT',
+      'RT',
+      'WAKIL_RT',
+      'WAKIL_KETUA_RT',
+      'WAKIL',
+      'SEKRETARIS_RT',
+      'SEKRETARIS',
+      'BENDAHARA_RT',
+      'BENDAHARA',
+      'SUPERADMIN',
+    };
+    if (allowed.contains(r)) return true;
+    if (r.contains('KETUA') ||
+        r.contains('WAKIL') ||
+        r.contains('SEKRETARIS') ||
+        r.contains('BENDAHARA')) {
+      return true;
+    }
+
+    final ket = (_user?['keterangan'] ??
+            _user?['profile']?['keterangan'] ??
+            '')
+        .toString()
+        .toUpperCase();
+    final name = (_user?['name'] ??
+            _user?['nama'] ??
+            _user?['profile']?['namaLengkap'] ??
+            '')
+        .toString()
+        .toUpperCase();
+    if (ket.contains('KETUA') ||
+        ket.contains('WAKIL') ||
+        ket.contains('SEKRETARIS') ||
+        ket.contains('BENDAHARA')) {
+      return true;
+    }
+    if (name.contains('KETUA RT') ||
+        name.contains('WAKIL RT') ||
+        name.contains('SEKRETARIS') ||
+        name.contains('BENDAHARA')) {
+      return true;
+    }
+
+    return false;
+  }
+
   Widget _buildMembershipSubscriptionCard(String role, String rtNomor, String rwNomor) {
+    if (!_canViewSubscriptionInfo(role)) {
+      return const SizedBox.shrink();
+    }
+
     final isPengurus = const {
       'ADMIN_RT',
       'KETUA_RT',

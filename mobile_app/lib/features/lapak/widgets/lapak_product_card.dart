@@ -124,7 +124,7 @@ class LapakProductCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(13),
+            padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -142,12 +142,12 @@ class LapakProductCard extends StatelessWidget {
                               if (product.isSponsored) ...[
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
+                                    horizontal: 5,
+                                    vertical: 1.5,
                                   ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFECFDF5),
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(5),
                                     border: Border.all(
                                       color: const Color(0xFF10B981),
                                       width: 0.8,
@@ -158,14 +158,14 @@ class LapakProductCard extends StatelessWidget {
                                     children: [
                                       Icon(
                                         Icons.auto_awesome_rounded,
-                                        size: 10,
+                                        size: 9,
                                         color: Color(0xFF059669),
                                       ),
-                                      SizedBox(width: 3),
+                                      SizedBox(width: 2.5),
                                       Text(
                                         'SPONSORED',
                                         style: TextStyle(
-                                          fontSize: 8.5,
+                                          fontSize: 8,
                                           fontWeight: FontWeight.w900,
                                           color: Color(0xFF059669),
                                           letterSpacing: 0.3,
@@ -174,7 +174,7 @@ class LapakProductCard extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 5),
                               ],
                               Flexible(
                                 child: Text(
@@ -183,15 +183,15 @@ class LapakProductCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Color(0xFF047857),
-                                    fontSize: 9.5,
-                                    letterSpacing: 0.5,
+                                    fontSize: 9,
+                                    letterSpacing: 0.4,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 3),
 
                           // Product Title
                           Text(
@@ -201,56 +201,56 @@ class LapakProductCard extends StatelessWidget {
                             style: const TextStyle(
                               color: AppTheme.primaryNavy,
                               fontWeight: FontWeight.w800,
-                              fontSize: 14.5,
-                              height: 1.25,
+                              fontSize: 13,
+                              height: 1.2,
                             ),
                           ),
 
                           // Product Description Snippet
                           if (product.description.trim().isNotEmpty) ...[
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 3),
                             Text(
                               product.description.trim(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 10.5,
                                 color: AppTheme.textSecondary,
                                 height: 1.2,
                               ),
                             ),
                           ],
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 5),
 
-                          // Price (ShopeeFood bold standout)
+                          // Price (bold standout)
                           Text(
                             lapakRupiah(product.price),
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.w900,
                               color: AppTheme.electricBlue,
                             ),
                           ),
 
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
 
                           // Store / Seller Info
                           Row(
                             children: [
                               const Icon(
                                 Icons.storefront_rounded,
-                                size: 12,
+                                size: 11,
                                 color: AppTheme.textSecondary,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 3),
                               Expanded(
                                 child: Text(
                                   product.sellerName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w500,
                                     color: AppTheme.textSecondary,
                                   ),
@@ -262,39 +262,39 @@ class LapakProductCard extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 10),
 
-                    // RIGHT COLUMN: Compact Square Photo + Quick Action (ShopeeFood Style)
+                    // RIGHT COLUMN: Compact Square Photo + Quick Action
                     Column(
                       children: [
                         Stack(
                           children: [
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(15),
+                              borderRadius: BorderRadius.circular(12),
                               child: SizedBox(
-                                width: 94,
-                                height: 94,
+                                width: 78,
+                                height: 78,
                                 child: ProductPhoto(product: product),
                               ),
                             ),
                             if (product.images.length > 1)
                               Positioned(
-                                bottom: 6,
-                                right: 6,
+                                bottom: 4,
+                                right: 4,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 5,
-                                    vertical: 2,
+                                    horizontal: 4,
+                                    vertical: 1.5,
                                   ),
                                   decoration: BoxDecoration(
                                     color: Colors.black.withValues(alpha: 0.65),
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(5),
                                   ),
                                   child: Text(
                                     '1/${product.images.length}',
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 9,
+                                      fontSize: 8.5,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),

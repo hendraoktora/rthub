@@ -6,11 +6,15 @@ import '../theme/app_theme.dart';
 class AdMobBannerWidget extends StatefulWidget {
   final String? adUnitId;
   final EdgeInsetsGeometry padding;
+  final AdSize adSize;
+  final Widget? customFallback;
 
   const AdMobBannerWidget({
     super.key,
     this.adUnitId,
     this.padding = const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+    this.adSize = AdSize.banner,
+    this.customFallback,
   });
 
   @override
@@ -30,7 +34,7 @@ class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
   void _loadBannerAd() {
     _bannerAd = BannerAd(
       adUnitId: widget.adUnitId ?? AdMobConfig.bannerAdUnitId,
-      size: AdSize.banner,
+      size: widget.adSize,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
@@ -65,6 +69,10 @@ class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
   @override
   Widget build(BuildContext context) {
     if (!_isAdLoaded || _bannerAd == null) {
+      if (widget.customFallback != null) {
+        return widget.customFallback!;
+      }
+
       // Fallback clean sponsored partner card when ad is loading or offline
       return Padding(
         padding: widget.padding,
@@ -136,6 +144,7 @@ class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),

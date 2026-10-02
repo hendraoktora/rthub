@@ -465,27 +465,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
 
         final payUrl = checkout['paymentUrl']?.toString();
+        bool isPaidSuccess = false;
         if (payUrl != null && payUrl.isNotEmpty && mounted) {
-          await Navigator.of(context).push(
+          final result = await Navigator.of(context).push<bool>(
             MaterialPageRoute<bool>(
               builder: (_) => DuitkuPaymentScreen(
                 paymentUrl: payUrl,
                 title: 'Perpanjangan RT Pro',
                 amount: 99000,
+                orderId: checkout['merchantOrderId']?.toString(),
               ),
             ),
           );
+          isPaidSuccess = result == true;
         }
 
-        // 2. Perpanjang status di database backend
-        await ApiService.renewRtPro(durationDays: 30);
-        _loadProfile();
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text('✅ Transaksi RT Pro selesai diproses! Masa aktif RT Pro otomatis bertambah (+30 hari).'),
-            backgroundColor: AppTheme.successGreen,
-          ),
-        );
+        if (isPaidSuccess) {
+          // 2. Perpanjang status di database backend
+          await ApiService.renewRtPro(durationDays: 30);
+          _loadProfile();
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('✅ Pembayaran berhasil! Masa aktif RT Pro otomatis bertambah (+30 hari).'),
+              backgroundColor: AppTheme.successGreen,
+            ),
+          );
+        } else {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Transaksi belum diselesaikan atau dibatalkan.'),
+              backgroundColor: AppTheme.warningAmber,
+            ),
+          );
+        }
       } catch (e) {
         messenger.showSnackBar(
           SnackBar(content: Text('⚠️ $e'), backgroundColor: AppTheme.alertRed),
@@ -554,27 +566,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
 
         final payUrl = checkout['paymentUrl']?.toString();
+        bool isPaidSuccess = false;
         if (payUrl != null && payUrl.isNotEmpty && mounted) {
-          await Navigator.of(context).push(
+          final result = await Navigator.of(context).push<bool>(
             MaterialPageRoute<bool>(
               builder: (_) => DuitkuPaymentScreen(
                 paymentUrl: payUrl,
                 title: 'Perpanjangan Iklan Sponsor',
                 amount: 15000,
+                orderId: checkout['merchantOrderId']?.toString(),
               ),
             ),
           );
+          isPaidSuccess = result == true;
         }
 
-        // 2. Perpanjang durasi iklan di backend
-        await ApiService.renewLapakAd(lapakId, durationDays: 7);
-        _loadProfile();
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('✅ Transaksi iklan "$judul" selesai! Masa tayang bertambah (+7 hari).'),
-            backgroundColor: AppTheme.successGreen,
-          ),
-        );
+        if (isPaidSuccess) {
+          // 2. Perpanjang durasi iklan di backend
+          await ApiService.renewLapakAd(lapakId, durationDays: 7);
+          _loadProfile();
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text('✅ Pembayaran iklan "$judul" berhasil! Masa tayang bertambah (+7 hari).'),
+              backgroundColor: AppTheme.successGreen,
+            ),
+          );
+        } else {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Transaksi iklan belum diselesaikan atau dibatalkan.'),
+              backgroundColor: AppTheme.warningAmber,
+            ),
+          );
+        }
       } catch (e) {
         messenger.showSnackBar(
           SnackBar(content: Text('⚠️ $e'), backgroundColor: AppTheme.alertRed),

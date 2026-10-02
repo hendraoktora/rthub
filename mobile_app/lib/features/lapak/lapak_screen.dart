@@ -106,35 +106,41 @@ class _LapakScreenState extends State<LapakScreen> {
         currentExpiry: product.promotedUntil,
         sisaDurasiHari: product.sisaDurasiHari,
         onActivate: (package) async {
-          await widget.repository.promote(product.id, package);
-          try {
-            final checkout = await ApiService.createAdsCheckout(
-              lapakId: product.id,
-              productTitle: product.title,
-              durasiHari: package.days,
-              amount: package.price.round(),
-              customerName: _user?['profile']?['namaLengkap'] ?? _user?['phone'],
-              customerPhone: _user?['phone'],
-              customerEmail: _user?['email'],
-            );
-            final payUrl = checkout['paymentUrl']?.toString();
-            if (payUrl != null && payUrl.isNotEmpty && mounted) {
-              await Navigator.of(context).push(
-                MaterialPageRoute<bool>(
-                  builder: (_) => DuitkuPaymentScreen(
-                    paymentUrl: payUrl,
-                    title: 'Pembayaran Iklan Lapak',
-                    amount: package.price.round(),
-                  ),
+          final checkout = await ApiService.createAdsCheckout(
+            lapakId: product.id,
+            productTitle: product.title,
+            durasiHari: package.days,
+            amount: package.price.round(),
+            customerName: _user?['profile']?['namaLengkap'] ?? _user?['phone'],
+            customerPhone: _user?['phone'],
+            customerEmail: _user?['email'],
+          );
+          final payUrl = checkout['paymentUrl']?.toString();
+          bool isPaidSuccess = false;
+          if (payUrl != null && payUrl.isNotEmpty && mounted) {
+            final result = await Navigator.of(context).push<bool>(
+              MaterialPageRoute<bool>(
+                builder: (_) => DuitkuPaymentScreen(
+                  paymentUrl: payUrl,
+                  title: 'Pembayaran Iklan Lapak',
+                  amount: package.price.round(),
+                  orderId: checkout['merchantOrderId']?.toString(),
                 ),
-              );
-            }
-          } catch (_) {}
+              ),
+            );
+            isPaidSuccess = result == true;
+          }
+
+          if (isPaidSuccess) {
+            await widget.repository.promote(product.id, package);
+          } else {
+            throw Exception('Pembayaran dibatalkan atau belum diselesaikan.');
+          }
         },
       ),
     );
     if (activated == true) {
-      _message('Status iklan berhasil diproses. Memperbarui daftar produk.');
+      _message('✅ Status iklan berhasil diaktifkan. Memperbarui daftar produk.');
       await _load();
     }
   }

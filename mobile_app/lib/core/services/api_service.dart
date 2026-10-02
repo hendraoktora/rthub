@@ -506,22 +506,26 @@ class ApiService {
       }
     } catch (_) {}
 
-    final token = await getToken();
-    if (token != null) return [];
+    bool isPaid = false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      isPaid = prefs.getBool('tagihan_is_paid_sep2026') ?? false;
+    } catch (_) {}
 
+    final now = DateTime.now();
     return [
       {
-        'id': 'tagihan_sep_2026',
-        'namaTagihan': 'Iuran Kas & Kebersihan',
+        'id': 'tagihan_auto_${now.month}_${now.year}',
+        'namaTagihan': 'Iuran Pengelolaan Lingkungan (IPL)',
         'nominalPokok': 50000,
-        'adminFee': 2000,
-        'totalBayar': 52000,
-        'periodeBulan': 9,
-        'periodeTahun': 2026,
-        'status': 'PAID',
-        'jatuhTempo': '2026-09-10T00:00:00.000Z',
-        'metodePembayaran': 'QRIS',
-        'paidAt': '2026-09-08T14:20:00.000Z',
+        'adminFee': 0,
+        'totalBayar': 50000,
+        'periodeBulan': now.month,
+        'periodeTahun': now.year,
+        'status': isPaid ? 'PAID' : 'UNPAID',
+        'jatuhTempo': '${now.year}-${now.month.toString().padLeft(2, '0')}-10T00:00:00.000Z',
+        'metodePembayaran': 'QRIS / Transfer Bank RT',
+        if (isPaid) 'paidAt': DateTime.now().toIso8601String(),
       },
     ];
   }

@@ -336,25 +336,38 @@ class _HomeScreenState extends State<HomeScreen> {
           customerEmail: _data.user?['email'],
         );
         final payUrl = checkout['paymentUrl']?.toString();
+        bool isPaidSuccess = false;
         if (payUrl != null && payUrl.isNotEmpty && mounted) {
-          await Navigator.of(context).push(
+          final result = await Navigator.of(context).push<bool>(
             MaterialPageRoute<bool>(
               builder: (_) => DuitkuPaymentScreen(
                 paymentUrl: payUrl,
                 title: 'Upgrade Paket RT Pro',
                 amount: 99000,
+                orderId: checkout['merchantOrderId']?.toString(),
               ),
             ),
           );
+          isPaidSuccess = result == true;
         }
-        await ApiService.renewRtPro(durationDays: 30);
-        await _refresh();
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text('✅ Transaksi RT Pro selesai diproses! Masa aktif RT Pro berhasil diperbarui.'),
-            backgroundColor: AppTheme.successGreen,
-          ),
-        );
+
+        if (isPaidSuccess) {
+          await ApiService.renewRtPro(durationDays: 30);
+          await _refresh();
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('✅ Pembayaran berhasil! Masa aktif RT Pro berhasil diperbarui (+30 hari).'),
+              backgroundColor: AppTheme.successGreen,
+            ),
+          );
+        } else {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Transaksi belum diselesaikan atau dibatalkan.'),
+              backgroundColor: AppTheme.warningAmber,
+            ),
+          );
+        }
       } catch (e) {
         messenger.showSnackBar(
           SnackBar(content: Text('⚠️ $e'), backgroundColor: AppTheme.alertRed),
@@ -389,8 +402,13 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverToBoxAdapter(child: _connectionNotice()),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(22, 18, 22, 4),
-              child: _buildExpiryAlertBanners(),
+              padding: const EdgeInsets.fromLTRB(22, 14, 22, 14),
+              child: Column(
+                children: [
+                  _buildExpiryAlertBanners(),
+                  _membershipCard(),
+                ],
+              ),
             ),
           ),
           SliverToBoxAdapter(
@@ -825,7 +843,10 @@ class _HomeScreenState extends State<HomeScreen> {
     color: Colors.white,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(18),
-      side: const BorderSide(color: Color(0xFFE2E8F0)),
+      side: BorderSide(
+        color: _isPengurus ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+        width: _isPengurus ? 1.5 : 1.0,
+      ),
     ),
     child: InkWell(
       borderRadius: BorderRadius.circular(18),
@@ -837,32 +858,62 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Icon(
-              _isPengurus
-                  ? Icons.admin_panel_settings_outlined
-                  : Icons.home_work_outlined,
-              color: AppTheme.electricBlue,
-              size: 22,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (_isPengurus ? const Color(0xFF4F46E5) : AppTheme.electricBlue).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                _isPengurus
+                    ? Icons.admin_panel_settings_rounded
+                    : Icons.home_work_outlined,
+                color: _isPengurus ? const Color(0xFF4F46E5) : AppTheme.electricBlue,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 11),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _isPengurus
-                        ? 'Ruang pengurus'
-                        : 'Rumah ${_data.user?['profile']?['noRumah'] ?? 'belum diisi'}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        _isPengurus
+                            ? 'Ruang Pengurus RT'
+                            : 'Rumah ${_data.user?['profile']?['noRumah'] ?? 'belum diisi'}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (_isPengurus) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFC7D2FE)),
+                          ),
+                          child: const Text(
+                            'ADMIN RT',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF4F46E5),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
                     _isPengurus
-                        ? 'Kelola warga, kas & lingkungan'
-                        : 'Identitas warga & keluarga',
+                        ? 'Kelola warga, kas RT, ronda & fasilitas lingkungan'
+                        : 'Identitas warga & keluarga terdaftar',
                     style: const TextStyle(
                       fontSize: 10,
                       color: AppTheme.textSecondary,
@@ -898,6 +949,15 @@ class _HomeScreenState extends State<HomeScreen> {
         key: const ValueKey('home-quick-actions'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_isPengurus)
+            Expanded(
+              child: HomeQuickAction(
+                icon: Icons.admin_panel_settings_rounded,
+                label: 'Pengurus',
+                color: const Color(0xFF4F46E5),
+                onTap: () => _navigate(const PengurusPanelScreen(), refresh: true),
+              ),
+            ),
           Expanded(
             child: HomeQuickAction(
               icon: Icons.receipt_long_rounded,
@@ -1060,7 +1120,7 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         else
           DepthCarousel(
-            height: 204 + ((textScale - 1).clamp(0, 2) * 100),
+            height: 146 + ((textScale - 1).clamp(0, 2) * 60),
             viewportFraction: .9,
             children: items
                 .take(12)

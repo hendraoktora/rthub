@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_cache_helper.dart';
 import '../../../core/widgets/admob_banner_widget.dart';
@@ -42,17 +43,28 @@ class HomeKasCard extends StatelessWidget {
           ].contains(item['status']?.toString().toUpperCase()),
         )
         .toList();
+    final hasUnpaid = outstanding != null && outstanding.isNotEmpty;
+    final isAllPaid = invoices != null && invoices!.isNotEmpty && !hasUnpaid;
+
+    final cardBgColor = hasUnpaid
+        ? const Color(0xFFFFFBEB) // Dynamic Warm Amber / Kuning Peringatan
+        : const Color(0xFFE7F6EF); // Fresh Mint Green
+    final primaryAccent = hasUnpaid
+        ? const Color(0xFFD97706)
+        : const Color(0xFF087252);
+
     final billLabel = invoices == null
         ? 'Iuran belum dimuat'
-        : outstanding!.isNotEmpty
-        ? '${outstanding.length} tagihan perlu dicek'
+        : hasUnpaid
+        ? '${outstanding.length} tagihan belum dibayar'
         : invoices!.isEmpty
         ? 'Belum ada tagihan'
         : 'Semua iuran sudah lunas';
+
     return TiltCard(
       scrollTilt: scrollTilt,
       child: _HomeSurface(
-        color: const Color(0xFFE7F6EF),
+        color: cardBgColor,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -64,15 +76,17 @@ class HomeKasCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'BUKU KAS / RT $rt',
+                        hasUnpaid ? 'TAGIHAN KAS & IURAN / RT $rt' : 'BUKU KAS / RT $rt',
                         style: _eyebrow.copyWith(
-                          color: const Color(0xFF087252),
+                          color: primaryAccent,
                         ),
                       ),
                       const SizedBox(height: 10),
-                      const Text(
-                        'Dikelola bersama.\nTerbuka untuk semua.',
-                        style: TextStyle(
+                      Text(
+                        hasUnpaid
+                            ? 'Iuran bulan ini belum lunas.\nYuk, dukung kas RT!'
+                            : 'Dikelola bersama.\nTerbuka untuk semua.',
+                        style: const TextStyle(
                           fontSize: 17,
                           height: 1.15,
                           fontWeight: FontWeight.w800,
@@ -121,10 +135,10 @@ class HomeKasCard extends StatelessWidget {
               children: [
                 Text(
                   '↓ ${hubRupiah(summary?['totalPemasukan'])}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF087252),
+                    color: primaryAccent,
                   ),
                 ),
                 Text(
@@ -146,9 +160,12 @@ class HomeKasCard extends StatelessWidget {
                     style: TextButton.styleFrom(
                       alignment: Alignment.centerLeft,
                       padding: EdgeInsets.zero,
-                      foregroundColor: const Color(0xFF087252),
+                      foregroundColor: primaryAccent,
                     ),
-                    icon: const Icon(Icons.receipt_long_rounded, size: 15),
+                    icon: Icon(
+                      hasUnpaid ? Icons.warning_amber_rounded : Icons.receipt_long_rounded,
+                      size: 15,
+                    ),
                     label: Text(
                       billLabel,
                       maxLines: 1,
@@ -161,23 +178,46 @@ class HomeKasCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                ElevatedButton.icon(
-                  onPressed: onInvoices,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF087252),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-                    visualDensity: VisualDensity.compact,
+                if (hasUnpaid) ...[
+                  ElevatedButton.icon(
+                    onPressed: onInvoices,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryAccent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: const Icon(Icons.payments_rounded, size: 13),
+                    label: const Text(
+                      'Bayar Kas',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  icon: const Icon(Icons.payments_rounded, size: 13),
-                  label: const Text(
-                    'Bayar Kas',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  const SizedBox(width: 4),
+                ] else if (isAllPaid) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD1FAE5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF059669)),
+                        SizedBox(width: 4),
+                        Text(
+                          'LUNAS',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF059669)),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
+                  const SizedBox(width: 4),
+                ],
                 IconButton.filledTonal(
                   onPressed: onDetails,
                   tooltip: 'Lihat rincian buku kas',
@@ -339,145 +379,143 @@ class HomeSubscriptionCard extends StatelessWidget {
     final sub = membership?['subscription'] as Map<String, dynamic>?;
     final isPro = sub?['isPro'] == true;
     final sisaHari = sub?['sisaHari'] as int? ?? 7;
-    final isNearExpiry = sisaHari <= 3;
-    final untilStr = sub?['activeUntil']?.toString();
+    final isExpiringSoon = sub?['isExpiringSoon'] == true || sisaHari <= 3;
+    final isExpired = sub?['isExpired'] == true || sisaHari <= 0;
+    final untilStr = sub?['activeUntil']?.toString() ?? sub?['expiredAt']?.toString();
     DateTime? untilDate = untilStr != null ? DateTime.tryParse(untilStr) : null;
     final untilFormatted = untilDate != null
         ? '${untilDate.day} ${_monthName(untilDate.month)} ${untilDate.year}'
-        : '7 Hari Kedepan';
-
-    final Color primaryAccent = isNearExpiry
-        ? const Color(0xFFDC2626)
-        : (isPro ? const Color(0xFF4F46E5) : const Color(0xFF0284C7));
-    final Color bgColor = isNearExpiry
-        ? const Color(0xFFFEF2F2)
-        : (isPro ? const Color(0xFFEEF2FF) : const Color(0xFFF0F9FF));
+        : 'Tidak Terbatas';
 
     return TiltCard(
       scrollTilt: scrollTilt,
       child: _HomeSurface(
-        color: bgColor,
+        color: Colors.white,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            isPro ? Icons.workspace_premium_rounded : Icons.star_rounded,
-                            size: 14,
-                            color: primaryAccent,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            isPro ? 'PAKET RT PRO AKTIF' : 'TRIAL 7 HARI RT PRO',
-                            style: _eyebrow.copyWith(color: primaryAccent),
-                          ),
-                        ],
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (isPro ? AppTheme.electricBlue : Colors.grey.shade600).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        isPro ? 'Akses Fitur Premium RT' : 'Evaluasi Layanan RT',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryNavy,
+                      child: Icon(
+                        isPro ? Icons.workspace_premium_rounded : Icons.account_circle_outlined,
+                        color: isPro ? AppTheme.electricBlue : Colors.grey.shade700,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isPro ? 'RTHub Pro (Pengurus RT)' : 'RTHub Basic (Pengurus RT)',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Paket Layanan Lingkungan RT',
+                          style: TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: primaryAccent,
-                    borderRadius: BorderRadius.circular(12),
+                    color: isPro
+                        ? (isExpiringSoon
+                            ? AppTheme.warningAmber.withValues(alpha: 0.12)
+                            : AppTheme.successGreen.withValues(alpha: 0.12))
+                        : (isExpired
+                            ? AppTheme.alertRed.withValues(alpha: 0.12)
+                            : Colors.grey.shade100),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    isPro ? 'PRO LENGKAP' : 'UJI COBA',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
+                    isPro
+                        ? (isExpiringSoon ? '⚠️ Sisa $sisaHari Hari' : '✓ AKTIF')
+                        : (isExpired ? '✕ KEDALUWARSA' : 'GRATIS'),
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      color: isPro
+                          ? (isExpiringSoon ? AppTheme.warningAmber : AppTheme.successGreen)
+                          : (isExpired ? AppTheme.alertRed : Colors.grey.shade700),
                     ),
                   ),
                 ),
               ],
             ),
-            const Spacer(),
-            if (isNearExpiry) ...[
-              Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFCA5A5)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.warning_amber_rounded, size: 15, color: Color(0xFFDC2626)),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'Sisa $sisaHari hari! Perpanjang agar akun RT tidak dinonaktifkan.',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFB91C1C),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            const Divider(height: 20, color: Color(0xFFF1F5F9)),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Text('Masa Aktif Layanan', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+                    const SizedBox(height: 3),
                     Text(
-                      'Sisa Masa Aktif: $sisaHari Hari',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: primaryAccent,
-                      ),
+                      isPro ? untilFormatted : 'Masa aktif habis',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                     ),
-                    const SizedBox(height: 2),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text('Sisa Durasi', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+                    const SizedBox(height: 3),
                     Text(
-                      'Berlaku hingga $untilFormatted',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppTheme.textSecondary,
+                      isPro ? '$sisaHari Hari Tersisa' : '0 Hari',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isExpiringSoon ? AppTheme.warningAmber : AppTheme.textPrimary,
                       ),
                     ),
                   ],
                 ),
-                ElevatedButton.icon(
-                  onPressed: onUpgrade,
-                  icon: const Icon(Icons.bolt_rounded, size: 15),
-                  label: Text(
-                    isPro ? 'Perpanjang' : 'Upgrade Pro',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryAccent,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
               ],
+            ),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.electricBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                onPressed: onUpgrade,
+                icon: const Icon(Icons.autorenew_rounded, size: 16),
+                label: const Text(
+                  'Perpanjang Masa Aktif (Rp 99.000 / bln)',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
+            const Center(
+              child: Text(
+                '💡 Sisa hari Anda saat ini akan diakumulasikan (+30 hari).',
+                style: TextStyle(fontSize: 9.5, color: AppTheme.textSecondary, fontStyle: FontStyle.italic),
+              ),
             ),
           ],
         ),
@@ -505,14 +543,14 @@ class HomeAdMobCard extends StatelessWidget {
       scrollTilt: scrollTilt,
       child: _HomeSurface(
         color: const Color(0xFFFAFAFA),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(6),
@@ -546,22 +584,59 @@ class HomeAdMobCard extends StatelessWidget {
                 ),
               ],
             ),
-            const Spacer(),
-            const Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-                child: AdMobBannerWidget(
-                  padding: EdgeInsets.zero,
+            const SizedBox(height: 8),
+            Expanded(
+              child: Center(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  child: AdMobBannerWidget(
+                    padding: EdgeInsets.zero,
+                    adSize: AdSize.mediumRectangle,
+                    customFallback: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.electricBlue.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.campaign_rounded, size: 28, color: AppTheme.electricBlue),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Ruang Iklan & Sponsor Google',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.primaryNavy),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Menjangkau ribuan warga RT & lingkungan sekitar secara tepat sasaran',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 10.5, color: AppTheme.textSecondary, height: 1.3),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 6),
             const Text(
               'Tayangan sponsor membantu kelancaran server & operasional RT digital',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 9.5,
                 color: AppTheme.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
@@ -610,25 +685,25 @@ class HomeProductCard extends StatelessWidget {
     return TiltCard(
       child: _HomeSurface(
         color: Colors.white,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Left Photo Showcase
             SizedBox(
-              width: 120,
+              width: 90,
               height: double.infinity,
               child: Semantics(
                 label: 'Lihat ${item['judul'] ?? 'produk warga'}',
                 button: true,
                 child: InkWell(
                   onTap: onOpen,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(14),
                   child: Stack(
                     children: [
                       Positioned.fill(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(14),
                           child: ColoredBox(
                             color: const Color(0xFFF1F5F9),
                             child: ImageCacheHelper.buildImage(
@@ -637,7 +712,7 @@ class HomeProductCard extends StatelessWidget {
                               placeholder: const Center(
                                 child: ClayIllustration(
                                   kind: ClayKind.shop,
-                                  size: 70,
+                                  size: 48,
                                 ),
                               ),
                             ),
@@ -646,38 +721,38 @@ class HomeProductCard extends StatelessWidget {
                       ),
                       // Floating Gradient Sponsored Pill
                       Positioned(
-                        left: 8,
-                        top: 8,
+                        left: 5,
+                        top: 5,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: 6,
+                            vertical: 3,
                           ),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
                             ),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(6),
                             boxShadow: const [
                               BoxShadow(
                                 color: Color(0x33000000),
-                                offset: Offset(0, 2),
-                                blurRadius: 4,
+                                offset: Offset(0, 1),
+                                blurRadius: 3,
                               ),
                             ],
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.auto_awesome, color: Colors.white, size: 9),
-                              SizedBox(width: 3),
+                              Icon(Icons.auto_awesome, color: Colors.white, size: 8),
+                              SizedBox(width: 2),
                               Text(
                                 'SPONSORED',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 8,
+                                  fontSize: 7.5,
                                   fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.5,
+                                  letterSpacing: 0.3,
                                 ),
                               ),
                             ],
@@ -689,7 +764,7 @@ class HomeProductCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 11),
             // Right Information & Action
             Expanded(
               child: Column(
@@ -698,7 +773,7 @@ class HomeProductCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.storefront_rounded, size: 13, color: AppTheme.textSecondary),
+                      const Icon(Icons.storefront_rounded, size: 12, color: AppTheme.textSecondary),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -706,7 +781,7 @@ class HomeProductCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.textSecondary,
                           ),
@@ -714,24 +789,24 @@ class HomeProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 3),
                   Text(
                     item['judul']?.toString() ?? 'Produk warga',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 13,
                       fontWeight: FontWeight.w800,
                       height: 1.2,
                       color: AppTheme.primaryNavy,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 5),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
                       color: const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(color: const Color(0xFFA7F3D0)),
                     ),
                     child: Text(
@@ -739,27 +814,27 @@ class HomeProductCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF047857),
                       ),
                     ),
                   ),
                   const Spacer(),
-                  // WhatsApp Green Button
+                  // WhatsApp Green Button (compact)
                   SizedBox(
-                    height: 38,
+                    height: 30,
                     child: ElevatedButton.icon(
                       onPressed: onOrder,
                       icon: const Icon(
                         Icons.chat_bubble_rounded,
-                        size: 14,
+                        size: 12,
                         color: Colors.white,
                       ),
                       label: const Text(
                         'Chat Penjual',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                         ),
@@ -767,9 +842,9 @@ class HomeProductCard extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF25D366),
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(9),
                         ),
                       ),
                     ),
@@ -783,6 +858,7 @@ class HomeProductCard extends StatelessWidget {
     );
   }
 }
+
 
 class HomeQuickAction extends StatelessWidget {
   const HomeQuickAction({

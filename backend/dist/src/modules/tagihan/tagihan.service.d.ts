@@ -4,30 +4,30 @@ export declare class TagihanService {
     private prisma;
     constructor(prisma: PrismaService);
     getMasterTagihan(rtId: string): Promise<{
-        rtId: string;
         id: string;
-        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string;
+        isActive: boolean;
+        deskripsi: string | null;
         nominalPokok: import("@prisma/client/runtime/library").Decimal;
         adminFee: import("@prisma/client/runtime/library").Decimal;
         namaTagihan: string;
-        deskripsi: string | null;
     }[]>;
     setMasterTagihan(rtId: string, data: {
         namaTagihan?: string;
         nominalPokok: number;
         deskripsi?: string;
     }): Promise<{
-        rtId: string;
         id: string;
-        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string;
+        isActive: boolean;
+        deskripsi: string | null;
         nominalPokok: import("@prisma/client/runtime/library").Decimal;
         adminFee: import("@prisma/client/runtime/library").Decimal;
         namaTagihan: string;
-        deskripsi: string | null;
     }>;
     generateTagihanBulanan(rtId: string, masterTagihanId: string, bulan: number, tahun: number): Promise<{
         message: string;
@@ -38,15 +38,15 @@ export declare class TagihanService {
     }>;
     getTagihanSaya(user: any): Promise<({
         masterTagihan: {
-            rtId: string;
             id: string;
-            isActive: boolean;
             createdAt: Date;
             updatedAt: Date;
+            rtId: string;
+            isActive: boolean;
+            deskripsi: string | null;
             nominalPokok: import("@prisma/client/runtime/library").Decimal;
             adminFee: import("@prisma/client/runtime/library").Decimal;
             namaTagihan: string;
-            deskripsi: string | null;
         };
         transaksi: {
             id: string;
@@ -79,12 +79,141 @@ export declare class TagihanService {
         jatuhTempo: Date;
         paidAt: Date | null;
     })[]>;
+    getInstruksiBayar(tagihanId: string): Promise<{
+        tagihanId: string;
+        namaTagihan: string;
+        periode: string;
+        nominal: number;
+        status: import(".prisma/client").$Enums.StatusTagihan;
+        rumah: string;
+        jatuhTempo: Date;
+        rekeningRT: {
+            namaBank: string;
+            nomorRekening: string;
+            atasNamaRekening: string;
+            qrisImageUrl: string;
+        };
+        transaksiTerakhir: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            userId: string;
+            status: import(".prisma/client").$Enums.PaymentStatus;
+            nominalPokok: import("@prisma/client/runtime/library").Decimal;
+            adminFee: import("@prisma/client/runtime/library").Decimal;
+            totalBayar: import("@prisma/client/runtime/library").Decimal;
+            paidAt: Date | null;
+            paymentMethod: import(".prisma/client").$Enums.PaymentMethod;
+            paymentCode: string | null;
+            referenceId: string | null;
+            buktiBayarUrl: string | null;
+            tagihanId: string;
+        };
+    }>;
+    konfirmasiBayarWarga(tagihanId: string, userId: string, data: {
+        paymentMethod: PaymentMethod;
+        buktiBayarUrl?: string;
+        catatan?: string;
+    }): Promise<{
+        message: string;
+        transaksiId: string;
+        status: string;
+    }>;
+    terimaTunai(tagihanId: string, bendaharaUserId: string): Promise<{
+        message: string;
+        tagihanId: string;
+        nominal: import("@prisma/client/runtime/library").Decimal;
+        status: string;
+    }>;
+    approveTransaksi(transaksiId: string, bendaharaUserId: string): Promise<{
+        message: string;
+        status: string;
+    }>;
+    getPendingVerifikasi(rtId: string): Promise<({
+        user: {
+            profile: {
+                id: string;
+                skDokumenUrl: string | null;
+                createdAt: Date;
+                updatedAt: Date;
+                namaLengkap: string;
+                nik: string | null;
+                noRumah: string | null;
+                noKk: string | null;
+                userId: string;
+                avatarUrl: string | null;
+                dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
+            };
+        } & {
+            id: string;
+            rwId: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            rtId: string | null;
+            phone: string;
+            email: string | null;
+            passwordHash: string;
+            role: import(".prisma/client").$Enums.Role;
+            isActive: boolean;
+            kelurahanId: string | null;
+        };
+        tagihan: {
+            rumah: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                rtId: string;
+                noRumah: string;
+                alamatLengkap: string | null;
+                statusHunian: string | null;
+            };
+            masterTagihan: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                rtId: string;
+                isActive: boolean;
+                deskripsi: string | null;
+                nominalPokok: import("@prisma/client/runtime/library").Decimal;
+                adminFee: import("@prisma/client/runtime/library").Decimal;
+                namaTagihan: string;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.StatusTagihan;
+            masterTagihanId: string;
+            rumahId: string;
+            periodeBulan: number;
+            periodeTahun: number;
+            nominalPokok: import("@prisma/client/runtime/library").Decimal;
+            adminFee: import("@prisma/client/runtime/library").Decimal;
+            totalBayar: import("@prisma/client/runtime/library").Decimal;
+            jatuhTempo: Date;
+            paidAt: Date | null;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
+        status: import(".prisma/client").$Enums.PaymentStatus;
+        nominalPokok: import("@prisma/client/runtime/library").Decimal;
+        adminFee: import("@prisma/client/runtime/library").Decimal;
+        totalBayar: import("@prisma/client/runtime/library").Decimal;
+        paidAt: Date | null;
+        paymentMethod: import(".prisma/client").$Enums.PaymentMethod;
+        paymentCode: string | null;
+        referenceId: string | null;
+        buktiBayarUrl: string | null;
+        tagihanId: string;
+    })[]>;
     bayarTagihan(tagihanId: string, userId: string, paymentMethod: PaymentMethod): Promise<{
         message: string;
         rincian: {
             tagihan: string;
             nominalIuranPokokMasukKasRT: import("@prisma/client/runtime/library").Decimal;
-            biayaLayananAdminPlatform: import("@prisma/client/runtime/library").Decimal;
             totalBayar: import("@prisma/client/runtime/library").Decimal;
             metodeBayar: import(".prisma/client").$Enums.PaymentMethod;
             status: string;

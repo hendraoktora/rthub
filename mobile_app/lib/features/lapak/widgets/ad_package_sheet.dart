@@ -158,18 +158,28 @@ class _AdPackageSheetState extends State<AdPackageSheet> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppTheme.background,
+                color: const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
               ),
-              child: const Text(
-                'Tarif mengikuti katalog aplikasi. Pembayaran belum terhubung di aplikasi; '
-                'koordinasikan pembayaran dengan pengurus. Tombol di bawah mengaktifkan iklan, '
-                'bukan konfirmasi pembayaran.',
-                style: TextStyle(
-                  fontSize: 12,
-                  height: 1.55,
-                  color: AppTheme.textSecondary,
-                ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.payment_rounded, color: Color(0xFF2563EB), size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Pembayaran instan didukung resmi via Duitku (QRIS & Virtual Account). '
+                      'Menekan tombol di bawah akan langsung membuka halaman pembayaran Duitku untuk mengaktifkan slot iklan.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.45,
+                        color: Color(0xFF1E40AF),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             if (_error != null)
@@ -221,15 +231,15 @@ class _AdPackageSheetState extends State<AdPackageSheet> {
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : const Icon(Icons.bolt_rounded),
                 label: Text(
                   _busy
-                      ? 'Memproses…'
+                      ? 'Menyiapkan Pembayaran…'
                       : (_isExtending
-                          ? 'Perpanjang Durasi (+${_selected.days} Hari) - ${_selected.label}'
-                          : 'Aktifkan Iklan ${_selected.label} (${_selected.days} Hari)'),
+                          ? 'Bayar Perpanjangan (+${_selected.days} Hari) via Duitku'
+                          : 'Bayar & Aktifkan Iklan via Duitku'),
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),

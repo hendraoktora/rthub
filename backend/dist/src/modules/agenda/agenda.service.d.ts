@@ -4,15 +4,15 @@ export declare class AgendaService {
     private prisma;
     constructor(prisma: PrismaService);
     getAgenda(user: any): Promise<{
-        rtId: string | null;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        deskripsi: string | null;
+        rtId: string | null;
         kategori: string;
+        kelurahanId: string | null;
         judul: string;
+        deskripsi: string | null;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         tanggalMulai: Date;
         tanggalSelesai: Date | null;
@@ -27,15 +27,15 @@ export declare class AgendaService {
         lokasi?: string;
         scope?: ScopeWilayah;
     }): Promise<{
-        rtId: string | null;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        deskripsi: string | null;
+        rtId: string | null;
         kategori: string;
+        kelurahanId: string | null;
         judul: string;
+        deskripsi: string | null;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         tanggalMulai: Date;
         tanggalSelesai: Date | null;
@@ -49,30 +49,30 @@ export declare class AgendaService {
         tanggalSelesai?: string;
         lokasi?: string;
     }): Promise<{
-        rtId: string | null;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        deskripsi: string | null;
+        rtId: string | null;
         kategori: string;
+        kelurahanId: string | null;
         judul: string;
+        deskripsi: string | null;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         tanggalMulai: Date;
         tanggalSelesai: Date | null;
         lokasi: string | null;
     }>;
     deleteAgenda(id: string, user: any): Promise<{
-        rtId: string | null;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        deskripsi: string | null;
+        rtId: string | null;
         kategori: string;
+        kelurahanId: string | null;
         judul: string;
+        deskripsi: string | null;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         tanggalMulai: Date;
         tanggalSelesai: Date | null;

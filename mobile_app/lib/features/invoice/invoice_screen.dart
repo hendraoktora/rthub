@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -91,56 +92,34 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _isPaying = true);
     try {
-      // 1. Jika metode digital (QRIS / Virtual Account), terbitkan Invoice Duitku
-      if (_selectedPaymentMethod != 'CASH') {
-        String methodCode = 'SP'; // Default ShopeePay / QRIS Duitku
-        if (_selectedPaymentMethod == 'VA_BCA') methodCode = 'BC';
-        if (_selectedPaymentMethod == 'VA_MANDIRI') methodCode = 'M2';
+      final tagihanId = (activeTagihan != null && activeTagihan['id'] != null)
+          ? activeTagihan['id'].toString()
+          : 'tagihan_demo';
 
-        final tagihanId = (activeTagihan != null && activeTagihan['id'] != null)
-            ? activeTagihan['id'].toString()
-            : 'tagihan_demo';
-
-        final duitkuRes = await ApiService.createDuitkuInvoice(tagihanId, methodCode);
-
-        if (!mounted) return;
-        setState(() => _isPaying = false);
-
-        if (duitkuRes['success'] == true ||
-            duitkuRes['vaNumber'] != null ||
-            duitkuRes['paymentUrl'] != null) {
-          if (_selectedPaymentMethod.startsWith('VA')) {
-            _showVaPaymentDialog(duitkuRes, activeTagihan, totalBayar);
-            return;
-          } else {
-            _showQrisPaymentDialog(duitkuRes, activeTagihan, totalBayar);
-            return;
-          }
-        }
-      }
-
-      // 2. Jika Cash atau fallback direct settlement
-      if (activeTagihan != null && activeTagihan['id'] != null) {
-        await ApiService.payTagihan(activeTagihan['id'].toString(), _selectedPaymentMethod);
-      } else {
-        await Future.delayed(const Duration(milliseconds: 700));
-      }
+      // Probis Baru: Ambil instruksi rekening dan QRIS kas RT
+      final instruksi = await ApiService.getInstruksiBayar(tagihanId);
 
       if (!mounted) return;
-      _completePaymentSuccess(totalBayar);
+      setState(() => _isPaying = false);
+
+      _showDirectRtPaymentDialog(instruksi, activeTagihan, totalBayar);
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('⚠️ Pembayaran gagal: $e'), backgroundColor: AppTheme.alertRed),
+        SnackBar(content: Text('⚠️ Gagal memuat instruksi pembayaran: $e'), backgroundColor: AppTheme.alertRed),
       );
     } finally {
       if (mounted) setState(() => _isPaying = false);
     }
   }
 
-  void _showVaPaymentDialog(Map<String, dynamic> data, dynamic activeTagihan, num totalBayar) {
-    final vaNumber = data['vaNumber']?.toString() ?? '8870812345678';
-    final bankName = _selectedPaymentMethod == 'VA_BCA' ? 'BCA' : 'Mandiri';
-    final orderId = data['merchantOrderId']?.toString() ?? 'INV-RT';
+  void _showDirectRtPaymentDialog(Map<String, dynamic> instruksi, dynamic activeTagihan, num totalBayar) {
+    final rekData = instruksi['rekeningRT'] as Map<String, dynamic>? ?? {};
+    final namaBank = rekData['namaBank']?.toString() ?? 'BCA';
+    final nomorRek = rekData['nomorRekening']?.toString() ?? '8820192831';
+    final atasNama = rekData['atasNamaRekening']?.toString() ?? 'Kas RT';
+    final qrisUrl = rekData['qrisImageUrl']?.toString();
+    final isCash = _selectedPaymentMethod == 'CASH';
+    final isQris = _selectedPaymentMethod == 'QRIS';
 
     showModalBottomSheet(
       context: context,
@@ -172,179 +151,139 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: isCash ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.account_balance_rounded, color: AppTheme.electricBlue, size: 24),
+                  child: Icon(
+                    isCash ? Icons.payments_rounded : (isQris ? Icons.qr_code_2_rounded : Icons.account_balance_rounded),
+                    color: isCash ? const Color(0xFFD97706) : AppTheme.electricBlue,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Virtual Account $bankName (Duitku)', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                      Text('No. Order: $orderId', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                      Text(
+                        isCash ? 'Bayar Tunai ke Bendahara' : (isQris ? 'QRIS Mandiri Kas RT' : 'Transfer Bank ke Kas RT'),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                      ),
+                      Text(
+                        isCash ? 'Serahkan fisik langsung ke pengurus' : 'Transfer langsung ke rekening kas lingkungan',
+                        style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            const Text('Nomor Virtual Account:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    vaNumber,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.2, color: AppTheme.primaryNavy),
+
+            if (isQris && qrisUrl != null && qrisUrl.isNotEmpty) ...[
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  TextButton.icon(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: vaNumber));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Nomor Virtual Account berhasil disalin!')),
-                      );
-                    },
-                    icon: const Icon(Icons.copy_rounded, size: 14),
-                    label: const Text('Salin', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: Column(
+                    children: [
+                      if (qrisUrl.startsWith('data:image'))
+                        Image.memory(
+                          base64Decode(qrisUrl.split(',').last),
+                          width: 180,
+                          height: 180,
+                          fit: BoxFit.contain,
+                        )
+                      else if (qrisUrl.startsWith('http'))
+                        Image.network(
+                          qrisUrl,
+                          width: 180,
+                          height: 180,
+                          fit: BoxFit.contain,
+                        )
+                      else
+                        const Icon(Icons.qr_code_2_rounded, size: 120, color: Color(0xFF059669)),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Scan QRIS Kas RT via Semua Bank / E-Wallet',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
+              const SizedBox(height: 14),
+            ],
+
+            if (!isCash) ...[
+              const Text('Nomor Rekening Tujuan Kas RT:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('$namaBank - $nomorRek', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.primaryNavy)),
+                        Text('a/n $atasNama', style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                      ],
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: nomorRek));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Nomor Rekening Kas RT berhasil disalin!')),
+                        );
+                      },
+                      icon: const Icon(Icons.copy_rounded, size: 14),
+                      label: const Text('Salin', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Total yang Harus Dibayar:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                 Text(
                   'Rp ${totalBayar.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.electricBlue),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.electricBlue),
                 ),
               ],
             ),
             const SizedBox(height: 20),
+
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: () async {
                   Navigator.pop(modalCtx);
                   if (activeTagihan != null && activeTagihan['id'] != null) {
-                    await ApiService.payTagihan(activeTagihan['id'].toString(), _selectedPaymentMethod);
+                    await ApiService.konfirmasiBayarTagihan(
+                      activeTagihan['id'].toString(),
+                      paymentMethod: _selectedPaymentMethod,
+                    );
                   }
                   _completePaymentSuccess(totalBayar);
                 },
                 icon: const Icon(Icons.check_circle_outline_rounded),
-                label: const Text('Saya Sudah Bayar / Cek Status'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showQrisPaymentDialog(Map<String, dynamic> data, dynamic activeTagihan, num totalBayar) {
-    final paymentUrl = data['paymentUrl']?.toString();
-    final orderId = data['merchantOrderId']?.toString() ?? 'INV-RT';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (modalCtx) => Container(
-        padding: const EdgeInsets.all(22),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.qr_code_2_rounded, color: Color(0xFF059669), size: 24),
+                label: Text(
+                  isCash ? 'Saya Sudah Setor Tunai ke Bendahara' : 'Saya Sudah Transfer / Kirim Konfirmasi',
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('QRIS Dinamis (Duitku)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                      Text('No. Order: $orderId', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: const Column(
-                children: [
-                  Icon(Icons.qr_code_scanner_rounded, size: 90, color: AppTheme.primaryNavy),
-                  SizedBox(height: 8),
-                  Text('Dukungan Semua Aplikasi Pembayaran:', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                  SizedBox(height: 4),
-                  Text('BCA • Mandiri • BRI • BNI • GoPay • OVO • Dana • ShopeePay', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (paymentUrl != null && paymentUrl.isNotEmpty) ...[
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    try {
-                      await launchUrl(Uri.parse(paymentUrl), mode: LaunchMode.externalApplication);
-                    } catch (_) {}
-                  },
-                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: const Text('Buka Halaman Checkout Duitku'),
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () async {
-                  Navigator.pop(modalCtx);
-                  if (activeTagihan != null && activeTagihan['id'] != null) {
-                    await ApiService.payTagihan(activeTagihan['id'].toString(), _selectedPaymentMethod);
-                  }
-                  _completePaymentSuccess(totalBayar);
-                },
-                icon: const Icon(Icons.check_circle_outline_rounded),
-                label: const Text('Saya Sudah Bayar / Cek Status'),
               ),
             ),
           ],
@@ -539,16 +478,13 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
   Widget _buildMyInvoiceTab() {
     final activeTagihan = _tagihanList.isNotEmpty ? _tagihanList[0] : null;
     final isPaid = activeTagihan?['status'] == 'PAID';
+    final isPending = activeTagihan?['status'] == 'PENDING';
     final nominalPokok = activeTagihan?['nominalPokok'] != null ? double.tryParse(activeTagihan['nominalPokok'].toString()) ?? 50000 : 50000;
     
-    // Fee calculations based on selected payment method
-    final isCash = _selectedPaymentMethod == 'CASH';
-    final isVa = _selectedPaymentMethod.startsWith('VA_');
-    final appFee = isCash ? 0.0 : (activeTagihan?['adminFee'] != null ? double.tryParse(activeTagihan['adminFee'].toString()) ?? 1500.0 : 1500.0);
-    final vaFee = isVa ? 3000.0 : 0.0;
+    // Probis baru: Bebas biaya platform, 100% masuk ke Kas RT
     final totalBayar = isPaid
-        ? (activeTagihan?['totalBayar'] != null ? double.tryParse(activeTagihan['totalBayar'].toString()) ?? (nominalPokok + 1500) : (nominalPokok + 1500))
-        : (nominalPokok + appFee + vaFee);
+        ? (activeTagihan?['totalBayar'] != null ? double.tryParse(activeTagihan['totalBayar'].toString()) ?? nominalPokok : nominalPokok)
+        : nominalPokok;
     final bulan = activeTagihan?['periodeBulan'] ?? 9;
     final tahun = activeTagihan?['periodeTahun'] ?? 2026;
 
@@ -683,13 +619,13 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: (isPaid ? AppTheme.successGreen : AppTheme.warningAmber).withValues(alpha: 0.1),
+                          color: (isPaid ? AppTheme.successGreen : (isPending ? AppTheme.electricBlue : AppTheme.warningAmber)).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          isPaid ? '✓ LUNAS' : 'Belum Lunas',
+                          isPaid ? '✓ LUNAS' : (isPending ? '⏳ Verifikasi RT' : 'Belum Lunas'),
                           style: TextStyle(
-                            color: isPaid ? AppTheme.successGreen : AppTheme.warningAmber,
+                            color: isPaid ? AppTheme.successGreen : (isPending ? AppTheme.electricBlue : AppTheme.warningAmber),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -718,18 +654,10 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
                       _buildPriceRow('Iuran Pokok Kas & Kebersihan RT', 'Rp ${nominalPokok.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}'),
                       const Divider(height: 20, color: AppTheme.slateLight),
                       _buildPriceRow(
-                        'Biaya Layanan Aplikasi',
-                        'Rp ${appFee.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                        info: isCash ? 'Gratis untuk pembayaran tunai langsung' : 'Biaya admin pemeliharaan platform RtHub',
+                        'Biaya Admin Platform',
+                        'Rp 0 (Gratis)',
+                        info: '100% iuran disalurkan langsung ke kas RT Anda tanpa potongan',
                       ),
-                      if (isVa) ...[
-                        const Divider(height: 20, color: AppTheme.slateLight),
-                        _buildPriceRow(
-                          'Biaya Virtual Account (Bank)',
-                          'Rp ${vaFee.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                          info: 'Biaya transaksi switching & channel bank mitra',
-                        ),
-                      ],
                       const Divider(height: 24, thickness: 1.5, color: AppTheme.slateBorder),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -762,30 +690,23 @@ class _InvoiceScreenState extends State<InvoiceScreen> with SingleTickerProvider
                   const SizedBox(height: 12),
                   _buildPaymentOption(
                     'QRIS',
-                    'QRIS (GoPay, OVO, Dana, ShopeePay, BCA)',
+                    'QRIS Mandiri Kas RT',
                     Icons.qr_code_2_rounded,
-                    subtitle: 'Bebas biaya transfer bank • Biaya aplikasi Rp 1.500',
+                    subtitle: 'Scan QRIS Bendahara RT dari mobile banking atau e-wallet apa saja',
                   ),
                   const SizedBox(height: 10),
                   _buildPaymentOption(
-                    'VA_BCA',
-                    'BCA Virtual Account (8800108123456)',
+                    'TRANSFER_MANUAL',
+                    'Transfer Bank Kas RT',
                     Icons.account_balance_rounded,
-                    subtitle: 'Biaya admin aplikasi Rp 1.500 + Bank VA Rp 3.000',
-                  ),
-                  const SizedBox(height: 10),
-                  _buildPaymentOption(
-                    'VA_MANDIRI',
-                    'Mandiri Virtual Account (8900108123456)',
-                    Icons.account_balance_wallet_rounded,
-                    subtitle: 'Biaya admin aplikasi Rp 1.500 + Bank VA Rp 3.000',
+                    subtitle: 'Transfer langsung ke rekening kas RT tanpa biaya platform',
                   ),
                   const SizedBox(height: 10),
                   _buildPaymentOption(
                     'CASH',
                     'Bayar Tunai ke Bendahara RT',
                     Icons.payments_rounded,
-                    subtitle: 'Setor langsung ke pengurus • Tanpa biaya admin tambahan',
+                    subtitle: 'Setor uang kas fisik secara langsung saat tatap muka',
                   ),
                 ] else ...[
                   Container(

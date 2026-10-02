@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hub_motion.dart';
+import '../payment/duitku_payment_screen.dart';
 import 'lapak_models.dart';
 import 'lapak_repository.dart';
 import 'widgets/ad_package_sheet.dart';
@@ -103,11 +105,36 @@ class _LapakScreenState extends State<LapakScreen> {
         productTitle: product.title,
         currentExpiry: product.promotedUntil,
         sisaDurasiHari: product.sisaDurasiHari,
-        onActivate: (package) => widget.repository.promote(product.id, package),
+        onActivate: (package) async {
+          await widget.repository.promote(product.id, package);
+          try {
+            final checkout = await ApiService.createAdsCheckout(
+              lapakId: product.id,
+              productTitle: product.title,
+              durasiHari: package.days,
+              amount: package.price.round(),
+              customerName: _user?['profile']?['namaLengkap'] ?? _user?['phone'],
+              customerPhone: _user?['phone'],
+              customerEmail: _user?['email'],
+            );
+            final payUrl = checkout['paymentUrl']?.toString();
+            if (payUrl != null && payUrl.isNotEmpty && mounted) {
+              await Navigator.of(context).push(
+                MaterialPageRoute<bool>(
+                  builder: (_) => DuitkuPaymentScreen(
+                    paymentUrl: payUrl,
+                    title: 'Pembayaran Iklan Lapak',
+                    amount: package.price.round(),
+                  ),
+                ),
+              );
+            }
+          } catch (_) {}
+        },
       ),
     );
     if (activated == true) {
-      _message('Aktivasi iklan dikonfirmasi server.');
+      _message('Status iklan berhasil diproses. Memperbarui daftar produk.');
       await _load();
     }
   }

@@ -25,8 +25,9 @@ let KasController = class KasController {
     constructor(kasService) {
         this.kasService = kasService;
     }
-    async getSummary(user) {
-        return this.kasService.getKasSummary(user.rtId);
+    async getSummary(user, queryRtId) {
+        const effectiveRtId = user?.rtId || queryRtId;
+        return this.kasService.getKasSummary(effectiveRtId);
     }
     async createKas(user, body) {
         return this.kasService.createKasEntry(user.rtId, user.id, body);
@@ -62,10 +63,12 @@ let KasController = class KasController {
 exports.KasController = KasController;
 __decorate([
     (0, common_1.Get)('summary'),
+    (0, swagger_1.ApiQuery)({ name: 'rtId', required: false, description: 'ID Wilayah RT (opsional fallback)' }),
     (0, swagger_1.ApiOperation)({ summary: 'Mendapatkan ringkasan saldo kas, pemasukan, pengeluaran & mutasi RT' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('rtId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], KasController.prototype, "getSummary", null);
 __decorate([

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/notification_service.dart';
 import 'features/splash/splash_screen.dart';
@@ -12,6 +13,12 @@ void main() async {
     await NotificationService.initialize();
   } catch (e) {
     debugPrint('Firebase init error: $e');
+  }
+
+  try {
+    await MobileAds.instance.initialize();
+  } catch (e) {
+    debugPrint('AdMob init error: $e');
   }
 
   runApp(const RtHubApp());

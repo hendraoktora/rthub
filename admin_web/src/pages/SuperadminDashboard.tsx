@@ -340,9 +340,9 @@ export const SuperadminDashboard: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex items-center justify-end gap-1.5 text-[10px]">
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-100" title="Saldo kas digital aktif yang ada di PG dan siap ditarik">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-                            Active: Rp {(r.saldoActive ?? r.saldoKas).toLocaleString('id-ID')}
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-100" title="Saldo kas via transfer bank langsung ke rekening pengurus RT">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                            Bank: Rp {(r.saldoActive ?? r.saldoKas).toLocaleString('id-ID')}
                           </span>
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-100" title="Saldo tunai dipegang fisik oleh bendahara">
                             Cash: Rp {(r.saldoCash ?? 0).toLocaleString('id-ID')}
@@ -354,7 +354,7 @@ export const SuperadminDashboard: React.FC = () => {
                     <td className="py-3.5 px-4 text-center">
                       {r.isPro || r.paket === 'PRO' ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                          👑 RT Pro (Rp 49rb)
+                          👑 RT Pro (Rp 99rb)
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
@@ -428,11 +428,11 @@ export const SuperadminDashboard: React.FC = () => {
 
                 <div className="pt-2 border-t border-slate-200/60 grid grid-cols-2 gap-2 text-[11px]">
                   <div className="bg-blue-50/80 p-1.5 rounded-lg border border-blue-100">
-                    <span className="text-[9px] text-blue-600 font-bold block uppercase">Saldo Active (PG)</span>
+                    <span className="text-[9px] text-blue-600 font-bold block uppercase">Saldo Transfer Bank</span>
                     <strong className="text-blue-900 font-extrabold text-xs">Rp {(r.saldoActive ?? r.saldoKas).toLocaleString('id-ID')}</strong>
                   </div>
                   <div className="bg-emerald-50/80 p-1.5 rounded-lg border border-emerald-100 text-right">
-                    <span className="text-[9px] text-emerald-600 font-bold block uppercase">Saldo Cash (Tunai)</span>
+                    <span className="text-[9px] text-emerald-600 font-bold block uppercase">Saldo Kas Tunai</span>
                     <strong className="text-emerald-900 font-extrabold text-xs">Rp {(r.saldoCash ?? 0).toLocaleString('id-ID')}</strong>
                   </div>
                 </div>
@@ -493,14 +493,14 @@ export const SuperadminDashboard: React.FC = () => {
               </div>
               <div className="bg-white p-3 rounded-xl border border-blue-200 bg-blue-50/50 shadow-sm flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-blue-600 font-bold uppercase">Saldo Active (PG)</span>
+                  <span className="text-[10px] text-blue-600 font-bold uppercase">Saldo Transfer Bank</span>
                   <p className="text-base font-black text-blue-700">Rp {(modalRt.saldoActive ?? modalRt.saldoKas).toLocaleString('id-ID')}</p>
                 </div>
                 <CheckCircle2 className="text-blue-600" size={20} />
               </div>
               <div className="bg-white p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 shadow-sm flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-emerald-600 font-bold uppercase">Saldo Bayar Cash</span>
+                  <span className="text-[10px] text-emerald-600 font-bold uppercase">Saldo Kas Tunai</span>
                   <p className="text-base font-black text-emerald-700">Rp {(modalRt.saldoCash ?? 0).toLocaleString('id-ID')}</p>
                 </div>
                 <Receipt className="text-emerald-600" size={20} />

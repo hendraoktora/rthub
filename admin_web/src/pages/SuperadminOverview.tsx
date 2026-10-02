@@ -74,7 +74,7 @@ export const SuperadminOverview: React.FC<SuperadminOverviewProps> = ({ onNaviga
   const proRts = rts.filter((r) => r.isPro || r.paket === 'PRO');
   const totalPro = proRts.length;
   const totalBasic = totalRt - totalPro;
-  const mrrAddons = totalPro * 49000;
+  const mrrAddons = totalPro * 99000;
 
   // Max values for chart scaling
   const maxWarga = Math.max(...rts.map(r => r.wargaCount), 1);
@@ -163,7 +163,7 @@ export const SuperadminOverview: React.FC<SuperadminOverviewProps> = ({ onNaviga
         {/* 4. Total Saldo Kas RT */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kas Ekosistem RT</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kas Lingkungan RT</span>
             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
               <Wallet size={18} />
             </div>
@@ -174,19 +174,19 @@ export const SuperadminOverview: React.FC<SuperadminOverviewProps> = ({ onNaviga
             </span>
             <div className="mt-1.5 flex flex-col gap-0.5 text-[10px]">
               <span className="text-blue-600 font-bold">
-                • Active (PG): Rp {totalActiveKas.toLocaleString('id-ID')}
+                • Transfer Bank: Rp {totalActiveKas.toLocaleString('id-ID')}
               </span>
               <span className="text-emerald-600 font-bold">
-                • Cash (Tunai): Rp {totalCashKas.toLocaleString('id-ID')}
+                • Kas Tunai: Rp {totalCashKas.toLocaleString('id-ID')}
               </span>
             </div>
           </div>
         </div>
 
-        {/* 5. MRR Paket RT Pro Add-Ons */}
+        {/* 5. MRR Langganan RT Pro */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Add-Ons Pro (MRR)</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Langganan RT Pro (MRR)</span>
             <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
               <Crown size={18} />
             </div>
@@ -196,7 +196,7 @@ export const SuperadminOverview: React.FC<SuperadminOverviewProps> = ({ onNaviga
               Rp {mrrAddons.toLocaleString('id-ID')}
             </span>
             <p className="text-[11px] text-amber-700 font-bold mt-1">
-              {totalPro} RT Pro ({totalBasic} RT Basic)
+              {totalPro} RT Pro ({totalBasic} RT Basic / Trial)
             </p>
           </div>
         </div>
@@ -386,20 +386,20 @@ export const SuperadminOverview: React.FC<SuperadminOverviewProps> = ({ onNaviga
                 <div className="flex items-center gap-2.5">
                   <ArrowDownLeft size={16} className="text-emerald-600" />
                   <span className="text-xs font-bold text-slate-800 group-hover:text-emerald-700">
-                    Arus Uang Masuk (Payment Gateway)
+                    Arus Kas Pendapatan (Duitku)
                   </span>
                 </div>
                 <ChevronRight size={14} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
               </button>
 
               <button
-                onClick={() => onNavigateTab && onNavigateTab('approval_penarikan')}
+                onClick={() => onNavigateTab && onNavigateTab('revenue')}
                 className="w-full p-3 rounded-xl bg-slate-50 hover:bg-purple-50/70 border border-slate-200 hover:border-purple-300 text-left transition flex items-center justify-between group"
               >
                 <div className="flex items-center gap-2.5">
-                  <Receipt size={16} className="text-purple-600" />
+                  <TrendingUp size={16} className="text-purple-600" />
                   <span className="text-xs font-bold text-slate-800 group-hover:text-purple-700">
-                    Approval Penarikan Kas RT
+                    Laporan Pendapatan & MRR
                   </span>
                 </div>
                 <ChevronRight size={14} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
@@ -412,7 +412,7 @@ export const SuperadminOverview: React.FC<SuperadminOverviewProps> = ({ onNaviga
                 <div className="flex items-center gap-2.5">
                   <Crown size={16} className="text-amber-600" />
                   <span className="text-xs font-bold text-slate-800 group-hover:text-amber-700">
-                    Paket Add-Ons Ekosistem RT
+                    Lisensi & Langganan RT Pro
                   </span>
                 </div>
                 <ChevronRight size={14} className="text-slate-400 group-hover:translate-x-1 transition-transform" />

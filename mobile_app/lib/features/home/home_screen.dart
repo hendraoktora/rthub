@@ -18,6 +18,7 @@ import '../agenda/agenda_screen.dart';
 import '../cctv/cctv_screen.dart';
 import '../gempa/gempa_screen.dart';
 import '../profile/profile_screen.dart';
+import '../payment/duitku_payment_screen.dart';
 import 'home_repository.dart';
 import 'widgets/home_cards.dart';
 
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static const _widgetChannel = MethodChannel('com.rthub.rthub_mobile/widget');
   final _scroll = ScrollController();
   HomeSnapshot _data = const HomeSnapshot();
+  Map<String, dynamic>? _membershipSummary;
   bool _loading = true;
   int _entryEpoch = 0;
   Future<void>? _activeLoad;
@@ -156,9 +158,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _load() async {
     try {
       final result = await widget.repository.load();
+      Map<String, dynamic>? membership;
+      try {
+        membership = await ApiService.getMembershipSummary();
+      } catch (_) {}
+
       if (!mounted) return;
       setState(() {
         _data = result.retaining(_data);
+        if (membership != null) _membershipSummary = membership;
         _loading = false;
         _entryEpoch++;
       });
@@ -271,6 +279,90 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _handleUpgradePro() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.workspace_premium_rounded, color: Color(0xFF4F46E5)),
+            SizedBox(width: 8),
+            Text('Upgrade RT Pro Rp 99.000', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Aktifkan langganan RT Pro selama 30 hari penuh via Duitku. Sisa masa aktif Anda saat ini akan diakumulasikan dan ditambah 30 hari.',
+              style: TextStyle(fontSize: 13, height: 1.4),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Metode Pembayaran: QRIS & Semua Virtual Account Bank',
+              style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4F46E5),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Bayar Duitku'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final checkout = await ApiService.createSubscriptionCheckout(
+          rtId: _data.user?['rtId']?.toString(),
+          planName: 'Paket RT Pro (Langganan 1 Bulan)',
+          amount: 99000,
+          customerName: _data.user?['profile']?['namaLengkap'] ?? _data.user?['phone'],
+          customerPhone: _data.user?['phone'],
+          customerEmail: _data.user?['email'],
+        );
+        final payUrl = checkout['paymentUrl']?.toString();
+        if (payUrl != null && payUrl.isNotEmpty && mounted) {
+          await Navigator.of(context).push(
+            MaterialPageRoute<bool>(
+              builder: (_) => DuitkuPaymentScreen(
+                paymentUrl: payUrl,
+                title: 'Upgrade Paket RT Pro',
+                amount: 99000,
+              ),
+            ),
+          );
+        }
+        await ApiService.renewRtPro(durationDays: 30);
+        await _refresh();
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('✅ Transaksi RT Pro selesai diproses! Masa aktif RT Pro berhasil diperbarui.'),
+            backgroundColor: AppTheme.successGreen,
+          ),
+        );
+      } catch (e) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('⚠️ $e'), backgroundColor: AppTheme.alertRed),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
@@ -297,8 +389,8 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverToBoxAdapter(child: _connectionNotice()),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(22, 18, 22, 14),
-              child: _membershipCard(),
+              padding: const EdgeInsets.fromLTRB(22, 18, 22, 4),
+              child: _buildExpiryAlertBanners(),
             ),
           ),
           SliverToBoxAdapter(
@@ -321,11 +413,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       onInvoices: () =>
                           _navigate(const InvoiceScreen(), refresh: true),
                     ),
+                    HomeSubscriptionCard(
+                      membership: _data.membership ?? _membershipSummary,
+                      scrollTilt: tilt,
+                      onUpgrade: _handleUpgradePro,
+                    ),
                     HomeQuakeCard(
                       data: _data.earthquake,
                       scrollTilt: tilt,
                       onTap: () =>
                           _navigate(GempaScreen(initialData: _data.earthquake)),
+                    ),
+                    HomeAdMobCard(
+                      scrollTilt: tilt,
                     ),
                   ],
                 );
@@ -623,6 +723,103 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     ),
   );
+
+  Widget _buildExpiryAlertBanners() {
+    final alerts = _membershipSummary?['alerts'] as List<dynamic>? ?? [];
+    if (alerts.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      children: alerts.map((alert) {
+        final isSub = alert['type'] == 'SUBSCRIPTION';
+        final isDanger = alert['severity'] == 'danger';
+        final title = alert['title']?.toString() ?? 'Pemberitahuan';
+        final message = alert['message']?.toString() ?? '';
+        final actionText = alert['actionText']?.toString() ?? 'Lihat';
+
+        final bgColor = isDanger
+            ? AppTheme.alertRed.withValues(alpha: 0.08)
+            : (isSub
+                ? AppTheme.warningAmber.withValues(alpha: 0.1)
+                : Colors.deepPurple.withValues(alpha: 0.08));
+        final borderColor = isDanger
+            ? AppTheme.alertRed.withValues(alpha: 0.35)
+            : (isSub
+                ? AppTheme.warningAmber.withValues(alpha: 0.4)
+                : Colors.deepPurple.withValues(alpha: 0.3));
+        final iconColor = isDanger
+            ? AppTheme.alertRed
+            : (isSub ? AppTheme.warningAmber : Colors.deepPurple);
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                isSub
+                    ? (isDanger ? Icons.error_outline_rounded : Icons.timer_outlined)
+                    : Icons.campaign_rounded,
+                color: iconColor,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: iconColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      message,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.textPrimary,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  _navigate(const ProfileScreen(), refresh: true);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: iconColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    actionText,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
 
   Widget _membershipCard() => Material(
     color: Colors.white,

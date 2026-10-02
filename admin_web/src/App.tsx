@@ -8,7 +8,6 @@ import { SuperadminRevenue } from './pages/SuperadminRevenue';
 import { SuperadminDashboard } from './pages/SuperadminDashboard';
 import { SuperadminOverview } from './pages/SuperadminOverview';
 import { SuperadminUangMasuk } from './pages/SuperadminUangMasuk';
-import { SuperadminApprovalPenarikan } from './pages/SuperadminApprovalPenarikan';
 import { SuperadminAddons } from './pages/SuperadminAddons';
 import { PengurusManagement } from './pages/PengurusManagement';
 import { RondaManagement } from './pages/RondaManagement';
@@ -69,19 +68,17 @@ export default function App() {
   const getPageInfo = () => {
     switch (activeTab) {
       case 'superadmin_overview':
-        return { title: 'Executive Overview (Nasional)', subtitle: 'Statistik ekosistem RT, warga, KK, saldo kas, dan adopsi paket Add-Ons' };
+        return { title: 'Executive Overview (Nasional)', subtitle: 'Statistik ekosistem RT, warga, KK, saldo kas, dan status langganan RT Pro' };
       case 'superadmin_rt':
-        return { title: 'Monitoring Wilayah RT (Superadmin)', subtitle: 'Pilihan & filter transaksi serta rekap RT se-Indonesia' };
+        return { title: 'Monitoring Wilayah RT (Superadmin)', subtitle: 'Pilihan & filter data RT, rekening/QRIS mandiri pengurus, serta status lisensi' };
       case 'uang_masuk':
-        return { title: 'Monitoring Arus Uang Masuk (Payment Gateway)', subtitle: 'Rincian transaksi iuran warga, boost iklan lapak, dan pembagian fee nasional' };
-      case 'approval_penarikan':
-        return { title: 'Approval Penarikan Kas RT (Payout)', subtitle: 'Verifikasi multi-layer saldo kas, saldo PG, dan keabsahan rekening pengurus RT' };
+        return { title: 'Arus Kas Pendapatan Platform (Duitku)', subtitle: 'Monitoring pembayaran langganan Paket RT Pro Rp 99.000 dan iklan sponsor lapak warga se-Indonesia' };
       case 'revenue':
-        return { title: 'Pendapatan Fee Platform RtHub', subtitle: 'Monitoring monetisasi fee transaksi admin nasional (Rp 1.500 / transaksi)' };
+        return { title: 'Laporan Pendapatan & MRR Platform', subtitle: 'Analisis Monthly Recurring Revenue (MRR) dari langganan RT Pro & pendapatan iklan sponsor' };
       case 'addons_rt':
-        return { title: 'Paket Add-Ons Ekosistem RT (Rp 49.000/bln)', subtitle: 'Layanan administrasi surat pengantar digital & pencatatan iuran manual RT' };
+        return { title: 'Manajemen Lisensi & Langganan RT Pro', subtitle: 'Monitoring status masa aktif RT Pro, trial 7 hari, dan peringatan auto-deaktivasi' };
       case 'dashboard':
-        return { title: 'Buku Kas & Keuangan RT', subtitle: `Pencatatan kas masuk, pengeluaran & transparansi publik (${user.wilayah})` };
+        return { title: 'Buku Kas & Keuangan RT', subtitle: `Pencatatan kas masuk (Bank/Transfer & Tunai) serta transparansi publik (${user.wilayah})` };
       case 'agenda_rt':
         return { title: 'Agenda Kegiatan Lingkungan RT', subtitle: `Jadwal kerja bakti, rapat pleno, dan posyandu (${user.wilayah})` };
       case 'berita_rt':
@@ -93,13 +90,13 @@ export default function App() {
       case 'ronda':
         return { title: 'Jadwal Ronda Malam Warga', subtitle: `Pengaturan sistem siskamling bergilir warga (${user.wilayah})` };
       case 'tagihan':
-        return { title: 'Tagihan & Monitoring Iuran Warga', subtitle: `Rekap warga lunas vs belum bayar iuran (${user.wilayah})` };
+        return { title: 'Tagihan & Monitoring Iuran Warga', subtitle: `Warga transfer langsung ke rekening/QRIS RT & verifikasi kas (${user.wilayah})` };
       case 'setting_iuran':
-        return { title: 'Pengaturan Nilai Iuran (Bendahara)', subtitle: `Ubah komponen nominal iuran kas RT, kebersihan & sampah (${user.wilayah})` };
+        return { title: 'Pengaturan Nilai Iuran & Rekening RT', subtitle: `Atur nominal iuran kas RT serta rekening bank / QRIS bendahara (${user.wilayah})` };
       case 'lapor_rt':
-        return { title: 'Laporan & Pengaduan Lingkungan', subtitle: `Kanal keluhan fasilitas umum, sampah, dan ketertiban (${user.wilayah})` };
+        return { title: 'Laporan & Pengaduan Lingkungan', subtitle: `Kanal keluhan fasilitas umum, sampah, dan surat pengantar (${user.wilayah})` };
       case 'lapak_warga':
-        return { title: 'Lapak Warga & UMKM Lingkungan', subtitle: `Marketplace produk, makanan, jasa, dan sewa (${user.wilayah})` };
+        return { title: 'Lapak Warga & UMKM Lingkungan', subtitle: `Etalase produk/jasa warga dengan kontak WhatsApp langsung (${user.wilayah})` };
       case 'security':
         return { title: 'Portal Keamanan / Satpam', subtitle: `Absensi pos ronda & laporan patroli (${user.wilayah})` };
       case 'panic_alert':
@@ -128,7 +125,7 @@ export default function App() {
           {activeTab === 'superadmin_overview' && <SuperadminOverview onNavigateTab={setActiveTab} />}
           {activeTab === 'superadmin_rt' && <SuperadminDashboard />}
           {activeTab === 'uang_masuk' && <SuperadminUangMasuk />}
-          {activeTab === 'approval_penarikan' && <SuperadminApprovalPenarikan />}
+          {activeTab === 'revenue' && <SuperadminRevenue />}
           {activeTab === 'addons_rt' && <SuperadminAddons />}
           {activeTab === 'dashboard' && <DashboardOverview user={user} />}
           {activeTab === 'agenda_rt' && <AgendaManagement user={user} />}

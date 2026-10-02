@@ -37,6 +37,21 @@ let TagihanController = class TagihanController {
     async getTagihanSaya(user) {
         return this.tagihanService.getTagihanSaya(user);
     }
+    async getPendingVerifikasi(user) {
+        return this.tagihanService.getPendingVerifikasi(user.rtId);
+    }
+    async getInstruksi(id) {
+        return this.tagihanService.getInstruksiBayar(id);
+    }
+    async konfirmasiBayar(id, user, body) {
+        return this.tagihanService.konfirmasiBayarWarga(id, user.id, body);
+    }
+    async terimaTunai(id, user) {
+        return this.tagihanService.terimaTunai(id, user.id);
+    }
+    async approveTransaksi(transaksiId, user) {
+        return this.tagihanService.approveTransaksi(transaksiId, user.id);
+    }
     async bayar(id, user, body) {
         return this.tagihanService.bayarTagihan(id, user.id, body.paymentMethod || client_1.PaymentMethod.QRIS);
     }
@@ -79,8 +94,55 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TagihanController.prototype, "getTagihanSaya", null);
 __decorate([
+    (0, common_1.Get)('pending-verifikasi'),
+    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.ADMIN_RT, client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Daftar bukti pembayaran iuran warga yang menunggu persetujuan (Khusus Bendahara RT)' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], TagihanController.prototype, "getPendingVerifikasi", null);
+__decorate([
+    (0, common_1.Get)(':id/instruksi'),
+    (0, swagger_1.ApiOperation)({ summary: 'Mendapatkan instruksi bayar beserta no rek & QRIS RT' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], TagihanController.prototype, "getInstruksi", null);
+__decorate([
+    (0, common_1.Post)(':id/konfirmasi'),
+    (0, swagger_1.ApiOperation)({ summary: 'Warga mengonfirmasi pembayaran dan upload bukti transfer / QRIS' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], TagihanController.prototype, "konfirmasiBayar", null);
+__decorate([
+    (0, common_1.Post)(':id/terima-tunai'),
+    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.ADMIN_RT, client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Bendahara menandai tagihan dibayar tunai langsung secara fisik' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], TagihanController.prototype, "terimaTunai", null);
+__decorate([
+    (0, common_1.Post)('transaksi/:transaksiId/approve'),
+    (0, roles_decorator_1.Roles)(client_1.Role.BENDAHARA_RT, client_1.Role.ADMIN_RT, client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Bendahara menyetujui bukti transfer / QRIS warga' }),
+    __param(0, (0, common_1.Param)('transaksiId')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], TagihanController.prototype, "approveTransaksi", null);
+__decorate([
     (0, common_1.Post)(':id/bayar'),
-    (0, swagger_1.ApiOperation)({ summary: 'Bayar tagihan iuran (Split otomatis: Kas RT + Fee Admin)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Simulasi bayar tagihan iuran instan' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __param(2, (0, common_1.Body)()),

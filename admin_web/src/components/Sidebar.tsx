@@ -37,13 +37,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role,
   // BENDAHARA: Kas, Tagihan, Setting Iuran, Lapor RT, Lapak
   // SECURITY: Absensi Pos, Lapor Patroli, Panic Alert, Lapor RT, Lapak
   const menuItems = [
-    // 1. Superadmin Platform Only
+    // 1. Superadmin Platform Only (Probis Baru: Monitored Subscriptions & Ads Revenue)
     { id: 'superadmin_overview', label: 'Overview Platform', icon: LayoutDashboard, roles: ['SUPERADMIN'] },
     { id: 'superadmin_rt', label: 'Monitoring Wilayah RT', icon: Building2, roles: ['SUPERADMIN'] },
-    { id: 'uang_masuk', label: 'Arus Uang Masuk (PG)', icon: ArrowDownLeft, roles: ['SUPERADMIN'] },
-    { id: 'approval_penarikan', label: 'Approval Penarikan RT', icon: ShieldCheck, roles: ['SUPERADMIN'] },
-    { id: 'revenue', label: 'Fee Platform RtHub', icon: TrendingUp, roles: ['SUPERADMIN'] },
-    { id: 'addons_rt', label: 'Paket Add-Ons RT', icon: Crown, roles: ['SUPERADMIN'] },
+    { id: 'uang_masuk', label: 'Arus Kas Pendapatan (Duitku)', icon: ArrowDownLeft, roles: ['SUPERADMIN'] },
+    { id: 'revenue', label: 'Laporan Pendapatan & MRR', icon: TrendingUp, roles: ['SUPERADMIN'] },
+    { id: 'addons_rt', label: 'Lisensi & Langganan RT Pro', icon: Crown, roles: ['SUPERADMIN'] },
 
     // 2. RT Operational (Ketua RT, Sekretaris, Bendahara)
     { id: 'dashboard', label: 'Buku Kas & Keuangan RT', icon: Wallet, roles: ['ADMIN_RT', 'BENDAHARA', 'BENDAHARA_RT'] },

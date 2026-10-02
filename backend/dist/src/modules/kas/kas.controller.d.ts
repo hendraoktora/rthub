@@ -3,48 +3,34 @@ import { TipeKas } from '@prisma/client';
 export declare class KasController {
     private readonly kasService;
     constructor(kasService: KasService);
-    getSummary(user: any): Promise<{
+    getSummary(user: any, queryRtId?: string): Promise<{
         saldoKas: number;
-        totalPemasukan: number;
-        totalPengeluaran: number;
-        recentTransactions: any[];
-        saldoKasDigital?: undefined;
-        saldoKasTunai?: undefined;
-        totalPemasukanTunai?: undefined;
-        totalPemasukanDigital?: undefined;
-    } | {
-        saldoKas: number;
+        saldoKasBank: number;
         saldoKasDigital: number;
         saldoKasTunai: number;
         totalPemasukan: number;
         totalPengeluaran: number;
         totalPemasukanTunai: number;
+        totalPemasukanBank: number;
         totalPemasukanDigital: number;
-        recentTransactions: {
-            rtId: string;
-            id: string;
-            createdAt: Date;
-            createdById: string;
-            tipe: import(".prisma/client").$Enums.TipeKas;
-            kategori: string;
-            nominal: import("@prisma/client/runtime/library").Decimal;
-            saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
-            keterangan: string;
-            buktiNotaUrl: string | null;
-        }[];
+        totalPengeluaranTunai: number;
+        totalPengeluaranBank: number;
+        recentTransactions: any[];
     }>;
     createKas(user: any, body: {
         tipe: TipeKas;
         kategori: string;
         nominal: number;
         keterangan: string;
+        metodeKas?: 'TUNAI' | 'BANK';
         buktiNotaUrl?: string;
     }): Promise<{
-        rtId: string;
         id: string;
         createdAt: Date;
+        rtId: string;
         createdById: string;
         tipe: import(".prisma/client").$Enums.TipeKas;
+        metodeKas: string;
         kategori: string;
         nominal: import("@prisma/client/runtime/library").Decimal;
         saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
@@ -56,13 +42,15 @@ export declare class KasController {
         kategori: string;
         nominal: number;
         keterangan: string;
+        metodeKas?: 'TUNAI' | 'BANK';
         buktiNotaUrl?: string;
     }): Promise<{
-        rtId: string;
         id: string;
         createdAt: Date;
+        rtId: string;
         createdById: string;
         tipe: import(".prisma/client").$Enums.TipeKas;
+        metodeKas: string;
         kategori: string;
         nominal: import("@prisma/client/runtime/library").Decimal;
         saldoBerjalan: import("@prisma/client/runtime/library").Decimal;
@@ -228,8 +216,11 @@ export declare class KasController {
         };
         summary: {
             totalBruto: number;
-            totalHakKasRt: number;
+            totalPendapatanPlatform: number;
+            totalLanggananPro: number;
+            totalIklanSponsor: number;
             totalCuanPlatform: number;
+            totalHakKasRt: number;
             totalFeeBankVa: number;
             totalTransaksi: number;
         };

@@ -31,6 +31,15 @@ let PaymentController = class PaymentController {
     async checkoutSubscription(body) {
         return this.duitkuService.createSubscriptionCheckout(body);
     }
+    async duitkuSubscription(body) {
+        return this.duitkuService.createSubscriptionCheckout(body);
+    }
+    async checkoutAds(body) {
+        return this.duitkuService.createAdsCheckout(body);
+    }
+    async duitkuAds(body) {
+        return this.duitkuService.createAdsCheckout(body);
+    }
     async createInvoice(userId, dto) {
         return this.duitkuService.createInvoice(userId, dto);
     }
@@ -58,12 +67,36 @@ __decorate([
 ], PaymentController.prototype, "getChannels", null);
 __decorate([
     (0, common_1.Post)('checkout-subscription'),
-    (0, swagger_1.ApiOperation)({ summary: 'Menerbitkan Checkout Pembayaran Langganan Paket RT Pro / Add-ons via Duitku' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Menerbitkan Checkout Pembayaran Langganan Paket RT Pro Rp 99.000 via Duitku' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "checkoutSubscription", null);
+__decorate([
+    (0, common_1.Post)('duitku/subscription'),
+    (0, swagger_1.ApiOperation)({ summary: 'Alias Menerbitkan Checkout Pembayaran Langganan Paket RT Pro Rp 99.000 via Duitku' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "duitkuSubscription", null);
+__decorate([
+    (0, common_1.Post)('checkout-ads'),
+    (0, swagger_1.ApiOperation)({ summary: 'Menerbitkan Checkout Pembayaran Iklan Sponsor / Promosi Lapak Warga via Duitku' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "checkoutAds", null);
+__decorate([
+    (0, common_1.Post)('duitku/ads'),
+    (0, swagger_1.ApiOperation)({ summary: 'Alias Menerbitkan Checkout Pembayaran Iklan Sponsor / Promosi Lapak Warga via Duitku' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "duitkuAds", null);
 __decorate([
     (0, common_1.Post)('create-invoice'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

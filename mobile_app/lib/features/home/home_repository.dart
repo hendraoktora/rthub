@@ -10,6 +10,7 @@ class HomeSnapshot {
     this.products,
     this.invoices,
     this.earthquake,
+    this.membership,
     this.failedSections = const {},
   });
 
@@ -20,6 +21,7 @@ class HomeSnapshot {
   final List<dynamic>? products;
   final List<dynamic>? invoices;
   final Map<String, dynamic>? earthquake;
+  final Map<String, dynamic>? membership;
   final Set<String> failedSections;
 
   HomeSnapshot retaining(HomeSnapshot previous) => HomeSnapshot(
@@ -30,6 +32,7 @@ class HomeSnapshot {
     products: products ?? previous.products,
     invoices: invoices ?? previous.invoices,
     earthquake: earthquake ?? previous.earthquake,
+    membership: membership ?? previous.membership,
     failedSections: failedSections,
   );
 }
@@ -69,6 +72,7 @@ class ApiHomeRepository implements HomeRepository {
       }),
       read('iuran', () => ApiService.getTagihanSaya(allowFallback: false)),
       read('BMKG', () => ApiService.getGempaTerkini(allowFallback: false)),
+      read('membership', ApiService.getMembershipSummary),
     ]);
     return HomeSnapshot(
       user: results[0] as Map<String, dynamic>?,
@@ -78,6 +82,7 @@ class ApiHomeRepository implements HomeRepository {
       products: results[4] as List<dynamic>?,
       invoices: results[5] as List<dynamic>?,
       earthquake: results[6] as Map<String, dynamic>?,
+      membership: results[7] as Map<String, dynamic>?,
       failedSections: failures,
     );
   }

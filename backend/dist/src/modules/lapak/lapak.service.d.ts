@@ -8,15 +8,15 @@ export declare class LapakService {
             nomor: string;
         };
     } & {
-        rtId: string;
         id: string;
-        kelurahanId: string;
         rwId: string;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string;
+        kelurahanId: string;
         status: string;
-        deskripsi: string;
         judul: string;
+        deskripsi: string;
         fotoUrl: string | null;
         kontakWa: string;
         ownerId: string;
@@ -33,17 +33,17 @@ export declare class LapakService {
         kontakWa: string;
         fotoUrl?: string;
     }): Promise<{
-        rtId: string;
         id: string;
-        isActive: boolean;
-        kelurahanId: string;
         rwId: string;
         createdAt: Date;
         updatedAt: Date;
-        deskripsi: string;
+        rtId: string;
         kategori: string;
+        isActive: boolean;
+        kelurahanId: string;
         sellerId: string;
         judul: string;
+        deskripsi: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
         kontakWa: string;
@@ -84,24 +84,24 @@ export declare class LapakService {
             nomor: string;
         };
         seller: {
+            id: string;
             profile: {
                 namaLengkap: string;
                 noRumah: string;
             };
             phone: string;
-            id: string;
         };
-        rtId: string;
         id: string;
-        isActive: boolean;
-        kelurahanId: string;
         rwId: string;
         createdAt: Date;
         updatedAt: Date;
-        deskripsi: string;
+        rtId: string;
         kategori: string;
+        isActive: boolean;
+        kelurahanId: string;
         sellerId: string;
         judul: string;
+        deskripsi: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
         kontakWa: string;
@@ -112,17 +112,17 @@ export declare class LapakService {
         promotedUntil: Date | null;
     }>;
     deleteProduk(id: string, user: any): Promise<{
-        rtId: string;
         id: string;
-        isActive: boolean;
-        kelurahanId: string;
         rwId: string;
         createdAt: Date;
         updatedAt: Date;
-        deskripsi: string;
+        rtId: string;
         kategori: string;
+        isActive: boolean;
+        kelurahanId: string;
         sellerId: string;
         judul: string;
+        deskripsi: string;
         harga: import("@prisma/client/runtime/library").Decimal;
         fotoUrl: string | null;
         kontakWa: string;

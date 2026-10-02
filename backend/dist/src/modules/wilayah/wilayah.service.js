@@ -414,6 +414,44 @@ let WilayahService = class WilayahService {
             data: { role: client_1.Role.WARGA },
         });
     }
+    async getRtRekening(rtId) {
+        const rt = await this.prisma.rT.findUnique({
+            where: { id: rtId },
+            select: {
+                id: true,
+                nomor: true,
+                namaBank: true,
+                nomorRekening: true,
+                atasNamaRekening: true,
+                qrisImageUrl: true,
+            },
+        });
+        if (!rt)
+            throw new common_1.BadRequestException('RT tidak ditemukan');
+        return rt;
+    }
+    async updateRtRekening(rtId, data) {
+        const rt = await this.prisma.rT.findUnique({ where: { id: rtId } });
+        if (!rt)
+            throw new common_1.BadRequestException('RT tidak ditemukan');
+        return this.prisma.rT.update({
+            where: { id: rtId },
+            data: {
+                ...(data.namaBank !== undefined ? { namaBank: data.namaBank?.trim() } : {}),
+                ...(data.nomorRekening !== undefined ? { nomorRekening: data.nomorRekening?.trim() } : {}),
+                ...(data.atasNamaRekening !== undefined ? { atasNamaRekening: data.atasNamaRekening?.trim() } : {}),
+                ...(data.qrisImageUrl !== undefined ? { qrisImageUrl: data.qrisImageUrl } : {}),
+            },
+            select: {
+                id: true,
+                nomor: true,
+                namaBank: true,
+                nomorRekening: true,
+                atasNamaRekening: true,
+                qrisImageUrl: true,
+            },
+        });
+    }
 };
 exports.WilayahService = WilayahService;
 exports.WilayahService = WilayahService = __decorate([

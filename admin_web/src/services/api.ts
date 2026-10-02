@@ -225,6 +225,10 @@ export const api = {
     return res.json();
   },
 
+  async getSuperadminUangMasuk() {
+    return this.get('/kas/superadmin/uang-masuk');
+  },
+
   async updateAddonSubscription(data: { rtId: string; status: 'AKTIF' | 'TRIAL' | 'TIDAK_AKTIF'; durationDays?: number; paket?: 'BASIC' | 'PRO' }) {
     const token = this.getToken();
     const res = await fetch(`${API_BASE_URL}/addons/update`, {
@@ -410,5 +414,33 @@ export const api = {
     });
     if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
     return res.json();
+  },
+
+  async getRtRekening(rtId: string) {
+    return this.get(`/wilayah/rt/${rtId}/rekening`);
+  },
+
+  async updateRtRekening(rtId: string, data: { namaBank?: string; nomorRekening?: string; atasNamaRekening?: string; qrisImageUrl?: string }) {
+    return this.post(`/wilayah/rt/${rtId}/rekening`, data);
+  },
+
+  async getPendingVerifikasi() {
+    return this.get('/tagihan/pending-verifikasi');
+  },
+
+  async approveTransaksi(transaksiId: string) {
+    return this.post(`/tagihan/transaksi/${transaksiId}/approve`);
+  },
+
+  async terimaTunai(tagihanId: string) {
+    return this.post(`/tagihan/${tagihanId}/terima-tunai`);
+  },
+
+  async getMembershipSummary() {
+    return this.get('/addons/summary');
+  },
+
+  async renewRtPro(durationDays = 30) {
+    return this.post('/addons/renew-pro', { durationDays });
   },
 };

@@ -47,4 +47,29 @@ export declare class AddonsService {
         durationDays?: number;
         updatedBy?: string;
     }): Promise<RtSubscriptionRecord>;
+    getMyMembershipAndAdsSummary(userId: string, rtId?: string): Promise<{
+        subscription: any;
+        userAds: {
+            id: string;
+            judul: string;
+            harga: number;
+            fotoUrl: string;
+            isPromoted: boolean;
+            promotedBadge: string;
+            paketIklan: string;
+            promotedUntil: string;
+            sisaHariIklan: number;
+            isExpiringSoon: boolean;
+            isExpired: boolean;
+        }[];
+        alerts: {
+            id: string;
+            type: "SUBSCRIPTION" | "ADS" | "TRIAL_EXPIRING" | "RT_DEACTIVATED";
+            severity: "warning" | "danger" | "info";
+            title: string;
+            message: string;
+            actionText: string;
+            meta?: any;
+        }[];
+    }>;
 }

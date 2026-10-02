@@ -122,16 +122,18 @@ let AddonsService = AddonsService_1 = class AddonsService {
             where: { id: rtId },
             include: { rw: { include: { kelurahan: true } } },
         });
+        const now = new Date();
+        const trialExpiry = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
         const defaultSub = {
             rtId,
             nomorRt: rt?.nomor || '03',
             nomorRw: rt?.rw?.nomor || '05',
             kelurahan: rt?.rw?.kelurahan?.nama || 'Sukamaju',
-            paket: 'BASIC',
-            status: 'TIDAK_AKTIF',
-            activatedAt: new Date().toISOString(),
-            expiredAt: null,
-            updatedAt: new Date().toISOString(),
+            paket: 'PRO',
+            status: 'TRIAL',
+            activatedAt: now.toISOString(),
+            expiredAt: trialExpiry.toISOString(),
+            updatedAt: now.toISOString(),
         };
         AddonsService_1.subscriptions[rtId] = defaultSub;
         AddonsService_1.saveToDisk();
@@ -192,12 +194,16 @@ let AddonsService = AddonsService_1 = class AddonsService {
         let expiredAt = null;
         if (data.status === 'AKTIF') {
             const days = data.durationDays || 30;
-            const exp = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+            const isCurrentlyActive = existing.status === 'AKTIF' && existing.expiredAt && new Date(existing.expiredAt).getTime() > now.getTime();
+            const baseTime = isCurrentlyActive ? new Date(existing.expiredAt).getTime() : now.getTime();
+            const exp = new Date(baseTime + days * 24 * 60 * 60 * 1000);
             expiredAt = exp.toISOString();
         }
         else if (data.status === 'TRIAL') {
             const days = data.durationDays || 14;
-            const exp = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+            const isCurrentlyTrial = existing.status === 'TRIAL' && existing.expiredAt && new Date(existing.expiredAt).getTime() > now.getTime();
+            const baseTime = isCurrentlyTrial ? new Date(existing.expiredAt).getTime() : now.getTime();
+            const exp = new Date(baseTime + days * 24 * 60 * 60 * 1000);
             expiredAt = exp.toISOString();
         }
         else {
@@ -214,6 +220,149 @@ let AddonsService = AddonsService_1 = class AddonsService {
         AddonsService_1.subscriptions[rtId] = updated;
         AddonsService_1.saveToDisk();
         return updated;
+    }
+    async getMyMembershipAndAdsSummary(userId, rtId) {
+        const now = new Date();
+        let subscriptionInfo = null;
+        if (rtId) {
+            const sub = await this.getRtSubscription(rtId);
+            const isPro = await this.isRtProActive(rtId);
+            let sisaHari = 0;
+            let isExpiringSoon = false;
+            let isExpired = false;
+            if (sub.expiredAt) {
+                const expTime = new Date(sub.expiredAt).getTime();
+                const diffMs = expTime - now.getTime();
+                if (diffMs > 0) {
+                    sisaHari = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+                    if (sisaHari <= 5) {
+                        isExpiringSoon = true;
+                    }
+                }
+                else {
+                    isExpired = true;
+                }
+            }
+            else if (sub.status === 'TIDAK_AKTIF') {
+                isExpired = true;
+            }
+            subscriptionInfo = {
+                ...sub,
+                isPro,
+                sisaHari,
+                isExpiringSoon,
+                isExpired,
+                renewalFee: 99000,
+            };
+        }
+        const myLapak = await this.prisma.lapakProduk.findMany({
+            where: { sellerId: userId },
+            orderBy: { createdAt: 'desc' },
+        });
+        const userAds = myLapak.map((p) => {
+            const isPromoted = Boolean(p.isPromoted && p.promotedUntil && new Date(p.promotedUntil) > now);
+            let sisaHariIklan = 0;
+            let isExpiringSoon = false;
+            let isExpired = false;
+            if (p.promotedUntil) {
+                const expTime = new Date(p.promotedUntil).getTime();
+                const diffMs = expTime - now.getTime();
+                if (diffMs > 0) {
+                    sisaHariIklan = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+                    if (sisaHariIklan <= 3) {
+                        isExpiringSoon = true;
+                    }
+                }
+                else {
+                    isExpired = true;
+                }
+            }
+            return {
+                id: p.id,
+                judul: p.judul,
+                harga: Number(p.harga),
+                fotoUrl: p.fotoUrl,
+                isPromoted,
+                promotedBadge: p.promotedBadge,
+                paketIklan: p.paketIklan,
+                promotedUntil: p.promotedUntil ? p.promotedUntil.toISOString() : null,
+                sisaHariIklan,
+                isExpiringSoon,
+                isExpired,
+            };
+        });
+        const alerts = [];
+        if (subscriptionInfo && rtId) {
+            const isTrial = subscriptionInfo.status === 'TRIAL';
+            const isExpired = subscriptionInfo.isExpired;
+            if (isExpired) {
+                subscriptionInfo.isDeactivated = true;
+                if (AddonsService_1.subscriptions[rtId]) {
+                    AddonsService_1.subscriptions[rtId].status = 'TIDAK_AKTIF';
+                    AddonsService_1.saveToDisk();
+                }
+                alerts.push({
+                    id: 'alert-rt-deactivated',
+                    type: 'RT_DEACTIVATED',
+                    severity: 'danger',
+                    title: 'Akun RT Dinonaktifkan Otomatis',
+                    message: `Masa aktif ${isTrial ? 'Trial 7 Hari' : 'Langganan Pro'} RT Anda telah berakhir. Seluruh isi dan fitur akun di RT ini dinonaktifkan sementara. Segera lakukan pembayaran Pro Rp 99.000 / bln untuk mengaktifkan kembali seluruh akun RT.`,
+                    actionText: 'Aktifkan Akun RT (Rp 99rb)',
+                    meta: { rtId },
+                });
+            }
+            else if (isTrial && subscriptionInfo.sisaHari <= 3) {
+                alerts.push({
+                    id: 'alert-trial-expiring',
+                    type: 'TRIAL_EXPIRING',
+                    severity: 'warning',
+                    title: `Masa Trial RT Pro Tersisa ${subscriptionInfo.sisaHari} Hari!`,
+                    message: `Masa uji coba gratis RT Pro Anda tersisa ${subscriptionInfo.sisaHari} hari lagi. Segera upgrade ke akun Pro (Rp 99.000 / bln) agar akun RT dan seluruh data warga tidak dinonaktifkan otomatis.`,
+                    actionText: 'Upgrade ke Pro (Rp 99rb)',
+                    meta: { rtId, sisaHari: subscriptionInfo.sisaHari },
+                });
+            }
+            else if (!isTrial && subscriptionInfo.isExpiringSoon) {
+                alerts.push({
+                    id: 'alert-sub-expiring',
+                    type: 'SUBSCRIPTION',
+                    severity: 'warning',
+                    title: 'Masa Aktif Pro Segera Berakhir',
+                    message: `Langganan RTHub Pro RT Anda tersisa ${subscriptionInfo.sisaHari} hari lagi. Perpanjang sekarang agar akses surat digital & kas RT tidak terputus.`,
+                    actionText: 'Perpanjang (Rp 99rb)',
+                    meta: { rtId, sisaHari: subscriptionInfo.sisaHari },
+                });
+            }
+        }
+        userAds.forEach((ad) => {
+            if (ad.isExpiringSoon) {
+                alerts.push({
+                    id: `alert-ad-expiring-${ad.id}`,
+                    type: 'ADS',
+                    severity: 'warning',
+                    title: 'Iklan Sponsor Segera Berakhir',
+                    message: `Masa tayang iklan "${ad.judul}" tersisa ${ad.sisaHariIklan} hari lagi. Perpanjang durasi agar produk tetap berada di posisi prioritas.`,
+                    actionText: 'Tambah Durasi Iklan',
+                    meta: { lapakId: ad.id, judul: ad.judul, sisaHari: ad.sisaHariIklan },
+                });
+            }
+            else if (ad.isExpired && ad.isPromoted) {
+                alerts.push({
+                    id: `alert-ad-expired-${ad.id}`,
+                    type: 'ADS',
+                    severity: 'info',
+                    title: 'Masa Tayang Iklan Selesai',
+                    message: `Iklan sponsor untuk "${ad.judul}" telah selesai tayang. Pasang iklan kembali untuk memaksimalkan promosi ke warga.`,
+                    actionText: 'Pasang Iklan Lagi',
+                    meta: { lapakId: ad.id, judul: ad.judul },
+                });
+            }
+        });
+        return {
+            subscription: subscriptionInfo,
+            userAds,
+            alerts,
+        };
     }
 };
 exports.AddonsService = AddonsService;

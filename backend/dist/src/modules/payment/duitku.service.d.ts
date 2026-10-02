@@ -1,5 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AddonsService } from '../addons/addons.service';
+import { LapakService } from '../lapak/lapak.service';
 export interface CreateInvoiceDto {
     tagihanId: string;
     paymentMethodCode?: string;
@@ -7,13 +9,15 @@ export interface CreateInvoiceDto {
 export declare class DuitkuService {
     private readonly config;
     private readonly prisma;
+    private readonly addonsService;
+    private readonly lapakService;
     private readonly logger;
     private readonly merchantCode;
     private readonly apiKey;
     private readonly env;
     private readonly callbackUrl;
     private readonly returnUrl;
-    constructor(config: ConfigService, prisma: PrismaService);
+    constructor(config: ConfigService, prisma: PrismaService, addonsService: AddonsService, lapakService: LapakService);
     private get baseUrl();
     isConfigured(): boolean;
     getGatewayStatus(): {
@@ -38,9 +42,31 @@ export declare class DuitkuService {
         message: string;
     }>;
     createSubscriptionCheckout(dto: {
+        rtId?: string;
         planName?: string;
         amount?: number;
         rtName?: string;
+        customerName?: string;
+        customerEmail?: string;
+        customerPhone?: string;
+        paymentMethodCode?: string;
+    }): Promise<{
+        success: boolean;
+        merchantOrderId: string;
+        reference: any;
+        paymentUrl: any;
+        vaNumber: any;
+        qrString: any;
+        amount: number;
+        paymentMethod: string;
+        statusCode: any;
+        message: string;
+    }>;
+    createAdsCheckout(dto: {
+        lapakId?: string;
+        productTitle?: string;
+        durasiHari?: number;
+        amount?: number;
         customerName?: string;
         customerEmail?: string;
         customerPhone?: string;

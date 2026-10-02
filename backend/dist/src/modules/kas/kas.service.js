@@ -59,53 +59,101 @@ let KasService = KasService_1 = class KasService {
         KasService_1.loadFromDisk();
     }
     async getKasSummary(rtId) {
+        const defaultEmpty = {
+            saldoKas: 0,
+            saldoKasBank: 0,
+            saldoKasDigital: 0,
+            saldoKasTunai: 0,
+            totalPemasukan: 0,
+            totalPengeluaran: 0,
+            totalPemasukanTunai: 0,
+            totalPemasukanBank: 0,
+            totalPemasukanDigital: 0,
+            totalPengeluaranTunai: 0,
+            totalPengeluaranBank: 0,
+            recentTransactions: [],
+        };
         if (!rtId) {
+            return defaultEmpty;
+        }
+        try {
+            const whereClause = { rtId };
+            const kasList = await this.prisma.kasRT.findMany({
+                where: whereClause,
+                orderBy: { createdAt: 'desc' },
+                take: 20,
+            });
+            const totalPemasukan = await this.prisma.kasRT.aggregate({
+                where: { ...whereClause, tipe: client_1.TipeKas.PEMASUKAN },
+                _sum: { nominal: true },
+            });
+            const totalPengeluaran = await this.prisma.kasRT.aggregate({
+                where: { ...whereClause, tipe: client_1.TipeKas.PENGELUARAN },
+                _sum: { nominal: true },
+            });
+            const sumIn = Number(totalPemasukan._sum.nominal || 0);
+            const sumOut = Number(totalPengeluaran._sum.nominal || 0);
+            const saldoKas = sumIn - sumOut;
+            let sumTunaiIn = 0;
+            let sumTunaiOut = 0;
+            try {
+                const tunaiIn = await this.prisma.kasRT.aggregate({
+                    where: {
+                        ...whereClause,
+                        tipe: client_1.TipeKas.PEMASUKAN,
+                        OR: [
+                            { metodeKas: 'TUNAI' },
+                            { kategori: { contains: 'Tunai' } },
+                        ],
+                    },
+                    _sum: { nominal: true },
+                });
+                const tunaiOut = await this.prisma.kasRT.aggregate({
+                    where: {
+                        ...whereClause,
+                        tipe: client_1.TipeKas.PENGELUARAN,
+                        OR: [
+                            { metodeKas: 'TUNAI' },
+                            { kategori: { contains: 'Tunai' } },
+                        ],
+                    },
+                    _sum: { nominal: true },
+                });
+                sumTunaiIn = Number(tunaiIn._sum.nominal || 0);
+                sumTunaiOut = Number(tunaiOut._sum.nominal || 0);
+            }
+            catch (innerErr) {
+                console.warn('Fallback kas tunai calculation:', innerErr);
+                sumTunaiIn = kasList
+                    .filter(k => k.tipe === client_1.TipeKas.PEMASUKAN && (k.kategori?.includes('Tunai') || k.metodeKas === 'TUNAI'))
+                    .reduce((acc, k) => acc + Number(k.nominal || 0), 0);
+                sumTunaiOut = kasList
+                    .filter(k => k.tipe === client_1.TipeKas.PENGELUARAN && (k.kategori?.includes('Tunai') || k.metodeKas === 'TUNAI'))
+                    .reduce((acc, k) => acc + Number(k.nominal || 0), 0);
+            }
+            const saldoKasTunai = Math.max(0, sumTunaiIn - sumTunaiOut);
+            const sumBankIn = Math.max(0, sumIn - sumTunaiIn);
+            const sumBankOut = Math.max(0, sumOut - sumTunaiOut);
+            const saldoKasBank = Math.max(0, sumBankIn - sumBankOut);
             return {
-                saldoKas: 0,
-                totalPemasukan: 0,
-                totalPengeluaran: 0,
-                recentTransactions: [],
+                saldoKas,
+                saldoKasBank,
+                saldoKasDigital: saldoKasBank,
+                saldoKasTunai,
+                totalPemasukan: sumIn,
+                totalPengeluaran: sumOut,
+                totalPemasukanTunai: sumTunaiIn,
+                totalPemasukanBank: sumBankIn,
+                totalPemasukanDigital: sumBankIn,
+                totalPengeluaranTunai: sumTunaiOut,
+                totalPengeluaranBank: sumBankOut,
+                recentTransactions: kasList,
             };
         }
-        const whereClause = { rtId };
-        const kasList = await this.prisma.kasRT.findMany({
-            where: whereClause,
-            orderBy: { createdAt: 'desc' },
-            take: 20,
-        });
-        const totalPemasukan = await this.prisma.kasRT.aggregate({
-            where: { ...whereClause, tipe: client_1.TipeKas.PEMASUKAN },
-            _sum: { nominal: true },
-        });
-        const totalPengeluaran = await this.prisma.kasRT.aggregate({
-            where: { ...whereClause, tipe: client_1.TipeKas.PENGELUARAN },
-            _sum: { nominal: true },
-        });
-        const sumIn = Number(totalPemasukan._sum.nominal || 0);
-        const sumOut = Number(totalPengeluaran._sum.nominal || 0);
-        const saldoKas = sumIn - sumOut;
-        const digitalIn = await this.prisma.kasRT.aggregate({
-            where: { ...whereClause, tipe: client_1.TipeKas.PEMASUKAN, kategori: { contains: 'Digital' } },
-            _sum: { nominal: true },
-        });
-        const sumDigitalIn = Number(digitalIn._sum.nominal || 0);
-        const sumTunaiIn = Math.max(0, sumIn - sumDigitalIn);
-        KasService_1.loadFromDisk();
-        const wdApproved = KasService_1.withdrawalRequests
-            .filter((r) => r.rtId === rtId && r.status === 'APPROVED')
-            .reduce((acc, r) => acc + Number(r.totalDipotong || 0), 0);
-        const saldoKasDigital = Math.max(0, sumDigitalIn - wdApproved);
-        const saldoKasTunai = Math.max(0, saldoKas - saldoKasDigital);
-        return {
-            saldoKas,
-            saldoKasDigital,
-            saldoKasTunai,
-            totalPemasukan: sumIn,
-            totalPengeluaran: sumOut,
-            totalPemasukanTunai: sumTunaiIn,
-            totalPemasukanDigital: sumDigitalIn,
-            recentTransactions: kasList,
-        };
+        catch (err) {
+            console.error('getKasSummary critical error, returning safe defaults:', err);
+            return defaultEmpty;
+        }
     }
     async createKasEntry(rtId, userId, data) {
         const nominalNum = Number(data.nominal);
@@ -119,11 +167,15 @@ let KasService = KasService_1 = class KasService {
         const newSaldo = data.tipe === client_1.TipeKas.PEMASUKAN
             ? currentSummary.saldoKas + nominalNum
             : currentSummary.saldoKas - nominalNum;
+        const determinedMetode = data.metodeKas || (data.kategori?.toLowerCase().includes('tunai') || data.keterangan?.toLowerCase().includes('tunai')
+            ? 'TUNAI'
+            : 'BANK');
         return this.prisma.kasRT.create({
             data: {
                 rtId,
                 createdById: userId,
                 tipe: data.tipe,
+                metodeKas: determinedMetode,
                 kategori: data.kategori,
                 nominal: nominalNum,
                 saldoBerjalan: newSaldo,
@@ -332,24 +384,11 @@ let KasService = KasService_1 = class KasService {
         };
     }
     async getSuperadminUangMasuk() {
-        const paidTagihan = await this.prisma.tagihanWarga.findMany({
-            where: { status: 'PAID' },
+        const proRts = await this.prisma.rT.findMany({
             include: {
-                masterTagihan: true,
-                rumah: {
-                    include: {
-                        rt: {
-                            include: {
-                                rw: {
-                                    include: { kelurahan: true },
-                                },
-                            },
-                        },
-                    },
-                },
-                transaksi: { take: 1, orderBy: { createdAt: 'desc' } },
+                rw: { include: { kelurahan: true } },
             },
-            orderBy: { paidAt: 'desc' },
+            orderBy: { updatedAt: 'desc' },
             take: 50,
         });
         const boostedAds = await this.prisma.lapakProduk.findMany({
@@ -359,50 +398,39 @@ let KasService = KasService_1 = class KasService {
                 rt: { include: { rw: { include: { kelurahan: true } } } },
             },
             orderBy: { createdAt: 'desc' },
-            take: 20,
+            take: 50,
         });
         const mappedTransactions = [];
-        let totalHakKasRt = 0;
-        let totalCuanPlatform = 0;
-        let totalFeeBankVa = 0;
-        let totalBruto = 0;
-        for (const t of paidTagihan) {
-            const metode = t.transaksi[0]?.paymentMethod || 'QRIS';
-            const isVa = metode.toString().startsWith('VA_');
-            const pokok = Number(t.nominalPokok) || 50000;
-            const feePlatform = KasService_1.platformFeeConfig.feeTransaksiIuran;
-            const feeBank = isVa ? KasService_1.platformFeeConfig.feeVirtualAccount : 0;
-            const total = pokok + feePlatform + feeBank;
-            totalHakKasRt += pokok;
-            totalCuanPlatform += feePlatform;
-            totalFeeBankVa += feeBank;
-            totalBruto += total;
+        let totalLanggananPro = 0;
+        let totalIklanSponsor = 0;
+        for (const rt of proRts) {
+            const nominal = 99000;
+            totalLanggananPro += nominal;
             mappedTransactions.push({
-                id: t.transaksi[0]?.id || `TRX-${t.id.substring(0, 8).toUpperCase()}`,
-                waktu: t.paidAt?.toISOString() || t.createdAt.toISOString(),
-                wilayah: `RT ${t.rumah?.rt?.nomor || '03'} / RW ${t.rumah?.rt?.rw?.nomor || '05'}, Kel. ${t.rumah?.rt?.rw?.kelurahan?.nama || 'Sukamaju'}`,
-                tipe: `Iuran Bulanan (${t.periodeBulan}/${t.periodeTahun})`,
-                pembayar: `Rumah ${t.rumah?.noRumah || '01'}`,
-                metode: metode.toString(),
-                nominalPokok: pokok,
-                feePlatform: feePlatform,
-                feeBankVa: feeBank,
-                totalBayar: total,
+                id: `SUB-${rt.id.substring(0, 8).toUpperCase()}`,
+                waktu: rt.updatedAt.toISOString(),
+                wilayah: `RT ${rt.nomor || '03'} / RW ${rt.rw?.nomor || '05'}, Kel. ${rt.rw?.kelurahan?.nama || 'Sukamaju'}`,
+                tipe: 'Langganan Paket RT Pro (Bulanan)',
+                pembayar: `Pengurus RT ${rt.nomor || '03'}`,
+                metode: 'QRIS / VA Duitku',
+                nominalPokok: 0,
+                feePlatform: nominal,
+                feeBankVa: 0,
+                totalBayar: nominal,
                 status: 'SETTLED',
             });
         }
         for (const ad of boostedAds) {
             const pkg = ad.paketIklan || 'RT';
-            const hargaIklan = pkg === 'SEMUA' ? 100000 : pkg === 'KELURAHAN' ? 50000 : pkg === 'RW' ? 25000 : 10000;
-            totalCuanPlatform += hargaIklan;
-            totalBruto += hargaIklan;
+            const hargaIklan = pkg === 'SEMUA' ? 100000 : pkg === 'KELURAHAN' ? 50000 : pkg === 'RW' ? 25000 : 15000;
+            totalIklanSponsor += hargaIklan;
             mappedTransactions.push({
                 id: `ADS-${ad.id.substring(0, 8).toUpperCase()}`,
                 waktu: ad.createdAt.toISOString(),
                 wilayah: `RT ${ad.rt?.nomor || '03'} / RW ${ad.rt?.rw?.nomor || '05'}, Kel. ${ad.rt?.rw?.kelurahan?.nama || 'Sukamaju'}`,
-                tipe: `Boost Iklan Lapak (Paket ${pkg})`,
-                pembayar: ad.seller?.profile?.namaLengkap || ad.seller?.phone || 'Pedagang Warga',
-                metode: 'QRIS',
+                tipe: `Iklan Sponsor Lapak (Paket ${pkg})`,
+                pembayar: ad.seller?.profile?.namaLengkap || ad.seller?.phone || 'Pelaku Usaha Warga',
+                metode: 'QRIS / VA Duitku',
                 nominalPokok: 0,
                 feePlatform: hargaIklan,
                 feeBankVa: 0,
@@ -410,14 +438,18 @@ let KasService = KasService_1 = class KasService {
                 status: 'SETTLED',
             });
         }
+        const totalPendapatan = totalLanggananPro + totalIklanSponsor;
         mappedTransactions.sort((a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime());
         return {
             gatewayInfo: this.duitkuService.getGatewayStatus(),
             summary: {
-                totalBruto,
-                totalHakKasRt,
-                totalCuanPlatform,
-                totalFeeBankVa,
+                totalBruto: totalPendapatan,
+                totalPendapatanPlatform: totalPendapatan,
+                totalLanggananPro,
+                totalIklanSponsor,
+                totalCuanPlatform: totalPendapatan,
+                totalHakKasRt: 0,
+                totalFeeBankVa: 0,
                 totalTransaksi: mappedTransactions.length,
             },
             transactions: mappedTransactions,

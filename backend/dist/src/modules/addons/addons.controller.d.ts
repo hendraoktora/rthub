@@ -55,6 +55,35 @@ export declare class AddonsController {
         updatedAt: string;
         updatedBy?: string;
     }[]>;
+    getMyMembershipSummary(user: any): Promise<{
+        subscription: any;
+        userAds: {
+            id: string;
+            judul: string;
+            harga: number;
+            fotoUrl: string;
+            isPromoted: boolean;
+            promotedBadge: string;
+            paketIklan: string;
+            promotedUntil: string;
+            sisaHariIklan: number;
+            isExpiringSoon: boolean;
+            isExpired: boolean;
+        }[];
+        alerts: {
+            id: string;
+            type: "SUBSCRIPTION" | "ADS" | "TRIAL_EXPIRING" | "RT_DEACTIVATED";
+            severity: "warning" | "danger" | "info";
+            title: string;
+            message: string;
+            actionText: string;
+            meta?: any;
+        }[];
+    }>;
+    renewPro(user: any, body: {
+        rtId?: string;
+        durationDays?: number;
+    }): Promise<import("./addons.service").RtSubscriptionRecord>;
     updateSubscription(user: any, body: {
         rtId: string;
         status: 'AKTIF' | 'TRIAL' | 'TIDAK_AKTIF';

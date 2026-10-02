@@ -34,6 +34,7 @@ enum PaymentMethod {
   VA_BRI
   VA_BNI
   CASH
+  TRANSFER_MANUAL
 }
 
 enum PaymentStatus {
@@ -117,6 +118,12 @@ model RT {
   rwId        String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Rekening Bank & QRIS Kas RT (Direct Transfer Warga)
+  namaBank        String?  @db.VarChar(50)   // e.g. "BCA", "Mandiri", "BRI"
+  nomorRekening   String?  @db.VarChar(50)   // e.g. "1234567890"
+  atasNamaRekening String? @db.VarChar(100)  // e.g. "Kas RT 03 Sukamaju"
+  qrisImageUrl    String?  @db.LongText      // Foto/Gambar QRIS Merchant Kas RT
 
   rw          RW       @relation(fields: [rwId], references: [id], onDelete: Cascade)
   users       User[]
@@ -282,7 +289,7 @@ model TransaksiPembayaran {
   status        PaymentStatus @default(PENDING)
   paymentCode   String?       @db.VarChar(100) // QR string or VA number
   referenceId   String?       @db.VarChar(100) // Midtrans/Xendit transaction ID
-  buktiBayarUrl String?       @db.VarChar(255) // For manual cash/transfer verification
+  buktiBayarUrl String?       @db.LongText    // Bukti transfer bank / QRIS warga
   paidAt        DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -309,6 +316,7 @@ model KasRT {
   rtId          String
   createdById   String
   tipe          TipeKas  @default(PEMASUKAN)
+  metodeKas     String   @default("BANK") @db.VarChar(20) // "BANK" (Rekening/QRIS) atau "TUNAI" (Cash)
   kategori      String   @db.VarChar(50) // "Iuran Warga", "Operasional", "Kebersihan", "Lainnya"
   nominal       Decimal  @db.Decimal(12, 2)
   saldoBerjalan Decimal  @db.Decimal(14, 2)

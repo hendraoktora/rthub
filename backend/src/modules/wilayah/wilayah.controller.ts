@@ -99,4 +99,28 @@ export class WilayahController {
   async deletePengurus(@Param('userId') userId: string) {
     return this.wilayahService.deletePengurus(userId);
   }
+
+  // Pengaturan Rekening Bank & QRIS Kas RT (Direct Transfer Warga)
+  @Get('rt/:rtId/rekening')
+  @ApiOperation({ summary: 'Mendapatkan informasi rekening bank dan QRIS RT' })
+  async getRtRekening(@Param('rtId') rtId: string) {
+    return this.wilayahService.getRtRekening(rtId);
+  }
+
+  @Post('rt/:rtId/rekening')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN_RT, Role.BENDAHARA_RT, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Ubah informasi rekening dan QRIS RT (Khusus Bendahara RT & Ketua RT)' })
+  async updateRtRekening(
+    @Param('rtId') rtId: string,
+    @Body() body: {
+      namaBank?: string;
+      nomorRekening?: string;
+      atasNamaRekening?: string;
+      qrisImageUrl?: string;
+    },
+  ) {
+    return this.wilayahService.updateRtRekening(rtId, body);
+  }
 }

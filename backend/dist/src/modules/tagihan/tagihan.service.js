@@ -121,6 +121,212 @@ let TagihanService = class TagihanService {
             orderBy: [{ periodeTahun: 'desc' }, { periodeBulan: 'desc' }],
         });
     }
+    async getInstruksiBayar(tagihanId) {
+        const tagihan = await this.prisma.tagihanWarga.findUnique({
+            where: { id: tagihanId },
+            include: {
+                masterTagihan: true,
+                rumah: {
+                    include: {
+                        rt: {
+                            select: {
+                                id: true,
+                                nomor: true,
+                                namaBank: true,
+                                nomorRekening: true,
+                                atasNamaRekening: true,
+                                qrisImageUrl: true,
+                            },
+                        },
+                    },
+                },
+                transaksi: { orderBy: { createdAt: 'desc' }, take: 1 },
+            },
+        });
+        if (!tagihan) {
+            throw new common_1.NotFoundException('Tagihan tidak ditemukan.');
+        }
+        return {
+            tagihanId: tagihan.id,
+            namaTagihan: tagihan.masterTagihan.namaTagihan,
+            periode: `${tagihan.periodeBulan}/${tagihan.periodeTahun}`,
+            nominal: Number(tagihan.nominalPokok),
+            status: tagihan.status,
+            rumah: `No. ${tagihan.rumah.noRumah}`,
+            jatuhTempo: tagihan.jatuhTempo,
+            rekeningRT: {
+                namaBank: tagihan.rumah.rt.namaBank || 'BCA (Belum diatur)',
+                nomorRekening: tagihan.rumah.rt.nomorRekening || 'Belum diisi pengurus',
+                atasNamaRekening: tagihan.rumah.rt.atasNamaRekening || `Kas RT ${tagihan.rumah.rt.nomor}`,
+                qrisImageUrl: tagihan.rumah.rt.qrisImageUrl || null,
+            },
+            transaksiTerakhir: tagihan.transaksi[0] || null,
+        };
+    }
+    async konfirmasiBayarWarga(tagihanId, userId, data) {
+        const tagihan = await this.prisma.tagihanWarga.findUnique({
+            where: { id: tagihanId },
+            include: { masterTagihan: true, rumah: true },
+        });
+        if (!tagihan) {
+            throw new common_1.NotFoundException('Tagihan tidak ditemukan.');
+        }
+        if (tagihan.status === client_1.StatusTagihan.PAID) {
+            throw new common_1.BadRequestException('Tagihan ini sudah lunas.');
+        }
+        const transaksi = await this.prisma.transaksiPembayaran.create({
+            data: {
+                tagihanId: tagihan.id,
+                userId,
+                nominalPokok: tagihan.nominalPokok,
+                adminFee: 0,
+                totalBayar: tagihan.nominalPokok,
+                paymentMethod: data.paymentMethod || client_1.PaymentMethod.QRIS,
+                status: client_1.PaymentStatus.PENDING,
+                buktiBayarUrl: data.buktiBayarUrl || null,
+                referenceId: `TF-${Date.now()}`,
+            },
+        });
+        await this.prisma.tagihanWarga.update({
+            where: { id: tagihan.id },
+            data: { status: client_1.StatusTagihan.PENDING },
+        });
+        return {
+            message: 'Konfirmasi pembayaran berhasil dikirim. Menunggu verifikasi bendahara RT.',
+            transaksiId: transaksi.id,
+            status: 'PENDING',
+        };
+    }
+    async terimaTunai(tagihanId, bendaharaUserId) {
+        const tagihan = await this.prisma.tagihanWarga.findUnique({
+            where: { id: tagihanId },
+            include: { masterTagihan: true, rumah: true },
+        });
+        if (!tagihan) {
+            throw new common_1.NotFoundException('Tagihan tidak ditemukan.');
+        }
+        if (tagihan.status === client_1.StatusTagihan.PAID) {
+            throw new common_1.BadRequestException('Tagihan sudah lunas.');
+        }
+        const transaksi = await this.prisma.transaksiPembayaran.create({
+            data: {
+                tagihanId: tagihan.id,
+                userId: bendaharaUserId,
+                nominalPokok: tagihan.nominalPokok,
+                adminFee: 0,
+                totalBayar: tagihan.nominalPokok,
+                paymentMethod: client_1.PaymentMethod.CASH,
+                status: client_1.PaymentStatus.SUCCESS,
+                paidAt: new Date(),
+            },
+        });
+        await this.prisma.tagihanWarga.update({
+            where: { id: tagihan.id },
+            data: { status: client_1.StatusTagihan.PAID, paidAt: new Date() },
+        });
+        const currentKas = await this.prisma.kasRT.findFirst({
+            where: { rtId: tagihan.rumah.rtId },
+            orderBy: { createdAt: 'desc' },
+        });
+        const currentSaldo = currentKas ? Number(currentKas.saldoBerjalan) : 0;
+        const newSaldo = currentSaldo + Number(tagihan.nominalPokok);
+        await this.prisma.kasRT.create({
+            data: {
+                rtId: tagihan.rumah.rtId,
+                createdById: bendaharaUserId,
+                tipe: client_1.TipeKas.PEMASUKAN,
+                metodeKas: 'TUNAI',
+                kategori: 'Iuran Warga (Tunai)',
+                nominal: tagihan.nominalPokok,
+                saldoBerjalan: newSaldo,
+                keterangan: `Pembayaran Tunai ${tagihan.masterTagihan.namaTagihan} Periode ${tagihan.periodeBulan}/${tagihan.periodeTahun} - Rumah ${tagihan.rumah.noRumah} (Diterima Bendahara)`,
+            },
+        });
+        return {
+            message: 'Pembayaran tunai berhasil dicatat dan masuk ke Saldo Kas Tunai RT.',
+            tagihanId: tagihan.id,
+            nominal: tagihan.nominalPokok,
+            status: 'PAID',
+        };
+    }
+    async approveTransaksi(transaksiId, bendaharaUserId) {
+        const transaksi = await this.prisma.transaksiPembayaran.findUnique({
+            where: { id: transaksiId },
+            include: {
+                tagihan: {
+                    include: { masterTagihan: true, rumah: true },
+                },
+                user: {
+                    include: { profile: true },
+                },
+            },
+        });
+        if (!transaksi) {
+            throw new common_1.NotFoundException('Transaksi tidak ditemukan.');
+        }
+        if (transaksi.status === client_1.PaymentStatus.SUCCESS) {
+            throw new common_1.BadRequestException('Transaksi ini sudah disetujui sebelumnya.');
+        }
+        await this.prisma.transaksiPembayaran.update({
+            where: { id: transaksi.id },
+            data: {
+                status: client_1.PaymentStatus.SUCCESS,
+                paidAt: new Date(),
+            },
+        });
+        await this.prisma.tagihanWarga.update({
+            where: { id: transaksi.tagihanId },
+            data: {
+                status: client_1.StatusTagihan.PAID,
+                paidAt: new Date(),
+            },
+        });
+        const currentKas = await this.prisma.kasRT.findFirst({
+            where: { rtId: transaksi.tagihan.rumah.rtId },
+            orderBy: { createdAt: 'desc' },
+        });
+        const currentSaldo = currentKas ? Number(currentKas.saldoBerjalan) : 0;
+        const newSaldo = currentSaldo + Number(transaksi.nominalPokok);
+        const caraBayar = transaksi.paymentMethod === client_1.PaymentMethod.QRIS ? 'QRIS RT' : 'Transfer Bank';
+        await this.prisma.kasRT.create({
+            data: {
+                rtId: transaksi.tagihan.rumah.rtId,
+                createdById: bendaharaUserId,
+                tipe: client_1.TipeKas.PEMASUKAN,
+                metodeKas: 'BANK',
+                kategori: `Iuran Warga (${caraBayar})`,
+                nominal: transaksi.nominalPokok,
+                saldoBerjalan: newSaldo,
+                keterangan: `Pembayaran ${transaksi.tagihan.masterTagihan.namaTagihan} Periode ${transaksi.tagihan.periodeBulan}/${transaksi.tagihan.periodeTahun} - Rumah ${transaksi.tagihan.rumah.noRumah} via ${caraBayar} (Dikonfirmasi Bendahara)`,
+            },
+        });
+        return {
+            message: `Pembayaran via ${caraBayar} berhasil disetujui dan masuk ke Saldo Kas Bank RT.`,
+            status: 'SUCCESS',
+        };
+    }
+    async getPendingVerifikasi(rtId) {
+        return this.prisma.transaksiPembayaran.findMany({
+            where: {
+                status: client_1.PaymentStatus.PENDING,
+                tagihan: {
+                    rumah: { rtId },
+                },
+            },
+            include: {
+                tagihan: {
+                    include: {
+                        masterTagihan: true,
+                        rumah: true,
+                    },
+                },
+                user: {
+                    include: { profile: true },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
     async bayarTagihan(tagihanId, userId, paymentMethod) {
         const tagihan = await this.prisma.tagihanWarga.findUnique({
             where: { id: tagihanId },
@@ -133,15 +339,13 @@ let TagihanService = class TagihanService {
             throw new common_1.BadRequestException('Tagihan ini sudah lunas.');
         }
         const isCash = paymentMethod === client_1.PaymentMethod.CASH;
-        const adminFeeApplied = isCash ? 0 : Number(tagihan.adminFee || 0);
-        const totalBayarApplied = Number(tagihan.nominalPokok) + adminFeeApplied;
         const transaksi = await this.prisma.transaksiPembayaran.create({
             data: {
                 tagihanId: tagihan.id,
                 userId,
                 nominalPokok: tagihan.nominalPokok,
-                adminFee: adminFeeApplied,
-                totalBayar: totalBayarApplied,
+                adminFee: 0,
+                totalBayar: tagihan.nominalPokok,
                 paymentMethod,
                 status: client_1.PaymentStatus.SUCCESS,
                 paidAt: new Date(),
@@ -154,29 +358,20 @@ let TagihanService = class TagihanService {
                 paidAt: new Date(),
             },
         });
-        if (!isCash && adminFeeApplied > 0) {
-            await this.prisma.systemFeeLog.create({
-                data: {
-                    transaksiId: transaksi.id,
-                    rtId: tagihan.rumah.rtId,
-                    nominalFee: adminFeeApplied,
-                    isSettled: false,
-                },
-            });
-        }
         const currentKas = await this.prisma.kasRT.findFirst({
             where: { rtId: tagihan.rumah.rtId },
             orderBy: { createdAt: 'desc' },
         });
         const currentSaldo = currentKas ? Number(currentKas.saldoBerjalan) : 0;
         const newSaldo = currentSaldo + Number(tagihan.nominalPokok);
-        const kategori = isCash ? 'Iuran Warga (Tunai)' : 'Iuran Warga (Digital)';
+        const kategori = isCash ? 'Iuran Warga (Tunai)' : `Iuran Warga (${paymentMethod})`;
         const caraBayar = isCash ? 'secara Tunai ke Bendahara' : `via ${paymentMethod}`;
         await this.prisma.kasRT.create({
             data: {
                 rtId: tagihan.rumah.rtId,
                 createdById: userId,
                 tipe: client_1.TipeKas.PEMASUKAN,
+                metodeKas: isCash ? 'TUNAI' : 'BANK',
                 kategori,
                 nominal: tagihan.nominalPokok,
                 saldoBerjalan: newSaldo,
@@ -188,7 +383,6 @@ let TagihanService = class TagihanService {
             rincian: {
                 tagihan: tagihan.masterTagihan.namaTagihan,
                 nominalIuranPokokMasukKasRT: tagihan.nominalPokok,
-                biayaLayananAdminPlatform: tagihan.adminFee,
                 totalBayar: tagihan.totalBayar,
                 metodeBayar: paymentMethod,
                 status: 'PAID / LUNAS',

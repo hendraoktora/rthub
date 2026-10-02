@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { KasService } from './kas.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -15,9 +15,14 @@ export class KasController {
   constructor(private readonly kasService: KasService) {}
 
   @Get('summary')
+  @ApiQuery({ name: 'rtId', required: false, description: 'ID Wilayah RT (opsional fallback)' })
   @ApiOperation({ summary: 'Mendapatkan ringkasan saldo kas, pemasukan, pengeluaran & mutasi RT' })
-  async getSummary(@CurrentUser() user: any) {
-    return this.kasService.getKasSummary(user.rtId);
+  async getSummary(
+    @CurrentUser() user: any,
+    @Query('rtId') queryRtId?: string,
+  ) {
+    const effectiveRtId = user?.rtId || queryRtId;
+    return this.kasService.getKasSummary(effectiveRtId);
   }
 
   @Post()
@@ -25,7 +30,7 @@ export class KasController {
   @ApiOperation({ summary: 'Mencatat transaksi kas / set saldo awal (Khusus Pengurus RT)' })
   async createKas(
     @CurrentUser() user: any,
-    @Body() body: { tipe: TipeKas; kategori: string; nominal: number; keterangan: string; buktiNotaUrl?: string },
+    @Body() body: { tipe: TipeKas; kategori: string; nominal: number; keterangan: string; metodeKas?: 'TUNAI' | 'BANK'; buktiNotaUrl?: string },
   ) {
     return this.kasService.createKasEntry(user.rtId, user.id, body);
   }
@@ -35,7 +40,7 @@ export class KasController {
   @ApiOperation({ summary: 'Mencatat transaksi kas masuk atau keluar (Khusus Pengurus RT)' })
   async createKasAlias(
     @CurrentUser() user: any,
-    @Body() body: { tipe: TipeKas; kategori: string; nominal: number; keterangan: string; buktiNotaUrl?: string },
+    @Body() body: { tipe: TipeKas; kategori: string; nominal: number; keterangan: string; metodeKas?: 'TUNAI' | 'BANK'; buktiNotaUrl?: string },
   ) {
     return this.kasService.createKasEntry(user.rtId, user.id, body);
   }

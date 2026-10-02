@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/image_cache_helper.dart';
+import '../../../core/widgets/admob_banner_widget.dart';
 import '../../../core/widgets/hub_motion.dart';
 
 String hubRupiah(Object? amount) {
@@ -300,6 +301,257 @@ class HomeQuakeCard extends StatelessWidget {
   }
 }
 
+class HomeSubscriptionCard extends StatelessWidget {
+  const HomeSubscriptionCard({
+    super.key,
+    required this.membership,
+    required this.onUpgrade,
+    this.scrollTilt = 0,
+  });
+
+  final Map<String, dynamic>? membership;
+  final VoidCallback onUpgrade;
+  final double scrollTilt;
+
+  @override
+  Widget build(BuildContext context) {
+    final sub = membership?['subscription'] as Map<String, dynamic>?;
+    final isPro = sub?['isPro'] == true;
+    final sisaHari = sub?['sisaHari'] as int? ?? 7;
+    final isNearExpiry = sisaHari <= 3;
+    final untilStr = sub?['activeUntil']?.toString();
+    DateTime? untilDate = untilStr != null ? DateTime.tryParse(untilStr) : null;
+    final untilFormatted = untilDate != null
+        ? '${untilDate.day} ${_monthName(untilDate.month)} ${untilDate.year}'
+        : '7 Hari Kedepan';
+
+    final Color primaryAccent = isNearExpiry
+        ? const Color(0xFFDC2626)
+        : (isPro ? const Color(0xFF4F46E5) : const Color(0xFF0284C7));
+    final Color bgColor = isNearExpiry
+        ? const Color(0xFFFEF2F2)
+        : (isPro ? const Color(0xFFEEF2FF) : const Color(0xFFF0F9FF));
+
+    return TiltCard(
+      scrollTilt: scrollTilt,
+      child: _HomeSurface(
+        color: bgColor,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            isPro ? Icons.workspace_premium_rounded : Icons.star_rounded,
+                            size: 14,
+                            color: primaryAccent,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            isPro ? 'PAKET RT PRO AKTIF' : 'TRIAL 7 HARI RT PRO',
+                            style: _eyebrow.copyWith(color: primaryAccent),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        isPro ? 'Akses Fitur Premium RT' : 'Evaluasi Layanan RT',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryNavy,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: primaryAccent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    isPro ? 'PRO LENGKAP' : 'UJI COBA',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            if (isNearExpiry) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, size: 15, color: Color(0xFFDC2626)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Sisa $sisaHari hari! Perpanjang agar akun RT tidak dinonaktifkan.',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFB91C1C),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sisa Masa Aktif: $sisaHari Hari',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: primaryAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Berlaku hingga $untilFormatted',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                ElevatedButton.icon(
+                  onPressed: onUpgrade,
+                  icon: const Icon(Icons.bolt_rounded, size: 15),
+                  label: Text(
+                    isPro ? 'Perpanjang' : 'Upgrade Pro',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryAccent,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _monthName(int m) {
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return m >= 1 && m <= 12 ? months[m] : '';
+  }
+}
+
+class HomeAdMobCard extends StatelessWidget {
+  const HomeAdMobCard({
+    super.key,
+    this.scrollTilt = 0,
+  });
+
+  final double scrollTilt;
+
+  @override
+  Widget build(BuildContext context) {
+    return TiltCard(
+      scrollTilt: scrollTilt,
+      child: _HomeSurface(
+        color: const Color(0xFFFAFAFA),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.ads_click_rounded, size: 12, color: Color(0xFF475569)),
+                      SizedBox(width: 4),
+                      Text(
+                        'SPONSOR RESMI GOOGLE',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF475569),
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                const Text(
+                  'AdMob by Google',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            const Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.all(Radius.circular(10)),
+                child: AdMobBannerWidget(
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+            const Spacer(),
+            const Text(
+              'Tayangan sponsor membantu kelancaran server & operasional RT digital',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                color: AppTheme.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class HomeProductCard extends StatelessWidget {
   const HomeProductCard({
     super.key,
@@ -337,69 +589,77 @@ class HomeProductCard extends StatelessWidget {
     return TiltCard(
       child: _HomeSurface(
         color: Colors.white,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              flex: 4,
+            // Left Photo Showcase
+            SizedBox(
+              width: 120,
+              height: double.infinity,
               child: Semantics(
                 label: 'Lihat ${item['judul'] ?? 'produk warga'}',
                 button: true,
                 child: InkWell(
                   onTap: onOpen,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(20),
                   child: Stack(
                     children: [
                       Positioned.fill(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(20),
                           child: ColoredBox(
-                            color: const Color(0xFFF0F7F1),
+                            color: const Color(0xFFF1F5F9),
                             child: ImageCacheHelper.buildImage(
                               _photo,
                               fit: BoxFit.cover,
                               placeholder: const Center(
                                 child: ClayIllustration(
                                   kind: ClayKind.shop,
-                                  size: 80,
+                                  size: 70,
                                 ),
                               ),
                             ),
                           ),
                         ),
                       ),
+                      // Floating Gradient Sponsored Pill
                       Positioned(
-                        left: 7,
+                        left: 8,
                         top: 8,
-                        child: Transform.rotate(
-                          angle: -.07,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 5,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
                             ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9E7A1),
-                              border: Border.all(
-                                color: const Color(0xFFCDB775),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x33000000),
+                                offset: Offset(0, 2),
+                                blurRadius: 4,
                               ),
-                              borderRadius: BorderRadius.circular(6),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x332A311F),
-                                  offset: Offset(0, 3),
-                                  blurRadius: 0,
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.auto_awesome, color: Colors.white, size: 9),
+                              SizedBox(width: 3),
+                              Text(
+                                'SPONSORED',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5,
                                 ),
-                              ],
-                            ),
-                            child: const Text(
-                              'SPONSORED',
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: .4,
                               ),
-                            ),
+                            ],
                           ),
                         ),
                       ),
@@ -408,62 +668,89 @@ class HomeProductCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
+            // Right Information & Action
             Expanded(
-              flex: 5,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    seller.toString(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppTheme.textSecondary,
-                    ),
+                  Row(
+                    children: [
+                      const Icon(Icons.storefront_rounded, size: 13, color: AppTheme.textSecondary),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          seller.toString(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 6),
                   Text(
                     item['judul']?.toString() ?? 'Produk warga',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 17,
+                      fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      height: 1.15,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    hubRupiah(item['harga']),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF087252),
+                      height: 1.2,
+                      color: AppTheme.primaryNavy,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextButton.icon(
-                    onPressed: onOrder,
-                    icon: const Icon(
-                      Icons.chat_bubble_outline_rounded,
-                      size: 15,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
                     ),
-                    label: const Text(
-                      'Pesan',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                    child: Text(
+                      hubRupiah(item['harga']),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF047857),
                       ),
                     ),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.primaryNavy,
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      minimumSize: const Size(92, 44),
+                  ),
+                  const Spacer(),
+                  // WhatsApp Green Button
+                  SizedBox(
+                    height: 38,
+                    child: ElevatedButton.icon(
+                      onPressed: onOrder,
+                      icon: const Icon(
+                        Icons.chat_bubble_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'Chat Penjual',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ),
                 ],

@@ -11,12 +11,14 @@ const common_1 = require("@nestjs/common");
 const payment_controller_1 = require("./payment.controller");
 const duitku_service_1 = require("./duitku.service");
 const prisma_module_1 = require("../../prisma/prisma.module");
+const addons_module_1 = require("../addons/addons.module");
+const lapak_module_1 = require("../lapak/lapak.module");
 let PaymentModule = class PaymentModule {
 };
 exports.PaymentModule = PaymentModule;
 exports.PaymentModule = PaymentModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [prisma_module_1.PrismaModule, addons_module_1.AddonsModule, lapak_module_1.LapakModule],
         controllers: [payment_controller_1.PaymentController],
         providers: [duitku_service_1.DuitkuService],
         exports: [duitku_service_1.DuitkuService],

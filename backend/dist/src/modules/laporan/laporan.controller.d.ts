@@ -14,26 +14,26 @@ export declare class LaporanController {
         dataSurat?: any;
     }): Promise<{
         user: {
+            id: string;
             profile: {
                 namaLengkap: string;
                 nik: string;
                 noRumah: string;
             };
             phone: string;
-            id: string;
         };
     } & {
-        rtId: string;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string;
+        kategori: string;
+        kelurahanId: string | null;
         userId: string;
         status: import(".prisma/client").$Enums.StatusLaporan;
-        deskripsi: string;
-        kategori: string;
         judul: string;
+        deskripsi: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
         tujuan: string;
@@ -45,36 +45,40 @@ export declare class LaporanController {
         respondedAt: Date | null;
     }>;
     getLaporanList(user: any): Promise<({
+        rt: {
+            id: string;
+            nomor: string;
+            namaJalan: string | null;
+            skDokumenUrl: string | null;
+            rwId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            namaBank: string | null;
+            nomorRekening: string | null;
+            atasNamaRekening: string | null;
+            qrisImageUrl: string | null;
+        };
         user: {
+            id: string;
             profile: {
                 namaLengkap: string;
                 nik: string;
                 noRumah: string;
             };
             phone: string;
-            id: string;
-        };
-        rt: {
-            namaJalan: string | null;
-            skDokumenUrl: string | null;
-            id: string;
-            rwId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            nomor: string;
         };
     } & {
-        rtId: string;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string;
+        kategori: string;
+        kelurahanId: string | null;
         userId: string;
         status: import(".prisma/client").$Enums.StatusLaporan;
-        deskripsi: string;
-        kategori: string;
         judul: string;
+        deskripsi: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
         tujuan: string;
@@ -91,36 +95,40 @@ export declare class LaporanController {
         tanggapanBy?: string;
         nomorSurat?: string;
     }): Promise<{
+        rt: {
+            id: string;
+            nomor: string;
+            namaJalan: string | null;
+            skDokumenUrl: string | null;
+            rwId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            namaBank: string | null;
+            nomorRekening: string | null;
+            atasNamaRekening: string | null;
+            qrisImageUrl: string | null;
+        };
         user: {
+            id: string;
             profile: {
                 namaLengkap: string;
                 nik: string;
                 noRumah: string;
             };
             phone: string;
-            id: string;
-        };
-        rt: {
-            namaJalan: string | null;
-            skDokumenUrl: string | null;
-            id: string;
-            rwId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            nomor: string;
         };
     } & {
-        rtId: string;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string;
+        kategori: string;
+        kelurahanId: string | null;
         userId: string;
         status: import(".prisma/client").$Enums.StatusLaporan;
-        deskripsi: string;
-        kategori: string;
         judul: string;
+        deskripsi: string;
         fotoUrl: string | null;
         isAnonymous: boolean;
         tujuan: string;

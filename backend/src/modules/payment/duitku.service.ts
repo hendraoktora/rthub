@@ -1,6 +1,8 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AddonsService } from '../addons/addons.service';
+import { LapakService } from '../lapak/lapak.service';
 import { StatusTagihan, PaymentStatus, PaymentMethod, TipeKas } from '@prisma/client';
 import * as crypto from 'crypto';
 
@@ -22,6 +24,8 @@ export class DuitkuService {
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly addonsService: AddonsService,
+    private readonly lapakService: LapakService,
   ) {
     this.merchantCode = this.config.get<string>('DUITKU_MERCHANT_CODE') || '';
     this.apiKey = this.config.get<string>('DUITKU_API_KEY') || '';
@@ -237,9 +241,11 @@ export class DuitkuService {
   }
 
   /**
-   * Membuat transaksi Checkout Langganan Paket RT Pro / Addons (Bisa diakses publik dari landing page)
+    /**
+   * Membuat transaksi Checkout Langganan Paket RT Pro Rp 99.000 / bulan via Duitku
    */
   async createSubscriptionCheckout(dto: {
+    rtId?: string;
     planName?: string;
     amount?: number;
     rtName?: string;
@@ -248,9 +254,9 @@ export class DuitkuService {
     customerPhone?: string;
     paymentMethodCode?: string;
   }) {
-    const nominalTotal = Math.round(Number(dto.amount) || 49000);
+    const nominalTotal = Math.round(Number(dto.amount) || 99000);
     const planName = dto.planName || 'Paket RT Pro (Langganan 1 Bulan)';
-    const rtName = dto.rtName || 'RT 04 / RW 04 Kota Baru';
+    const rtName = dto.rtName || 'RT Komunitas';
     const customerName = dto.customerName || 'Pengurus RT';
     const customerEmail = dto.customerEmail || 'support@rthub.id';
     const customerPhone = dto.customerPhone || '085155163110';
@@ -262,6 +268,12 @@ export class DuitkuService {
     const rawSig = `${this.merchantCode}${merchantOrderId}${nominalTotal}${this.apiKey}`;
     const signature = crypto.createHash('md5').update(rawSig).digest('hex');
 
+    const additionalParam = JSON.stringify({
+      type: 'SUBSCRIPTION_PRO',
+      rtId: dto.rtId || '',
+      planName,
+    });
+
     const payload = {
       merchantCode: this.merchantCode,
       paymentAmount: nominalTotal,
@@ -270,6 +282,7 @@ export class DuitkuService {
       productDetails,
       email: customerEmail,
       phoneNumber: customerPhone,
+      additionalParam,
       itemDetails: [
         {
           name: planName,
@@ -315,10 +328,106 @@ export class DuitkuService {
         amount: nominalTotal,
         paymentMethod: methodCode,
         statusCode: result.statusCode,
-        message: 'Invoice checkout berhasil diterbitkan via Duitku Sandbox. Silakan selesaikan pembayaran.',
+        message: 'Invoice langganan RT Pro Rp 99.000 berhasil diterbitkan via Duitku.',
       };
     } catch (err: any) {
       this.logger.error(`[DUITKU CHECKOUT ERROR] ${err.message}`, err.stack);
+      throw new BadRequestException(`Gagal menghubungi gateway Duitku: ${err.message}`);
+    }
+  }
+
+  /**
+   * Membuat transaksi Checkout Pasang Iklan Sponsor / Promosi Lapak Warga via Duitku
+   */
+  async createAdsCheckout(dto: {
+    lapakId?: string;
+    productTitle?: string;
+    durasiHari?: number;
+    amount?: number;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    paymentMethodCode?: string;
+  }) {
+    const nominalTotal = Math.round(Number(dto.amount) || 15000);
+    const durasi = Number(dto.durasiHari) || 7;
+    const productTitle = dto.productTitle || 'Produk UMKM Warga';
+    const planName = `Slot Iklan Sponsor (${durasi} Hari) - ${productTitle}`;
+    const customerName = dto.customerName || 'Pelaku Usaha Warga';
+    const customerEmail = dto.customerEmail || 'iklan@rthub.id';
+    const customerPhone = dto.customerPhone || '085155163110';
+    const methodCode = dto.paymentMethodCode || 'SP'; // SP = QRIS
+
+    const merchantOrderId = `ADS-${Date.now()}`;
+    const productDetails = planName;
+
+    const rawSig = `${this.merchantCode}${merchantOrderId}${nominalTotal}${this.apiKey}`;
+    const signature = crypto.createHash('md5').update(rawSig).digest('hex');
+
+    const additionalParam = JSON.stringify({
+      type: 'ADS_SPONSOR',
+      lapakId: dto.lapakId || '',
+      durasiHari: durasi,
+    });
+
+    const payload = {
+      merchantCode: this.merchantCode,
+      paymentAmount: nominalTotal,
+      paymentMethod: methodCode,
+      merchantOrderId,
+      productDetails,
+      email: customerEmail,
+      phoneNumber: customerPhone,
+      additionalParam,
+      itemDetails: [
+        {
+          name: planName,
+          price: nominalTotal,
+          quantity: 1,
+        },
+      ],
+      customerDetail: {
+        firstName: customerName,
+        lastName: '',
+        email: customerEmail,
+        phoneNumber: customerPhone,
+      },
+      callbackUrl: this.callbackUrl,
+      returnUrl: this.returnUrl,
+      signature,
+      expiryPeriod: 1440,
+    };
+
+    try {
+      const response = await fetch(`${this.baseUrl}/merchant/v2/inquiry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      this.logger.log(`[DUITKU ADS CHECKOUT] OrderId: ${merchantOrderId} -> ${JSON.stringify(result)}`);
+
+      if (result.statusCode !== '00') {
+        throw new BadRequestException(
+          `Gagal membuat checkout iklan Duitku: ${result.statusMessage || result.statusCode || 'Respon tidak valid'}`
+        );
+      }
+
+      return {
+        success: true,
+        merchantOrderId,
+        reference: result.reference,
+        paymentUrl: result.paymentUrl,
+        vaNumber: result.vaNumber,
+        qrString: result.qrString,
+        amount: nominalTotal,
+        paymentMethod: methodCode,
+        statusCode: result.statusCode,
+        message: 'Invoice iklan sponsor berhasil diterbitkan via Duitku.',
+      };
+    } catch (err: any) {
+      this.logger.error(`[DUITKU ADS ERROR] ${err.message}`, err.stack);
       throw new BadRequestException(`Gagal menghubungi gateway Duitku: ${err.message}`);
     }
   }
@@ -370,6 +479,41 @@ export class DuitkuService {
     } catch (_) {}
 
     const tagihanId = meta.tagihanId;
+
+    // Handle Subscription RT Pro checkout callback (Probis Akumulasi Durasi)
+    if (merchantOrderId.startsWith('SUB-') || meta.type === 'SUBSCRIPTION_PRO') {
+      const rtId = meta.rtId;
+      if (rtId) {
+        await this.addonsService.updateSubscription(rtId, {
+          status: 'AKTIF',
+          paket: 'PRO',
+          durationDays: 30,
+          updatedBy: 'DUITKU_PAYMENT',
+        });
+        this.logger.log(`[DUITKU SUBSCRIPTION SUCCESS] Langganan RT ${rtId} Pro berhasil diperpanjang (+30 hari akumulatif)!`);
+      }
+      return {
+        status: 'SUCCESS',
+        message: 'Langganan RT Pro berhasil diaktifkan / diperpanjang dengan penambahan durasi.',
+      };
+    }
+
+    // Handle Lapak Ads checkout callback (Probis Akumulasi Durasi)
+    if (merchantOrderId.startsWith('ADS-') || meta.type === 'ADS_SPONSOR') {
+      const lapakId = meta.lapakId;
+      const durasiHari = Number(meta.durasiHari) || 7;
+      if (lapakId) {
+        await this.lapakService.boostProduk(lapakId, { id: 'duitku-gateway' }, {
+          durationDays: durasiHari,
+          packageType: 'DUITKU_ADS',
+        });
+        this.logger.log(`[DUITKU ADS SUCCESS] Iklan lapak ${lapakId} berhasil diperpanjang (+${durasiHari} hari akumulatif)!`);
+      }
+      return {
+        status: 'SUCCESS',
+        message: `Iklan sponsor lapak warga berhasil diaktifkan / diperpanjang (+${durasiHari} hari).`,
+      };
+    }
 
     let transaksi = await this.prisma.transaksiPembayaran.findFirst({
       where: {

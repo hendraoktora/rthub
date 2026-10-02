@@ -8,11 +8,11 @@ export declare class WilayahController {
             rws: number;
         };
     } & {
-        kecamatan: string | null;
-        kota: string | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        kecamatan: string | null;
+        kota: string | null;
         nama: string;
         provinsi: string | null;
         kodePos: string | null;
@@ -23,24 +23,28 @@ export declare class WilayahController {
         };
     } & {
         id: string;
-        kelurahanId: string;
+        nomor: string;
         createdAt: Date;
         updatedAt: Date;
-        nomor: string;
+        kelurahanId: string;
     })[]>;
     getRtByRw(rwId: string): Promise<({
         _count: {
-            rumah: number;
             users: number;
+            rumah: number;
         };
     } & {
+        id: string;
+        nomor: string;
         namaJalan: string | null;
         skDokumenUrl: string | null;
-        id: string;
         rwId: string;
         createdAt: Date;
         updatedAt: Date;
-        nomor: string;
+        namaBank: string | null;
+        nomorRekening: string | null;
+        atasNamaRekening: string | null;
+        qrisImageUrl: string | null;
     })[]>;
     getAllRtSummary(): Promise<{
         id: string;
@@ -74,20 +78,20 @@ export declare class WilayahController {
         rumahList: ({
             kartuKeluarga: ({
                 anggota: {
-                    nik: string | null;
                     id: string;
                     createdAt: Date;
                     updatedAt: Date;
+                    nik: string | null;
                     nama: string;
                     hubungan: string;
                     noHp: string | null;
                     kkId: string;
                 }[];
             } & {
-                noKk: string;
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
+                noKk: string;
                 rumahId: string;
                 namaKepala: string;
                 fotoKkUrl: string | null;
@@ -108,38 +112,38 @@ export declare class WilayahController {
                 paidAt: Date | null;
             }[];
         } & {
-            rtId: string;
-            noRumah: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            rtId: string;
+            noRumah: string;
             alamatLengkap: string | null;
             statusHunian: string | null;
         })[];
         userList: {
             profile: {
-                namaLengkap: string;
-                nik: string | null;
-                skDokumenUrl: string | null;
-                noRumah: string | null;
-                noKk: string | null;
                 id: string;
+                skDokumenUrl: string | null;
                 createdAt: Date;
                 updatedAt: Date;
+                namaLengkap: string;
+                nik: string | null;
+                noRumah: string | null;
+                noKk: string | null;
                 userId: string;
                 avatarUrl: string | null;
                 dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
             };
-            phone: string;
-            email: string | null;
-            rtId: string | null;
             id: string;
-            role: import(".prisma/client").$Enums.Role;
-            isActive: boolean;
-            kelurahanId: string | null;
             rwId: string | null;
             createdAt: Date;
             updatedAt: Date;
+            rtId: string | null;
+            phone: string;
+            email: string | null;
+            role: import(".prisma/client").$Enums.Role;
+            isActive: boolean;
+            kelurahanId: string | null;
         }[];
     }>;
     addWargaToRt(rtId: string, body: {
@@ -155,35 +159,35 @@ export declare class WilayahController {
         message: string;
         user: {
             profile: {
-                namaLengkap: string;
-                nik: string | null;
-                skDokumenUrl: string | null;
-                noRumah: string | null;
-                noKk: string | null;
                 id: string;
+                skDokumenUrl: string | null;
                 createdAt: Date;
                 updatedAt: Date;
+                namaLengkap: string;
+                nik: string | null;
+                noRumah: string | null;
+                noKk: string | null;
                 userId: string;
                 avatarUrl: string | null;
                 dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
             };
-            phone: string;
-            email: string | null;
-            rtId: string | null;
             id: string;
-            role: import(".prisma/client").$Enums.Role;
-            isActive: boolean;
-            kelurahanId: string | null;
             rwId: string | null;
             createdAt: Date;
             updatedAt: Date;
+            rtId: string | null;
+            phone: string;
+            email: string | null;
+            role: import(".prisma/client").$Enums.Role;
+            isActive: boolean;
+            kelurahanId: string | null;
         };
         rumah: {
-            rtId: string;
-            noRumah: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            rtId: string;
+            noRumah: string;
             alamatLengkap: string | null;
             statusHunian: string | null;
         };
@@ -193,28 +197,28 @@ export declare class WilayahController {
         nama: string;
         noRumah: string;
         profile: {
-            namaLengkap: string;
-            nik: string | null;
-            skDokumenUrl: string | null;
-            noRumah: string | null;
-            noKk: string | null;
             id: string;
+            skDokumenUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
+            namaLengkap: string;
+            nik: string | null;
+            noRumah: string | null;
+            noKk: string | null;
             userId: string;
             avatarUrl: string | null;
             dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
         };
-        phone: string;
-        email: string | null;
-        rtId: string | null;
         id: string;
-        role: import(".prisma/client").$Enums.Role;
-        isActive: boolean;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string | null;
+        phone: string;
+        email: string | null;
+        role: import(".prisma/client").$Enums.Role;
+        isActive: boolean;
+        kelurahanId: string | null;
     }[]>;
     addOrUpdatePengurus(rtId: string, body: {
         namaLengkap: string;
@@ -224,40 +228,61 @@ export declare class WilayahController {
         email?: string;
     }): Promise<{
         profile: {
-            namaLengkap: string;
-            nik: string | null;
-            skDokumenUrl: string | null;
-            noRumah: string | null;
-            noKk: string | null;
             id: string;
+            skDokumenUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
+            namaLengkap: string;
+            nik: string | null;
+            noRumah: string | null;
+            noKk: string | null;
             userId: string;
             avatarUrl: string | null;
             dataKeluarga: import("@prisma/client/runtime/library").JsonValue | null;
         };
-        phone: string;
-        email: string | null;
-        rtId: string | null;
         id: string;
-        role: import(".prisma/client").$Enums.Role;
-        isActive: boolean;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
-    }>;
-    deletePengurus(userId: string): Promise<{
+        rtId: string | null;
         phone: string;
         email: string | null;
-        rtId: string | null;
+        role: import(".prisma/client").$Enums.Role;
+        isActive: boolean;
+        kelurahanId: string | null;
+    }>;
+    deletePengurus(userId: string): Promise<{
         id: string;
+        rwId: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        rtId: string | null;
+        phone: string;
+        email: string | null;
         passwordHash: string;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
         kelurahanId: string | null;
-        rwId: string | null;
-        createdAt: Date;
-        updatedAt: Date;
+    }>;
+    getRtRekening(rtId: string): Promise<{
+        id: string;
+        nomor: string;
+        namaBank: string;
+        nomorRekening: string;
+        atasNamaRekening: string;
+        qrisImageUrl: string;
+    }>;
+    updateRtRekening(rtId: string, body: {
+        namaBank?: string;
+        nomorRekening?: string;
+        atasNamaRekening?: string;
+        qrisImageUrl?: string;
+    }): Promise<{
+        id: string;
+        nomor: string;
+        namaBank: string;
+        nomorRekening: string;
+        atasNamaRekening: string;
+        qrisImageUrl: string;
     }>;
 }

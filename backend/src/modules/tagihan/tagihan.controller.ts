@@ -46,8 +46,45 @@ export class TagihanController {
     return this.tagihanService.getTagihanSaya(user);
   }
 
+  @Get('pending-verifikasi')
+  @Roles(Role.BENDAHARA_RT, Role.ADMIN_RT, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Daftar bukti pembayaran iuran warga yang menunggu persetujuan (Khusus Bendahara RT)' })
+  async getPendingVerifikasi(@CurrentUser() user: any) {
+    return this.tagihanService.getPendingVerifikasi(user.rtId);
+  }
+
+  @Get(':id/instruksi')
+  @ApiOperation({ summary: 'Mendapatkan instruksi bayar beserta no rek & QRIS RT' })
+  async getInstruksi(@Param('id') id: string) {
+    return this.tagihanService.getInstruksiBayar(id);
+  }
+
+  @Post(':id/konfirmasi')
+  @ApiOperation({ summary: 'Warga mengonfirmasi pembayaran dan upload bukti transfer / QRIS' })
+  async konfirmasiBayar(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+    @Body() body: { paymentMethod: PaymentMethod; buktiBayarUrl?: string; catatan?: string },
+  ) {
+    return this.tagihanService.konfirmasiBayarWarga(id, user.id, body);
+  }
+
+  @Post(':id/terima-tunai')
+  @Roles(Role.BENDAHARA_RT, Role.ADMIN_RT, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Bendahara menandai tagihan dibayar tunai langsung secara fisik' })
+  async terimaTunai(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.tagihanService.terimaTunai(id, user.id);
+  }
+
+  @Post('transaksi/:transaksiId/approve')
+  @Roles(Role.BENDAHARA_RT, Role.ADMIN_RT, Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Bendahara menyetujui bukti transfer / QRIS warga' })
+  async approveTransaksi(@Param('transaksiId') transaksiId: string, @CurrentUser() user: any) {
+    return this.tagihanService.approveTransaksi(transaksiId, user.id);
+  }
+
   @Post(':id/bayar')
-  @ApiOperation({ summary: 'Bayar tagihan iuran (Split otomatis: Kas RT + Fee Admin)' })
+  @ApiOperation({ summary: 'Simulasi bayar tagihan iuran instan' })
   async bayar(
     @Param('id') id: string,
     @CurrentUser() user: any,

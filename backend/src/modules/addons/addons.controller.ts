@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AddonsService } from './addons.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -52,6 +52,30 @@ export class AddonsController {
   @ApiOperation({ summary: 'Daftar seluruh status langganan Add-Ons RT di sistem (Superadmin)' })
   async getAllRtSubscriptions() {
     return this.addonsService.getAllRtSubscriptions();
+  }
+
+  @Get('summary')
+  @ApiOperation({ summary: 'Ringkasan keanggotaan, status langganan RT, masa aktif, dan iklan sponsor warga' })
+  async getMyMembershipSummary(@CurrentUser() user: any) {
+    return this.addonsService.getMyMembershipAndAdsSummary(user.id, user.rtId);
+  }
+
+  @Post('renew-pro')
+  @ApiOperation({ summary: 'Perpanjang langganan RT Pro (Akumulasi sisa durasi + 30 hari)' })
+  async renewPro(
+    @CurrentUser() user: any,
+    @Body() body: { rtId?: string; durationDays?: number },
+  ) {
+    const targetRtId = body.rtId || user.rtId;
+    if (!targetRtId) {
+      throw new BadRequestException('RT ID diperlukan untuk perpanjangan Pro.');
+    }
+    return this.addonsService.updateSubscription(targetRtId, {
+      status: 'AKTIF',
+      paket: 'PRO',
+      durationDays: body.durationDays || 30,
+      updatedBy: user.phone || user.id,
+    });
   }
 
   @Post('update')

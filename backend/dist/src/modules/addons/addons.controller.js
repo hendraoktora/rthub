@@ -54,6 +54,21 @@ let AddonsController = class AddonsController {
     async getAllRtSubscriptions() {
         return this.addonsService.getAllRtSubscriptions();
     }
+    async getMyMembershipSummary(user) {
+        return this.addonsService.getMyMembershipAndAdsSummary(user.id, user.rtId);
+    }
+    async renewPro(user, body) {
+        const targetRtId = body.rtId || user.rtId;
+        if (!targetRtId) {
+            throw new common_1.BadRequestException('RT ID diperlukan untuk perpanjangan Pro.');
+        }
+        return this.addonsService.updateSubscription(targetRtId, {
+            status: 'AKTIF',
+            paket: 'PRO',
+            durationDays: body.durationDays || 30,
+            updatedBy: user.phone || user.id,
+        });
+    }
     async updateSubscription(user, body) {
         return this.addonsService.updateSubscription(body.rtId, {
             ...body,
@@ -87,6 +102,23 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AddonsController.prototype, "getAllRtSubscriptions", null);
+__decorate([
+    (0, common_1.Get)('summary'),
+    (0, swagger_1.ApiOperation)({ summary: 'Ringkasan keanggotaan, status langganan RT, masa aktif, dan iklan sponsor warga' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AddonsController.prototype, "getMyMembershipSummary", null);
+__decorate([
+    (0, common_1.Post)('renew-pro'),
+    (0, swagger_1.ApiOperation)({ summary: 'Perpanjang langganan RT Pro (Akumulasi sisa durasi + 30 hari)' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AddonsController.prototype, "renewPro", null);
 __decorate([
     (0, common_1.Post)('update'),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),

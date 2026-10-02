@@ -11,12 +11,12 @@ export declare class BeritaController {
             role: import(".prisma/client").$Enums.Role;
         };
     } & {
-        rtId: string | null;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string | null;
+        kelurahanId: string | null;
         judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;
@@ -31,12 +31,12 @@ export declare class BeritaController {
         coverUrl?: string;
         isPinned?: boolean;
     }): Promise<{
-        rtId: string | null;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string | null;
+        kelurahanId: string | null;
         judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;
@@ -51,12 +51,12 @@ export declare class BeritaController {
         coverUrl?: string;
         isPinned?: boolean;
     }): Promise<{
-        rtId: string | null;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string | null;
+        kelurahanId: string | null;
         judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;
@@ -65,12 +65,12 @@ export declare class BeritaController {
         isPinned: boolean;
     }>;
     deleteBerita(id: string, user: any): Promise<{
-        rtId: string | null;
         id: string;
-        kelurahanId: string | null;
         rwId: string | null;
         createdAt: Date;
         updatedAt: Date;
+        rtId: string | null;
+        kelurahanId: string | null;
         judul: string;
         scope: import(".prisma/client").$Enums.ScopeWilayah;
         authorId: string;

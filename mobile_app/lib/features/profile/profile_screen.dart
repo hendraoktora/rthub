@@ -6,6 +6,7 @@ import '../../core/services/api_service.dart';
 import '../../core/services/nik_service.dart';
 import '../../core/utils/image_cache_helper.dart';
 import '../auth/login_screen.dart';
+import '../payment/duitku_payment_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,7 +17,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _user;
+  Map<String, dynamic>? _membershipData;
   bool _isLoading = true;
+  bool _isRenewing = false;
 
   // Preset Avatars for easy profile picture setup
   final List<Map<String, String>> _avatarPresets = [
@@ -65,9 +68,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _loadProfile() async {
     final userData = await ApiService.getUserData();
+    final membership = await ApiService.getMembershipSummary();
     if (mounted) {
       setState(() {
         _user = userData;
+        _membershipData = membership;
         _isLoading = false;
         _initFamilyData();
       });
@@ -396,6 +401,513 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _handleRenewPro() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.workspace_premium_rounded, color: AppTheme.electricBlue),
+            SizedBox(width: 8),
+            Text('Perpanjang RT Pro', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Biaya langganan Paket RT Pro: Rp 99.000 / bulan.',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Sisa durasi aktif Anda saat ini akan diakumulasikan dan ditambah 30 hari penuh secara otomatis.',
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.electricBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Perpanjang (+30 Hari)'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() => _isRenewing = true);
+      try {
+        // 1. Menerbitkan transaksi checkout Duitku
+        final checkout = await ApiService.createSubscriptionCheckout(
+          rtId: _user?['rtId']?.toString(),
+          planName: 'Paket RT Pro (Langganan 1 Bulan)',
+          amount: 99000,
+          customerName: _user?['profile']?['namaLengkap'] ?? _user?['phone'],
+          customerPhone: _user?['phone'],
+          customerEmail: _user?['email'],
+        );
+
+        final payUrl = checkout['paymentUrl']?.toString();
+        if (payUrl != null && payUrl.isNotEmpty && mounted) {
+          await Navigator.of(context).push(
+            MaterialPageRoute<bool>(
+              builder: (_) => DuitkuPaymentScreen(
+                paymentUrl: payUrl,
+                title: 'Perpanjangan RT Pro',
+                amount: 99000,
+              ),
+            ),
+          );
+        }
+
+        // 2. Perpanjang status di database backend
+        await ApiService.renewRtPro(durationDays: 30);
+        _loadProfile();
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('✅ Transaksi RT Pro selesai diproses! Masa aktif RT Pro otomatis bertambah (+30 hari).'),
+            backgroundColor: AppTheme.successGreen,
+          ),
+        );
+      } catch (e) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('⚠️ $e'), backgroundColor: AppTheme.alertRed),
+        );
+      } finally {
+        if (mounted) setState(() => _isRenewing = false);
+      }
+    }
+  }
+
+  void _handleRenewAd(String lapakId, String judul) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.campaign_rounded, color: Colors.deepPurple),
+            SizedBox(width: 8),
+            Expanded(child: Text('Perpanjang Iklan Sponsor', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Produk: $judul', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text(
+              'Tambah durasi masa tayang iklan sebesar +7 hari via Duitku. Sisa durasi yang sedang berjalan akan diakumulasikan secara otomatis.',
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurple,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Bayar Duitku (+7 Hari)'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() => _isRenewing = true);
+      try {
+        // 1. Menerbitkan transaksi checkout iklan Duitku
+        final checkout = await ApiService.createAdsCheckout(
+          lapakId: lapakId,
+          productTitle: judul,
+          durasiHari: 7,
+          amount: 15000,
+          customerName: _user?['profile']?['namaLengkap'] ?? _user?['phone'],
+          customerPhone: _user?['phone'],
+          customerEmail: _user?['email'],
+        );
+
+        final payUrl = checkout['paymentUrl']?.toString();
+        if (payUrl != null && payUrl.isNotEmpty && mounted) {
+          await Navigator.of(context).push(
+            MaterialPageRoute<bool>(
+              builder: (_) => DuitkuPaymentScreen(
+                paymentUrl: payUrl,
+                title: 'Perpanjangan Iklan Sponsor',
+                amount: 15000,
+              ),
+            ),
+          );
+        }
+
+        // 2. Perpanjang durasi iklan di backend
+        await ApiService.renewLapakAd(lapakId, durationDays: 7);
+        _loadProfile();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('✅ Transaksi iklan "$judul" selesai! Masa tayang bertambah (+7 hari).'),
+            backgroundColor: AppTheme.successGreen,
+          ),
+        );
+      } catch (e) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('⚠️ $e'), backgroundColor: AppTheme.alertRed),
+        );
+      } finally {
+        if (mounted) setState(() => _isRenewing = false);
+      }
+    }
+  }
+
+  Widget _buildMembershipSubscriptionCard(String role, String rtNomor, String rwNomor) {
+    final isPengurus = const {
+      'ADMIN_RT',
+      'KETUA_RT',
+      'BENDAHARA_RT',
+      'BENDAHARA',
+      'SEKRETARIS',
+      'SUPERADMIN',
+    }.contains(role);
+
+    final sub = _membershipData?['subscription'];
+    final isPro = sub?['isPro'] == true;
+    final expiredAtStr = sub?['expiredAt']?.toString();
+    DateTime? expiredAt = expiredAtStr != null ? DateTime.tryParse(expiredAtStr) : null;
+    final sisaHari = sub?['sisaHari'] ?? 0;
+    final isExpiringSoon = sub?['isExpiringSoon'] == true;
+    final isExpired = sub?['isExpired'] == true;
+
+    final bulanNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    final formattedExp = expiredAt != null
+        ? '${expiredAt.day} ${bulanNames[expiredAt.month]} ${expiredAt.year}'
+        : 'Tidak Terbatas';
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isExpiringSoon
+              ? AppTheme.warningAmber.withValues(alpha: 0.6)
+              : (isExpired ? AppTheme.alertRed.withValues(alpha: 0.6) : const Color(0xFFE2E8F0)),
+          width: isExpiringSoon || isExpired ? 1.5 : 1,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x060F172A),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: (isPro ? AppTheme.electricBlue : Colors.grey.shade600).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      isPro ? Icons.workspace_premium_rounded : Icons.account_circle_outlined,
+                      color: isPro ? AppTheme.electricBlue : Colors.grey.shade700,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isPengurus
+                            ? (isPro ? 'RTHub Pro (Pengurus RT)' : 'RTHub Basic (Pengurus RT)')
+                            : 'Akun Warga RT $rtNomor',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                      ),
+                      Text(
+                        isPengurus ? 'Paket Layanan Lingkungan RT' : 'Warga Terdaftar di RW $rwNomor',
+                        style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isPro
+                      ? (isExpiringSoon
+                          ? AppTheme.warningAmber.withValues(alpha: 0.12)
+                          : AppTheme.successGreen.withValues(alpha: 0.12))
+                      : (isExpired
+                          ? AppTheme.alertRed.withValues(alpha: 0.12)
+                          : Colors.grey.shade100),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  isPro
+                      ? (isExpiringSoon ? '⚠️ Sisa $sisaHari Hari' : '✓ AKTIF')
+                      : (isExpired ? '✕ KEDALUWARSA' : 'GRATIS'),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: isPro
+                        ? (isExpiringSoon ? AppTheme.warningAmber : AppTheme.successGreen)
+                        : (isExpired ? AppTheme.alertRed : Colors.grey.shade700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24, color: Color(0xFFF1F5F9)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Masa Aktif Layanan', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  const SizedBox(height: 2),
+                  Text(
+                    isPengurus ? (isPro ? formattedExp : 'Masa aktif habis') : 'Aktif Selamanya',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text('Sisa Durasi', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  const SizedBox(height: 2),
+                  Text(
+                    isPengurus ? (isPro ? '$sisaHari Hari Tersisa' : '0 Hari') : 'Tanpa Batas',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: isExpiringSoon ? AppTheme.warningAmber : AppTheme.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (isPengurus) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.electricBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                ),
+                onPressed: _isRenewing ? null : _handleRenewPro,
+                icon: _isRenewing
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.autorenew_rounded, size: 18),
+                label: Text(
+                  _isRenewing ? 'Memproses...' : 'Perpanjang Masa Aktif (Rp 99.000 / bln)',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              '💡 Sisa hari Anda saat ini akan diakumulasikan dan ditambah 30 hari penuh.',
+              style: TextStyle(fontSize: 10, color: AppTheme.textSecondary, fontStyle: FontStyle.italic),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserSponsoredAdsCard() {
+    final ads = _membershipData?['userAds'] as List<dynamic>? ?? [];
+    if (ads.isEmpty) return const SizedBox.shrink();
+
+    final bulanNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.deepPurple.withValues(alpha: 0.3)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x060F172A),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.campaign_rounded, color: Colors.deepPurple, size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    'Iklan Sponsor Lapak Saya',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${ads.length} Produk',
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20, color: Color(0xFFF1F5F9)),
+          ...ads.map((ad) {
+            final judul = ad['judul']?.toString() ?? 'Produk Warga';
+            final isPromoted = ad['isPromoted'] == true;
+            final sisaHari = ad['sisaHariIklan'] ?? 0;
+            final isExpiringSoon = ad['isExpiringSoon'] == true;
+            final expStr = ad['promotedUntil']?.toString();
+            final expDate = expStr != null ? DateTime.tryParse(expStr) : null;
+            final formattedExp = expDate != null
+                ? '${expDate.day} ${bulanNames[expDate.month]} ${expDate.year}'
+                : '-';
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isExpiringSoon
+                      ? AppTheme.warningAmber.withValues(alpha: 0.5)
+                      : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          judul,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isPromoted
+                              ? (isExpiringSoon ? AppTheme.warningAmber.withValues(alpha: 0.15) : Colors.deepPurple.withValues(alpha: 0.15))
+                              : Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          isPromoted ? (isExpiringSoon ? '⚠️ Sisa $sisaHari Hari' : '🚀 Prioritas Aktif') : 'Masa Tayang Habis',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isPromoted
+                                ? (isExpiringSoon ? AppTheme.warningAmber : Colors.deepPurple)
+                                : Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Tayang s/d: $formattedExp ($sisaHari hari)',
+                        style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                      ),
+                      InkWell(
+                        onTap: _isRenewing ? null : () => _handleRenewAd(ad['id'].toString(), judul),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.more_time_rounded, color: Colors.white, size: 12),
+                              SizedBox(width: 4),
+                              Text(
+                                '+7 Hari',
+                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+          const Text(
+            '💡 Tambah durasi iklan akan mengakumulasikan durasi baru ke sisa masa tayang saat ini.',
+            style: TextStyle(fontSize: 10, color: AppTheme.textSecondary, fontStyle: FontStyle.italic),
+          ),
+        ],
       ),
     );
   }
@@ -1170,6 +1682,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+
+              // Card Status Akun, Durasi Langganan & Masa Aktif
+              _buildMembershipSubscriptionCard(role, rtNomor, rwNomor),
+
+              // Card Iklan Sponsor Lapak Warga (Jika ada produk dipromosikan)
+              _buildUserSponsoredAdsCard(),
 
               // Data Kependudukan Section
               Row(

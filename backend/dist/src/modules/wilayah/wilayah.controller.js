@@ -51,6 +51,12 @@ let WilayahController = class WilayahController {
     async deletePengurus(userId) {
         return this.wilayahService.deletePengurus(userId);
     }
+    async getRtRekening(rtId) {
+        return this.wilayahService.getRtRekening(rtId);
+    }
+    async updateRtRekening(rtId, body) {
+        return this.wilayahService.updateRtRekening(rtId, body);
+    }
 };
 exports.WilayahController = WilayahController;
 __decorate([
@@ -138,6 +144,26 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], WilayahController.prototype, "deletePengurus", null);
+__decorate([
+    (0, common_1.Get)('rt/:rtId/rekening'),
+    (0, swagger_1.ApiOperation)({ summary: 'Mendapatkan informasi rekening bank dan QRIS RT' }),
+    __param(0, (0, common_1.Param)('rtId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], WilayahController.prototype, "getRtRekening", null);
+__decorate([
+    (0, common_1.Post)('rt/:rtId/rekening'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN_RT, client_1.Role.BENDAHARA_RT, client_1.Role.SUPERADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Ubah informasi rekening dan QRIS RT (Khusus Bendahara RT & Ketua RT)' }),
+    __param(0, (0, common_1.Param)('rtId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], WilayahController.prototype, "updateRtRekening", null);
 exports.WilayahController = WilayahController = __decorate([
     (0, swagger_1.ApiTags)('Wilayah (Hierarki Kelurahan, RW, RT & Manajemen Warga & Pengurus)'),
     (0, common_1.Controller)('api/wilayah'),

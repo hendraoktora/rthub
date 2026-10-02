@@ -32,9 +32,27 @@ export class PaymentController {
   }
 
   @Post('checkout-subscription')
-  @ApiOperation({ summary: 'Menerbitkan Checkout Pembayaran Langganan Paket RT Pro / Add-ons via Duitku' })
+  @ApiOperation({ summary: 'Menerbitkan Checkout Pembayaran Langganan Paket RT Pro Rp 99.000 via Duitku' })
   async checkoutSubscription(@Body() body: any) {
     return this.duitkuService.createSubscriptionCheckout(body);
+  }
+
+  @Post('duitku/subscription')
+  @ApiOperation({ summary: 'Alias Menerbitkan Checkout Pembayaran Langganan Paket RT Pro Rp 99.000 via Duitku' })
+  async duitkuSubscription(@Body() body: any) {
+    return this.duitkuService.createSubscriptionCheckout(body);
+  }
+
+  @Post('checkout-ads')
+  @ApiOperation({ summary: 'Menerbitkan Checkout Pembayaran Iklan Sponsor / Promosi Lapak Warga via Duitku' })
+  async checkoutAds(@Body() body: any) {
+    return this.duitkuService.createAdsCheckout(body);
+  }
+
+  @Post('duitku/ads')
+  @ApiOperation({ summary: 'Alias Menerbitkan Checkout Pembayaran Iklan Sponsor / Promosi Lapak Warga via Duitku' })
+  async duitkuAds(@Body() body: any) {
+    return this.duitkuService.createAdsCheckout(body);
   }
 
   @Post('create-invoice')

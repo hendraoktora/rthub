@@ -21,7 +21,10 @@ import {
   AlertCircle,
   Loader2,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Crown,
+  Clock,
+  Megaphone
 } from 'lucide-react';
 import { api, UserSession } from '../services/api';
 import { showAlert } from '../services/swal';
@@ -34,11 +37,15 @@ interface DashboardProps {
 export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
   const [kasData, setKasData] = useState<{
     saldoKas: number;
+    saldoKasTunai: number;
+    saldoKasBank: number;
     totalPemasukan: number;
     totalPengeluaran: number;
     recentTransactions: any[];
   }>({
     saldoKas: 0,
+    saldoKasTunai: 0,
+    saldoKasBank: 0,
     totalPemasukan: 0,
     totalPengeluaran: 0,
     recentTransactions: [],
@@ -50,9 +57,12 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [filterType, setFilterType] = useState<'ALL' | 'PEMASUKAN' | 'PENGELUARAN'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [membershipSummary, setMembershipSummary] = useState<any>(null);
+  const [isRenewing, setIsRenewing] = useState(false);
 
   const [newMutasi, setNewMutasi] = useState({
     tipe: 'PENGELUARAN',
+    metodeKas: 'BANK',
     kategori: 'Perbaikan Fasilitas & Lampu PJU',
     nominal: '',
     keterangan: '',
@@ -72,8 +82,40 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
     }
   };
 
+  const loadMembership = async () => {
+    try {
+      const data = await api.getMembershipSummary();
+      setMembershipSummary(data);
+    } catch (e) {
+      console.error('Error fetching membership summary:', e);
+    }
+  };
+
+  const handleRenewPro = async () => {
+    const sisa = membershipSummary?.subscription?.sisaHari || 0;
+    const confirm = window.confirm(
+      `Perpanjang Langganan RTHub Pro (Rp 99.000 / Bulan)?\n\nSisa durasi aktif Anda (${sisa} hari) akan diakumulasikan dan ditambah 30 hari penuh secara otomatis.`
+    );
+    if (!confirm) return;
+
+    setIsRenewing(true);
+    try {
+      await api.renewRtPro(30);
+      showAlert.success(
+        'Langganan Diperpanjang!',
+        'Masa aktif RTHub Pro Anda berhasil diperpanjang (+30 hari akumulatif).'
+      );
+      loadMembership();
+    } catch (err: any) {
+      showAlert.error('Gagal Memperpanjang', err.message || 'Terjadi kesalahan sistem.');
+    } finally {
+      setIsRenewing(false);
+    }
+  };
+
   useEffect(() => {
     loadKasSummary();
+    loadMembership();
   }, [user]);
 
   const handleCatatKas = async (e: React.FormEvent) => {
@@ -89,14 +131,16 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
         newMutasi.noBuktiNota ? ` [Nota: ${newMutasi.noBuktiNota}]` : ''
       } (PIC: ${newMutasi.picPengurus})`;
 
-      await api.catatKas({
+      await (api.catatKas as any)({
         tipe: newMutasi.tipe,
         kategori: newMutasi.kategori,
         nominal: Number(newMutasi.nominal),
         keterangan: keteranganFull,
+        metodeKas: newMutasi.metodeKas,
       });
 
       setShowModal(false);
+      loadKasSummary();
       const isOut = newMutasi.tipe === 'PENGELUARAN';
       showAlert.success(
         'Berhasil Dicatat!',
@@ -106,6 +150,7 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
       );
       setNewMutasi({
         tipe: 'PENGELUARAN',
+        metodeKas: 'BANK',
         kategori: 'Perbaikan Fasilitas & Lampu PJU',
         nominal: '',
         keterangan: '',
@@ -196,6 +241,7 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
             onClick={() => {
               setNewMutasi({
                 tipe: 'PENGELUARAN',
+                metodeKas: 'BANK',
                 kategori: 'Perbaikan Fasilitas & Lampu PJU',
                 nominal: '',
                 keterangan: '',
@@ -214,6 +260,7 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
             onClick={() => {
               setNewMutasi({
                 tipe: 'PEMASUKAN',
+                metodeKas: 'BANK',
                 kategori: 'Iuran Warga',
                 nominal: '',
                 keterangan: '',
@@ -229,10 +276,136 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
         </div>
       </div>
 
+      {/* Banner Peringatan Kadaluwarsa / Sisa Hari Langganan & Iklan */}
+      {membershipSummary?.alerts && membershipSummary.alerts.length > 0 && (
+        <div className="space-y-3">
+          {membershipSummary.alerts.map((alert: any) => {
+            const isDanger = alert.severity === 'danger';
+            const isSub = alert.type === 'SUBSCRIPTION';
+            return (
+              <div
+                key={alert.id}
+                className={`p-4 rounded-2xl border flex items-center justify-between gap-4 transition shadow-sm ${
+                  isDanger
+                    ? 'bg-rose-50 border-rose-200 text-rose-900'
+                    : isSub
+                    ? 'bg-amber-50 border-amber-200 text-amber-900'
+                    : 'bg-purple-50 border-purple-200 text-purple-900'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      isDanger
+                        ? 'bg-rose-100 text-rose-600'
+                        : isSub
+                        ? 'bg-amber-100 text-amber-600'
+                        : 'bg-purple-100 text-purple-600'
+                    }`}
+                  >
+                    {isSub ? <Clock size={20} /> : <Megaphone size={20} />}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold">{alert.title}</h4>
+                    <p className="text-xs text-slate-700 mt-0.5">{alert.message}</p>
+                  </div>
+                </div>
+                {isSub && (
+                  <button
+                    onClick={handleRenewPro}
+                    disabled={isRenewing}
+                    className="shrink-0 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition"
+                  >
+                    {isRenewing ? 'Memproses...' : alert.actionText}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Card Info Status Akun, Durasi Langganan & Masa Aktif */}
+      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-6 rounded-2xl shadow-md border border-slate-800">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center shrink-0 shadow-lg">
+              <Crown size={26} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <span className="text-base font-extrabold tracking-wide">
+                  {membershipSummary?.subscription?.isPro
+                    ? 'RTHub Pro (Pengurus RT Komunitas)'
+                    : 'RTHub Basic (Pengurus RT)'}
+                </span>
+                <span
+                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                    membershipSummary?.subscription?.isPro
+                      ? membershipSummary?.subscription?.isExpiringSoon
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                  }`}
+                >
+                  {membershipSummary?.subscription?.isPro
+                    ? membershipSummary?.subscription?.isExpiringSoon
+                      ? `⚠️ Sisa ${membershipSummary?.subscription?.sisaHari} Hari`
+                      : '✓ AKTIF'
+                    : '✕ KEDALUWARSA'}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-slate-300">
+                <span>
+                  📅 Masa Aktif: <strong className="text-white">
+                    {membershipSummary?.subscription?.expiredAt
+                      ? new Date(membershipSummary.subscription.expiredAt).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })
+                      : 'Belum aktif / masa habis'}
+                  </strong>
+                </span>
+                <span>•</span>
+                <span>
+                  ⏳ Sisa Durasi: <strong className={membershipSummary?.subscription?.isExpiringSoon ? 'text-amber-300 font-bold' : 'text-white'}>
+                    {membershipSummary?.subscription?.sisaHari || 0} Hari
+                  </strong>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={handleRenewPro}
+              disabled={isRenewing}
+              className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-extrabold shadow-md transition flex items-center gap-2"
+            >
+              {isRenewing ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Memproses...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={15} />
+                  <span>Perpanjang Pro (Rp 99.000 / bln)</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+        <p className="mt-3 text-[11px] text-slate-400 italic">
+          💡 Fitur Akumulasi Otomatis: Saat perpanjang langganan, sisa durasi yang sedang aktif akan diakumulasikan dan ditambah 30 hari baru.
+        </p>
+      </div>
+
       {/* Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Saldo Kas RT</span>
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
               <Wallet size={20} />
@@ -241,9 +414,16 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
           <h3 className="text-2xl font-extrabold text-slate-900">
             Rp {kasData.saldoKas.toLocaleString('id-ID')}
           </h3>
-          <p className="text-xs text-emerald-600 font-medium flex items-center gap-1 mt-2">
-            <CheckCircle2 size={13} /> Saldo Berjalan Siap Pakai
-          </p>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-col gap-1 text-[11px]">
+            <div className="flex justify-between items-center text-slate-600">
+              <span>💵 Kas Tunai (Fisik):</span>
+              <span className="font-bold text-slate-900">Rp {(kasData.saldoKasTunai || 0).toLocaleString('id-ID')}</span>
+            </div>
+            <div className="flex justify-between items-center text-blue-600">
+              <span>🏦 Kas Bank / QRIS:</span>
+              <span className="font-bold text-blue-700">Rp {(kasData.saldoKasBank || 0).toLocaleString('id-ID')}</span>
+            </div>
+          </div>
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -474,6 +654,34 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
                       </>
                     )}
                   </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 block mb-1">Metode Penyimpanan Kas *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewMutasi({ ...newMutasi, metodeKas: 'BANK' })}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                      newMutasi.metodeKas === 'BANK'
+                        ? 'bg-blue-50 border-blue-500 text-blue-700'
+                        : 'bg-slate-50 border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    🏦 Rekening / QRIS
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewMutasi({ ...newMutasi, metodeKas: 'TUNAI' })}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                      newMutasi.metodeKas === 'TUNAI'
+                        ? 'bg-amber-50 border-amber-500 text-amber-700'
+                        : 'bg-slate-50 border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    💵 Uang Tunai (Fisik)
+                  </button>
                 </div>
               </div>
 

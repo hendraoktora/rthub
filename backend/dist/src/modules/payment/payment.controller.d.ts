@@ -31,6 +31,42 @@ export declare class PaymentController {
         statusCode: any;
         message: string;
     }>;
+    duitkuSubscription(body: any): Promise<{
+        success: boolean;
+        merchantOrderId: string;
+        reference: any;
+        paymentUrl: any;
+        vaNumber: any;
+        qrString: any;
+        amount: number;
+        paymentMethod: string;
+        statusCode: any;
+        message: string;
+    }>;
+    checkoutAds(body: any): Promise<{
+        success: boolean;
+        merchantOrderId: string;
+        reference: any;
+        paymentUrl: any;
+        vaNumber: any;
+        qrString: any;
+        amount: number;
+        paymentMethod: string;
+        statusCode: any;
+        message: string;
+    }>;
+    duitkuAds(body: any): Promise<{
+        success: boolean;
+        merchantOrderId: string;
+        reference: any;
+        paymentUrl: any;
+        vaNumber: any;
+        qrString: any;
+        amount: number;
+        paymentMethod: string;
+        statusCode: any;
+        message: string;
+    }>;
     createInvoice(userId: string, dto: CreateInvoiceDto): Promise<{
         success: boolean;
         isSimulation: boolean;

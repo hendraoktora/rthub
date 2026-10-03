@@ -1,30 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Wallet, 
-  ArrowDownRight, 
   ArrowUpRight, 
-  CheckCircle2, 
-  RefreshCw, 
-  Plus, 
+  ArrowDownRight, 
   Calendar, 
   Search, 
-  FileText, 
   Share2, 
-  Printer, 
   ShieldCheck, 
-  Paperclip, 
   Check, 
-  X,
-  MessageCircle,
-  TrendingDown,
-  TrendingUp,
-  AlertCircle,
-  Loader2,
+  MessageCircle, 
+  TrendingUp, 
+  Loader2, 
+  Crown, 
+  Clock, 
+  Megaphone,
+  ArrowUp,
+  ArrowDown,
+  CreditCard,
+  Building,
+  CheckCircle2,
+  Users,
+  Receipt,
+  FileText,
   Copy,
-  ExternalLink,
-  Crown,
-  Clock,
-  Megaphone
+  ChevronDown,
+  BarChart3,
+  Sparkles,
+  QrCode
 } from 'lucide-react';
 import { api, UserSession } from '../services/api';
 import { showAlert } from '../services/swal';
@@ -59,6 +60,7 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [membershipSummary, setMembershipSummary] = useState<any>(null);
   const [isRenewing, setIsRenewing] = useState(false);
+  const [timeView, setTimeView] = useState<'monthly' | 'annually'>('monthly');
 
   const [newMutasi, setNewMutasi] = useState({
     tipe: 'PENGELUARAN',
@@ -165,7 +167,7 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
     }
   };
 
-  const rtLabel = user?.wilayah || 'Lingkungan RT Aktif';
+  const rtLabel = user?.wilayah || 'RT 03 / RW 05';
 
   // Format Broadcast WA message for Transparansi Warga
   const waBroadcastText = `*📢 LAPORAN TRANSPARANSI KAS ${rtLabel.toUpperCase()}*\n\n` +
@@ -189,54 +191,49 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
     return matchType && matchSearch;
   });
 
+  const getGreetingName = () => {
+    if (!user?.name) return 'Pengurus RT';
+    return user.name.split(' ')[0];
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Top Banner & Action Controls */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+    <div className="space-y-6 max-w-[1440px] mx-auto pb-10">
+      {/* SVG Definitions for Striped Bar Chart Patterns */}
+      <svg className="absolute w-0 h-0 overflow-hidden" aria-hidden="true">
+        <defs>
+          <pattern id="greenStripes" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="10" stroke="#94DFC0" strokeWidth="4.5" />
+            <line x1="5" y1="0" x2="5" y2="10" stroke="#DCFCE7" strokeWidth="5.5" />
+          </pattern>
+          <linearGradient id="areaCurveGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#34D399" stopOpacity="0.4" />
+            <stop offset="85%" stopColor="#10B981" stopOpacity="0.03" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      {/* Top Greeting & Controls Row (matches reference) */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-bold text-slate-900">Buku Kas & Arus Keuangan ({rtLabel})</h3>
-            <span className="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-full flex items-center gap-1">
-              <ShieldCheck size={12} /> Audit Terbuka
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Setiap pengeluaran kas tercatat dengan nota dan otomatis terpublikasikan transparan ke aplikasi seluruh warga
+          <h1 className="text-2xl sm:text-3xl font-semibold text-slate-800 tracking-tight">
+            Welcome Back, <span className="font-bold text-slate-900">{getGreetingName()}</span>
+          </h1>
+          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 font-medium">
+            <ShieldCheck size={14} className="text-emerald-600" />
+            <span>Sistem Operasional Digital Kas Lingkungan ({rtLabel})</span>
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Refresh */}
-          <button
-            onClick={loadKasSummary}
-            disabled={isLoading}
-            className="p-2.5 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-bold border border-slate-200 flex items-center gap-1.5 transition"
-            title="Refresh Saldo"
-          >
-            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-          </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Date Picker Pill (matches reference) */}
+          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] text-xs font-semibold text-slate-700">
+            <Calendar size={14} className="text-slate-400" />
+            <span>01 Okt, 2026 - 31 Okt, 2026</span>
+            <ChevronDown size={14} className="text-slate-400 ml-1" />
+          </div>
 
-          {/* Broadcast WA Transparansi */}
-          <a
-            href={`https://wa.me/?text=${encodeURIComponent(waBroadcastText)}`}
-            target="_blank"
-            rel="noreferrer"
-            className="px-3.5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
-            title="Bagikan Ringkasan Kas ke Grup WhatsApp Warga"
-          >
-            <MessageCircle size={15} /> <span>Broadcast LPJ Kas</span>
-          </a>
-
-          {/* Sebar Undangan Warga ke WA */}
-          <button
-            onClick={() => setShowInviteModal(true)}
-            className="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
-            title="Sebar Undangan Pendaftaran Warga ke WhatsApp"
-          >
-            <Share2 size={15} /> <span>Sebar Undangan Warga (WA)</span>
-          </button>
-
-          {/* Catat Pengeluaran / Kas */}
+          {/* Action Button "+ Catat Mutasi Kas" */}
           <button
             onClick={() => {
               setNewMutasi({
@@ -250,515 +247,801 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
               });
               setShowModal(true);
             }}
-            className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+            className="flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 text-slate-800 rounded-full border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] text-xs font-bold transition hover:border-emerald-600"
           >
-            <ArrowUpRight size={16} /> - Catat Pengeluaran Kas
+            <span>+ Catat Mutasi Kas</span>
           </button>
 
-          {/* Catat Pemasukan */}
-          <button
-            onClick={() => {
-              setNewMutasi({
-                tipe: 'PEMASUKAN',
-                metodeKas: 'BANK',
-                kategori: 'Iuran Warga',
-                nominal: '',
-                keterangan: '',
-                picPengurus: user?.name || 'Bendahara RT',
-                noBuktiNota: '',
-              });
-              setShowModal(true);
-            }}
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+          {/* Broadcast WA Pill */}
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(waBroadcastText)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#065F46] hover:bg-emerald-800 text-white rounded-full shadow-sm text-xs font-bold transition"
+            title="Bagikan Ringkasan Kas ke Grup WhatsApp Warga"
           >
-            <Plus size={16} /> + Kas Masuk
+            <MessageCircle size={14} />
+            <span>Broadcast LPJ WA</span>
+          </a>
+
+          {/* Sebar Undangan Warga Pill */}
+          <button
+            onClick={() => setShowInviteModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200 text-xs font-bold transition"
+          >
+            <Share2 size={14} />
+            <span>Undang Warga</span>
           </button>
         </div>
       </div>
 
-      {/* Banner Peringatan Kadaluwarsa / Sisa Hari Langganan & Iklan */}
+      {/* Subscription Alert Banner if Expiring */}
       {membershipSummary?.alerts && membershipSummary.alerts.length > 0 && (
-        <div className="space-y-3">
-          {membershipSummary.alerts.map((alert: any) => {
-            const isDanger = alert.severity === 'danger';
-            const isSub = alert.type === 'SUBSCRIPTION';
-            return (
-              <div
-                key={alert.id}
-                className={`p-4 rounded-2xl border flex items-center justify-between gap-4 transition shadow-sm ${
-                  isDanger
-                    ? 'bg-rose-50 border-rose-200 text-rose-900'
-                    : isSub
-                    ? 'bg-amber-50 border-amber-200 text-amber-900'
-                    : 'bg-purple-50 border-purple-200 text-purple-900'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      isDanger
-                        ? 'bg-rose-100 text-rose-600'
-                        : isSub
-                        ? 'bg-amber-100 text-amber-600'
-                        : 'bg-purple-100 text-purple-600'
-                    }`}
-                  >
-                    {isSub ? <Clock size={20} /> : <Megaphone size={20} />}
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold">{alert.title}</h4>
-                    <p className="text-xs text-slate-700 mt-0.5">{alert.message}</p>
-                  </div>
+        <div className="space-y-2">
+          {membershipSummary.alerts.map((alert: any) => (
+            <div
+              key={alert.id}
+              className="p-3.5 rounded-2xl border border-amber-200 bg-amber-50/90 text-amber-900 flex items-center justify-between gap-4 shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-amber-200/80 text-amber-800 flex items-center justify-center shrink-0">
+                  <Clock size={16} />
                 </div>
-                {isSub && (
-                  <button
-                    onClick={handleRenewPro}
-                    disabled={isRenewing}
-                    className="shrink-0 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition"
-                  >
-                    {isRenewing ? 'Memproses...' : alert.actionText}
-                  </button>
-                )}
+                <div>
+                  <h4 className="text-xs font-bold">{alert.title}</h4>
+                  <p className="text-[11px] text-amber-800">{alert.message}</p>
+                </div>
               </div>
-            );
-          })}
+              <button
+                onClick={handleRenewPro}
+                disabled={isRenewing}
+                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-full text-xs font-bold shadow-sm transition shrink-0"
+              >
+                {isRenewing ? 'Memproses...' : alert.actionText}
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Card Info Status Akun, Durasi Langganan & Masa Aktif */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-6 rounded-2xl shadow-md border border-slate-800">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center shrink-0 shadow-lg">
-              <Crown size={26} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <span className="text-base font-extrabold tracking-wide">
-                  {membershipSummary?.subscription?.isPro
-                    ? 'RTHub Pro (Pengurus RT Komunitas)'
-                    : 'RTHub Basic (Pengurus RT)'}
-                </span>
-                <span
-                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                    membershipSummary?.subscription?.isPro
-                      ? membershipSummary?.subscription?.isExpiringSoon
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                  }`}
-                >
-                  {membershipSummary?.subscription?.isPro
-                    ? membershipSummary?.subscription?.isExpiringSoon
-                      ? `⚠️ Sisa ${membershipSummary?.subscription?.sisaHari} Hari`
-                      : '✓ AKTIF'
-                    : '✕ KEDALUWARSA'}
-                </span>
+      {/* ============================================================== */}
+      {/* MAIN BENTO GRID (Matches Pinterest: Card 1, Card 2, Cards 3&4) */}
+      {/* ============================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        {/* ================= CARD 1: KAS RT DIGITAL CARD (Col 4) ================= */}
+        <div className="lg:col-span-4 bg-white rounded-[26px] p-6 border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Kas RT Digital</h3>
+                <p className="text-[11px] text-slate-400">Total saldo berjalan</p>
               </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-slate-300">
-                <span>
-                  📅 Masa Aktif: <strong className="text-white">
-                    {membershipSummary?.subscription?.expiredAt
-                      ? new Date(membershipSummary.subscription.expiredAt).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })
-                      : 'Belum aktif / masa habis'}
-                  </strong>
-                </span>
-                <span>•</span>
-                <span>
-                  ⏳ Sisa Durasi: <strong className={membershipSummary?.subscription?.isExpiringSoon ? 'text-amber-300 font-bold' : 'text-white'}>
-                    {membershipSummary?.subscription?.sisaHari || 0} Hari
-                  </strong>
-                </span>
+              <button
+                onClick={() => {
+                  setNewMutasi({
+                    tipe: 'PEMASUKAN',
+                    metodeKas: 'BANK',
+                    kategori: 'Iuran Warga',
+                    nominal: '',
+                    keterangan: '',
+                    picPengurus: user?.name || 'Bendahara RT',
+                    noBuktiNota: '',
+                  });
+                  setShowModal(true);
+                }}
+                className="w-8 h-8 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-800 flex items-center justify-center transition"
+                title="Tambah Kas Masuk"
+              >
+                <ArrowUpRight size={15} />
+              </button>
+            </div>
+
+            {/* Forest Green Debit Card Mockup (Matches Pinterest Reference) */}
+            <div className="w-full rounded-2xl p-5 text-white bg-gradient-to-br from-[#065F46] via-[#047857] to-[#087252] shadow-lg shadow-emerald-900/20 relative overflow-hidden transition-transform duration-300 hover:scale-[1.01]">
+              {/* Background Geometric Watermark Accent */}
+              <div className="absolute -right-10 -bottom-10 w-44 h-44 rounded-full bg-white/5 pointer-events-none" />
+              <div className="absolute right-6 top-6 w-20 h-20 rounded-full bg-white/5 pointer-events-none" />
+
+              <div className="flex items-center justify-between mb-4 relative z-10">
+                <span className="text-xs font-black tracking-widest text-emerald-100">KAS RT-HUB</span>
+                <span className="text-sm font-bold tracking-widest opacity-80">)))</span>
+              </div>
+
+              <div className="mb-4 relative z-10">
+                <p className="text-[10px] text-emerald-200/90 font-medium">Kas Utama Lingkungan</p>
+                <h2 className="text-2xl font-black tracking-tight text-white mt-0.5">
+                  Rp {kasData.saldoKas.toLocaleString('id-ID')}
+                </h2>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] font-mono tracking-wider text-emerald-100/90 pt-1 border-t border-emerald-600/40 relative z-10">
+                <span>•••• 882901</span>
+                <span className="text-[9px] uppercase font-bold text-emerald-200">EXP ACTIVE</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Under-Card Metric (Weekly/Monthly Revenue) */}
+          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] text-slate-400 font-medium">Pemasukan Bulan Ini</p>
+              <h4 className="text-lg font-extrabold text-slate-900 mt-0.5">
+                +Rp {kasData.totalPemasukan.toLocaleString('id-ID')}
+              </h4>
+            </div>
+            <div className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 text-xs font-bold flex items-center gap-1">
+              <TrendingUp size={13} />
+              <span>+12.8%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= CARD 2: ENGAGEMENT / TREN KEUANGAN RT (Col 5) ================= */}
+        <div className="lg:col-span-5 bg-white rounded-[26px] p-6 border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div>
+            {/* Header with Switcher Pill (Monthly / Annually) */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                  <BarChart3 size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Arus Keuangan & Iuran RT</h3>
+                  <p className="text-[11px] text-slate-400">Statistik penerimaan kas warga</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Switcher Pill (Monthly / Annually) */}
+                <div className="flex items-center bg-slate-100 p-1 rounded-full text-[11px] font-bold">
+                  <button
+                    onClick={() => setTimeView('monthly')}
+                    className={`px-3 py-1 rounded-full transition-all ${
+                      timeView === 'monthly'
+                        ? 'bg-[#065F46] text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setTimeView('annually')}
+                    className={`px-3 py-1 rounded-full transition-all ${
+                      timeView === 'annually'
+                        ? 'bg-[#065F46] text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Annually
+                  </button>
+                </div>
+
+                <button
+                  className="w-8 h-8 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-800 flex items-center justify-center transition"
+                  title="Lihat Detail Statistik"
+                >
+                  <ArrowUpRight size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* Striped Bar Chart Graphic (Faithful to Pinterest Reference) */}
+            <div className="relative pt-6 pb-2">
+              {/* Y-Axis Grid Lines & Labels */}
+              <div className="relative h-44 flex items-end justify-between px-3">
+                {/* Horizontal guide lines */}
+                <div className="absolute inset-x-0 top-0 border-b border-dashed border-slate-100" />
+                <div className="absolute inset-x-0 top-1/4 border-b border-dashed border-slate-100" />
+                <div className="absolute inset-x-0 top-2/4 border-b border-dashed border-slate-100" />
+                <div className="absolute inset-x-0 top-3/4 border-b border-dashed border-slate-100" />
+                <div className="absolute inset-x-0 bottom-0 border-b border-slate-200" />
+
+                {/* Bar 1: Mei (2.2k) */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <div
+                    className="w-9 rounded-full transition-all duration-300 hover:opacity-90"
+                    style={{
+                      height: '70px',
+                      background: 'url(#greenStripes)',
+                    }}
+                  />
+                  <span className="text-[10px] font-bold text-slate-400 mt-2">MEI</span>
+                </div>
+
+                {/* Bar 2: Jun (4.1k) */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <div
+                    className="w-9 rounded-full transition-all duration-300 hover:opacity-90"
+                    style={{
+                      height: '115px',
+                      background: 'url(#greenStripes)',
+                    }}
+                  />
+                  <span className="text-[10px] font-bold text-slate-400 mt-2">JUN</span>
+                </div>
+
+                {/* Bar 3: Jul (3.2k) */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <div
+                    className="w-9 rounded-full transition-all duration-300 hover:opacity-90"
+                    style={{
+                      height: '92px',
+                      background: 'url(#greenStripes)',
+                    }}
+                  />
+                  <span className="text-[10px] font-bold text-slate-400 mt-2">JUL</span>
+                </div>
+
+                {/* Bar 4: Agu / Peak Month (Solid Dark Green with Floating Badge) */}
+                <div className="relative z-10 flex flex-col items-center">
+                  {/* Floating Tag "+17.8%" above peak bar */}
+                  <div className="absolute -top-7 flex flex-col items-center">
+                    <span className="px-2 py-0.5 rounded-full bg-[#065F46] text-white text-[10px] font-bold shadow-sm whitespace-nowrap">
+                      +17.8%
+                    </span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#065F46] mt-0.5" />
+                  </div>
+
+                  <div
+                    className="w-9 rounded-full bg-[#065F46] shadow-md shadow-emerald-900/25 transition-all duration-300 hover:bg-emerald-800"
+                    style={{ height: '142px' }}
+                  />
+                  <span className="text-[10px] font-bold text-slate-800 mt-2">AGU</span>
+                </div>
+
+                {/* Bar 5: Sep (3.8k) */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <div
+                    className="w-9 rounded-full transition-all duration-300 hover:opacity-90"
+                    style={{
+                      height: '110px',
+                      background: 'url(#greenStripes)',
+                    }}
+                  />
+                  <span className="text-[10px] font-bold text-slate-400 mt-2">SEP</span>
+                </div>
+
+                {/* Bar 6: Okt (3.4k) */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <div
+                    className="w-9 rounded-full transition-all duration-300 hover:opacity-90"
+                    style={{
+                      height: '98px',
+                      background: 'url(#greenStripes)',
+                    }}
+                  />
+                  <span className="text-[10px] font-bold text-slate-400 mt-2">OKT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 text-[11px] text-slate-400 flex items-center justify-between border-t border-slate-100">
+            <span>Tingkat partisipasi warga: <strong className="text-emerald-700">92% Lunas Tepat Waktu</strong></span>
+            <span className="text-emerald-600 font-bold">Periode Aktif 2026</span>
+          </div>
+        </div>
+
+        {/* ================= CARDS 3 & 4 (Col 3): AREA CHART & PARTICIPATION ================= */}
+        <div className="lg:col-span-3 flex flex-col gap-6 justify-between">
+          
+          {/* Card 3: Saldo Bank & Area Curve */}
+          <div className="bg-white rounded-[26px] p-5 border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Kas Bank & QRIS</h4>
+                  <p className="text-[10px] text-slate-400">Total balance digital</p>
+                </div>
+                <button
+                  className="w-7 h-7 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-800 flex items-center justify-center transition"
+                  title="Detail Kas Bank"
+                >
+                  <ArrowUpRight size={13} />
+                </button>
+              </div>
+
+              {/* Balance */}
+              <div className="mt-2">
+                <span className="text-[10px] text-slate-400 uppercase font-semibold">Total Digital</span>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                  Rp {(kasData.saldoKasBank || kasData.saldoKas).toLocaleString('id-ID')}
+                </h3>
+              </div>
+
+              {/* Smooth Spline Area Chart (matches reference) */}
+              <div className="relative h-16 w-full my-2 overflow-hidden">
+                <svg className="w-full h-full" viewBox="0 0 240 70" preserveAspectRatio="none">
+                  {/* Fill Area */}
+                  <path
+                    d="M 0 45 C 30 20, 50 65, 80 25 C 110 -10, 130 50, 160 18 C 190 -5, 210 38, 240 20 L 240 70 L 0 70 Z"
+                    fill="url(#areaCurveGrad)"
+                  />
+                  {/* Line Curve */}
+                  <path
+                    d="M 0 45 C 30 20, 50 65, 80 25 C 110 -10, 130 50, 160 18 C 190 -5, 210 38, 240 20"
+                    fill="none"
+                    stroke="#10B981"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {/* Quick Pill Buttons: Send & Receive (matches Send / Receive pill in ref) */}
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <button
+                onClick={() => {
+                  setNewMutasi({
+                    tipe: 'PEMASUKAN',
+                    metodeKas: 'BANK',
+                    kategori: 'Iuran Warga',
+                    nominal: '',
+                    keterangan: '',
+                    picPengurus: user?.name || 'Bendahara RT',
+                    noBuktiNota: '',
+                  });
+                  setShowModal(true);
+                }}
+                className="py-2 px-3 rounded-full bg-[#065F46] hover:bg-emerald-800 text-white text-[11px] font-bold shadow-sm transition flex items-center justify-center gap-1"
+              >
+                <span>Kas Masuk</span>
+                <ArrowUp size={12} />
+              </button>
+
+              <button
+                onClick={() => {
+                  setNewMutasi({
+                    tipe: 'PENGELUARAN',
+                    metodeKas: 'BANK',
+                    kategori: 'Perbaikan Fasilitas & Lampu PJU',
+                    nominal: '',
+                    keterangan: '',
+                    picPengurus: user?.name || 'Bendahara RT',
+                    noBuktiNota: '',
+                  });
+                  setShowModal(true);
+                }}
+                className="py-2 px-3 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-[11px] font-bold transition flex items-center justify-center gap-1"
+              >
+                <span>Pengeluaran</span>
+                <ArrowDown size={12} />
+              </button>
+            </div>
+          </div>
+
+          {/* Card 4: Kepatuhan Warga & Citizen Avatars Stack */}
+          <div className="bg-white rounded-[26px] p-5 border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <Receipt size={16} />
+              </div>
+              <div className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold flex items-center gap-0.5">
+                <span>+12.8%</span>
+              </div>
+            </div>
+
+            <div className="my-2">
+              <p className="text-[10px] text-slate-400 font-semibold uppercase">Tingkat Partisipasi Iuran</p>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">
+                94.2% <span className="text-xs font-semibold text-slate-500">Tertagih</span>
+              </h3>
+            </div>
+
+            {/* Warga Lunas Avatars Stack (Matches Pinterest Reference) */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] text-slate-400 font-medium">Warga Lunas Terverifikasi</p>
+                <div className="flex items-center -space-x-2 mt-1.5">
+                  <div className="w-6 h-6 rounded-full bg-amber-400 text-slate-900 text-[9px] font-extrabold flex items-center justify-center ring-2 ring-white">
+                    BD
+                  </div>
+                  <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-[9px] font-extrabold flex items-center justify-center ring-2 ring-white">
+                    ST
+                  </div>
+                  <div className="w-6 h-6 rounded-full bg-blue-500 text-white text-[9px] font-extrabold flex items-center justify-center ring-2 ring-white">
+                    JK
+                  </div>
+                  <div className="w-6 h-6 rounded-full bg-[#065F46] text-white text-[8px] font-bold flex items-center justify-center ring-2 ring-white">
+                    +18
+                  </div>
+                </div>
+              </div>
+
+              <button
+                className="w-7 h-7 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-800 flex items-center justify-center transition"
+                title="Buka Data Warga"
+              >
+                <ArrowUpRight size={13} />
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ============================================================== */}
+      {/* BOTTOM ROW: PAYMENT HISTORY & STATUS LISENSI PRO               */}
+      {/* ============================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        {/* ================= CARD 5: PAYMENT HISTORY (Col 8) ================= */}
+        <div className="lg:col-span-8 bg-white rounded-[26px] p-6 border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-900">Payment History</h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                    {filteredTransactions.length} Transaksi
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400">Mutasi kas & pembayaran iuran warga terbaru</p>
+              </div>
+
+              {/* Filter Pills */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setFilterType('ALL')}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                    filterType === 'ALL'
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Semua
+                </button>
+                <button
+                  onClick={() => setFilterType('PEMASUKAN')}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                    filterType === 'PEMASUKAN'
+                      ? 'bg-[#065F46] text-white'
+                      : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                  }`}
+                >
+                  Masuk (+)
+                </button>
+                <button
+                  onClick={() => setFilterType('PENGELUARAN')}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                    filterType === 'PENGELUARAN'
+                      ? 'bg-rose-700 text-white'
+                      : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                  }`}
+                >
+                  Keluar (-)
+                </button>
+              </div>
+            </div>
+
+            {/* Clean Table List (Matches Pinterest Row Style with Logos & Status) */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 text-[11px] text-slate-400 font-semibold">
+                    <th className="pb-3 font-normal">Nama / Keterangan</th>
+                    <th className="pb-3 font-normal">Tanggal</th>
+                    <th className="pb-3 font-normal">Waktu</th>
+                    <th className="pb-3 font-normal">Status</th>
+                    <th className="pb-3 font-normal text-right">Nominal</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {filteredTransactions.slice(0, 6).map((tx: any, idx: number) => {
+                    const isMasuk = tx.tipe === 'PEMASUKAN';
+                    const txDate = new Date(tx.createdAt || Date.now());
+
+                    return (
+                      <tr key={tx.id || idx} className="hover:bg-slate-50/70 transition-colors">
+                        {/* Name with Circular Icon */}
+                        <td className="py-3 pr-3">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                                isMasuk
+                                  ? 'bg-emerald-50 text-emerald-700'
+                                  : 'bg-rose-50 text-rose-600'
+                              }`}
+                            >
+                              {isMasuk ? <ArrowDownRight size={15} /> : <ArrowUpRight size={15} />}
+                            </div>
+                            <div className="max-w-[220px]">
+                              <p className="font-bold text-slate-900 truncate">
+                                {tx.kategori || (isMasuk ? 'Iuran Warga' : 'Pengeluaran')}
+                              </p>
+                              <p className="text-[10px] text-slate-500 truncate">
+                                {tx.keterangan || 'Pembukuan Kas'}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Date */}
+                        <td className="py-3 text-slate-600 font-medium whitespace-nowrap">
+                          {txDate.toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </td>
+
+                        {/* Time */}
+                        <td className="py-3 text-slate-400 whitespace-nowrap">
+                          {txDate.toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })} WIB
+                        </td>
+
+                        {/* Status (green dot Successful like in Pinterest reference) */}
+                        <td className="py-3">
+                          <span className="inline-flex items-center gap-1.5 font-bold text-[11px] text-emerald-700">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span>{isMasuk ? 'Successful' : 'Dicatat'}</span>
+                          </span>
+                        </td>
+
+                        {/* Amount */}
+                        <td className={`py-3 text-right font-bold whitespace-nowrap ${
+                          isMasuk ? 'text-emerald-700' : 'text-slate-800'
+                        }`}>
+                          {isMasuk ? '+' : '−'}Rp {Number(tx.nominal).toLocaleString('id-ID')}
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {filteredTransactions.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-400">
+                        Belum ada mutasi yang tercatat untuk filter ini.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Table Footer */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Transparansi Kas Digital RT-Hub OS</span>
+            <span className="text-emerald-700 font-semibold">Tersinkronisasi Realtime</span>
+          </div>
+        </div>
+
+        {/* ================= CARD 6: STATUS AKUN PRO & AUDIT TERBUKA (Col 4) ================= */}
+        <div className="lg:col-span-4 bg-white rounded-[26px] p-6 border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Crown size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">RTHub Pro License</h4>
+                  <p className="text-[10px] text-slate-400">Status langganan pengurus</p>
+                </div>
+              </div>
+
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                membershipSummary?.subscription?.isPro
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+              }`}>
+                {membershipSummary?.subscription?.isPro ? 'PRO AKTIF' : 'BASIC'}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 mb-4">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500">Sisa Masa Aktif:</span>
+                <span className="font-extrabold text-slate-900">
+                  {membershipSummary?.subscription?.sisaHari || 0} Hari
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs mt-2 pt-2 border-t border-slate-200/60">
+                <span className="text-slate-500">Masa Berlaku:</span>
+                <span className="font-bold text-slate-700">
+                  {membershipSummary?.subscription?.expiredAt
+                    ? new Date(membershipSummary.subscription.expiredAt).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })
+                    : 'Belum aktif'}
+                </span>
+              </div>
+            </div>
+
             <button
               onClick={handleRenewPro}
               disabled={isRenewing}
-              className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-extrabold shadow-md transition flex items-center gap-2"
+              className="w-full py-2.5 px-4 rounded-full bg-[#065F46] hover:bg-emerald-800 text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-2"
             >
               {isRenewing ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>Memproses...</span>
+                  <Loader2 size={15} className="animate-spin" />
+                  <span>Memproses Perpanjangan...</span>
                 </>
               ) : (
                 <>
-                  <RefreshCw size={15} />
-                  <span>Perpanjang Pro (Rp 99.000 / bln)</span>
+                  <Sparkles size={15} />
+                  <span>Perpanjang Pro (Rp 99.000)</span>
                 </>
               )}
             </button>
           </div>
+
+          {/* Audit Terbuka Notice */}
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500">
+            <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+            <span>Setiap transaksi tercatat terenkripsi & dipublikasikan langsung ke warga.</span>
+          </div>
         </div>
-        <p className="mt-3 text-[11px] text-slate-400 italic">
-          💡 Fitur Akumulasi Otomatis: Saat perpanjang langganan, sisa durasi yang sedang aktif akan diakumulasikan dan ditambah 30 hari baru.
-        </p>
+
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Saldo Kas RT</span>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Wallet size={20} />
-            </div>
-          </div>
-          <h3 className="text-2xl font-extrabold text-slate-900">
-            Rp {kasData.saldoKas.toLocaleString('id-ID')}
-          </h3>
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-col gap-1 text-[11px]">
-            <div className="flex justify-between items-center text-slate-600">
-              <span>💵 Kas Tunai (Fisik):</span>
-              <span className="font-bold text-slate-900">Rp {(kasData.saldoKasTunai || 0).toLocaleString('id-ID')}</span>
-            </div>
-            <div className="flex justify-between items-center text-blue-600">
-              <span>🏦 Kas Bank / QRIS:</span>
-              <span className="font-bold text-blue-700">Rp {(kasData.saldoKasBank || 0).toLocaleString('id-ID')}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Pemasukan</span>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <TrendingUp size={20} />
-            </div>
-          </div>
-          <h3 className="text-2xl font-extrabold text-slate-900">
-            Rp {kasData.totalPemasukan.toLocaleString('id-ID')}
-          </h3>
-          <p className="text-xs text-slate-400 font-medium mt-2">Iuran bulanan warga & saldo awal</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Pengeluaran</span>
-            <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
-              <TrendingDown size={20} />
-            </div>
-          </div>
-          <h3 className="text-2xl font-extrabold text-slate-900">
-            Rp {kasData.totalPengeluaran.toLocaleString('id-ID')}
-          </h3>
-          <p className="text-xs text-slate-400 font-medium mt-2">Operasional sampah, satpam & fasilitas</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-sm flex flex-col justify-between">
-          <div>
-            <span className="text-xs font-semibold text-blue-300 uppercase tracking-wider">Prinsip Transparansi</span>
-            <h4 className="text-base font-bold mt-1">100% Akuntabel & Publik</h4>
-            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
-              Warga dapat melihat detail setiap nota & pengeluaran kas langsung dari aplikasi HP.
-            </p>
-          </div>
-          <div className="pt-2 text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-            <span>✓ Terenkripsi & Terverifikasi DB</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter & Search Transactions */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="relative flex-1 w-full max-w-md">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Cari kategori, keterangan pengeluaran, atau nota..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500"
-          />
-        </div>
-
-        <div className="flex items-center gap-1.5 w-full md:w-auto">
-          <button
-            onClick={() => setFilterType('ALL')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
-              filterType === 'ALL'
-                ? 'bg-slate-900 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Semua Mutasi
-          </button>
-          <button
-            onClick={() => setFilterType('PEMASUKAN')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-              filterType === 'PEMASUKAN'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-            }`}
-          >
-            <ArrowDownRight size={13} /> Pemasukan (+Iuran)
-          </button>
-          <button
-            onClick={() => setFilterType('PENGELUARAN')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-              filterType === 'PENGELUARAN'
-                ? 'bg-red-600 text-white shadow-sm'
-                : 'bg-red-50 text-red-700 hover:bg-red-100'
-            }`}
-          >
-            <ArrowUpRight size={13} /> Pengeluaran Kas (-)
-          </button>
-        </div>
-      </div>
-
-      {/* Recent Mutasi Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <h4 className="font-bold text-slate-900 text-base">Riwayat Buku Kas & Pengeluaran Terbuka</h4>
-            <p className="text-xs text-slate-500">Pencatatan real-time arus kas lingkungan dari MySQL terverifikasi</p>
-          </div>
-          <span className="text-xs text-slate-500 font-medium">
-            Total {filteredTransactions.length} Catatan
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50/70 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200/60">
-              <tr>
-                <th className="px-5 py-3.5">Waktu Transaksi</th>
-                <th className="px-5 py-3.5">Kategori & Rincian Pengeluaran/Masuk</th>
-                <th className="px-5 py-3.5">Tipe Arus Kas</th>
-                <th className="px-5 py-3.5">Nominal Transaksi</th>
-                <th className="px-5 py-3.5">Saldo Berjalan</th>
-                <th className="px-5 py-3.5 text-center">Bukti / Transparansi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((tx: any) => {
-                  const isMasuk = tx.tipe === 'PEMASUKAN';
-                  return (
-                    <tr key={tx.id} className="hover:bg-slate-50/50 transition">
-                      <td className="px-5 py-4 text-xs font-medium text-slate-500">
-                        {new Date(tx.createdAt).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </td>
-                      <td className="px-5 py-4">
-                        <p className="font-bold text-slate-900 text-xs">{tx.kategori}</p>
-                        <p className="text-xs text-slate-600 mt-0.5">{tx.keterangan}</p>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1 ${
-                            isMasuk ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
-                          }`}
-                        >
-                          {isMasuk ? <ArrowDownRight size={12} /> : <ArrowUpRight size={12} />}
-                          {isMasuk ? 'Kas Masuk' : 'Pengeluaran'}
-                        </span>
-                      </td>
-                      <td className={`px-5 py-4 font-bold text-xs ${isMasuk ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {isMasuk ? '+' : '-'}Rp {Number(tx.nominal).toLocaleString('id-ID')}
-                      </td>
-                      <td className="px-5 py-4 font-bold text-slate-900 text-xs">
-                        Rp {Number(tx.saldoBerjalan).toLocaleString('id-ID')}
-                      </td>
-                      <td className="px-5 py-4 text-center">
-                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-full border border-blue-100 inline-flex items-center gap-1">
-                          <Check size={11} /> Terpublikasi ke Warga
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-xs text-slate-400">
-                    Tidak ada mutasi kas yang sesuai dengan filter pencarian.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Modal Catat Mutasi Kas / Pengeluaran */}
+      {/* ============================================================== */}
+      {/* MODAL CATAT MUTASI KAS                                         */}
+      {/* ============================================================== */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900">
-                {newMutasi.tipe === 'PENGELUARAN' ? '📤 Catat Pengeluaran Uang Kas RT' : '📥 Catat Pemasukan Kas RT'}
+              <h3 className="text-base font-bold text-slate-900">
+                {newMutasi.tipe === 'PEMASUKAN' ? 'Tambah Kas Masuk RT' : 'Catat Pengeluaran Kas RT'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X size={18} />
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold transition"
+              >
+                ✕
               </button>
             </div>
 
-            <form onSubmit={handleCatatKas} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">Tipe Mutasi *</label>
-                  <select
-                    value={newMutasi.tipe}
-                    onChange={(e) => {
-                      const newTipe = e.target.value;
-                      setNewMutasi({
-                        ...newMutasi,
-                        tipe: newTipe,
-                        kategori: newTipe === 'PENGELUARAN' ? 'Perbaikan Fasilitas & Lampu PJU' : 'Iuran Warga',
-                      });
-                    }}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="PENGELUARAN">📤 Pengeluaran (Uang Keluar)</option>
-                    <option value="PEMASUKAN">📥 Pemasukan (Uang Masuk)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">Kategori Transaksi *</label>
-                  <select
-                    value={newMutasi.kategori}
-                    onChange={(e) => setNewMutasi({ ...newMutasi, kategori: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500 font-semibold"
-                  >
-                    {newMutasi.tipe === 'PENGELUARAN' ? (
-                      <>
-                        <option value="Perbaikan Fasilitas & Lampu PJU">Perbaikan Fasilitas & Lampu PJU</option>
-                        <option value="Honor Petugas Kebersihan & Sampah">Honor Petugas Kebersihan & Sampah</option>
-                        <option value="Honor & Perlengkapan Keamanan / Satpam">Honor & Perlengkapan Keamanan / Satpam</option>
-                        <option value="Dana Sosial & Santunan Warga">Dana Sosial & Santunan Warga</option>
-                        <option value="Kegiatan Warga / Kerja Bakti / 17an">Kegiatan Warga / Kerja Bakti / 17an</option>
-                        <option value="Konsumsi & Rapat RT">Konsumsi & Rapat RT</option>
-                        <option value="Operasional & Administrasi RT">Operasional & Administrasi RT</option>
-                        <option value="Lainnya">Lainnya</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="Iuran Warga">Iuran Kas Warga Bulanan</option>
-                        <option value="Saldo Awal Pembukuan">Saldo Awal Pembukuan Kas</option>
-                        <option value="Donasi / Sumbangan Sukarela">Donasi / Sumbangan Sukarela</option>
-                        <option value="Sewa Fasilitas / Lapangan RT">Sewa Fasilitas / Lapangan RT</option>
-                        <option value="Lainnya">Lainnya</option>
-                      </>
-                    )}
-                  </select>
-                </div>
+            <form onSubmit={handleCatatKas} className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => setNewMutasi({ ...newMutasi, tipe: 'PENGELUARAN' })}
+                  className={`py-2 rounded-xl font-bold transition ${
+                    newMutasi.tipe === 'PENGELUARAN'
+                      ? 'bg-white text-rose-700 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Pengeluaran (−)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewMutasi({ ...newMutasi, tipe: 'PEMASUKAN' })}
+                  className={`py-2 rounded-xl font-bold transition ${
+                    newMutasi.tipe === 'PEMASUKAN'
+                      ? 'bg-[#065F46] text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Pemasukan (+)
+                </button>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">Metode Penyimpanan Kas *</label>
+                <label className="block font-semibold text-slate-700 mb-1">Nominal (Rp) *</label>
+                <input
+                  type="number"
+                  required
+                  placeholder="Contoh: 150000"
+                  value={newMutasi.nominal}
+                  onChange={(e) => setNewMutasi({ ...newMutasi, nominal: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600 font-bold text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Kategori Transaksi</label>
+                <select
+                  value={newMutasi.kategori}
+                  onChange={(e) => setNewMutasi({ ...newMutasi, kategori: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600 text-slate-800"
+                >
+                  {newMutasi.tipe === 'PENGELUARAN' ? (
+                    <>
+                      <option value="Perbaikan Fasilitas & Lampu PJU">Perbaikan Fasilitas & Lampu PJU</option>
+                      <option value="Kebersihan & Angkut Sampah">Kebersihan & Angkut Sampah</option>
+                      <option value="Honor Satpam & Petugas Kebersihan">Honor Satpam & Petugas Kebersihan</option>
+                      <option value="Kegiatan Warga & Rapat Pleno">Kegiatan Warga & Rapat Pleno</option>
+                      <option value="Kas Tak Terduga / Sosial Lingkungan">Kas Tak Terduga / Sosial Lingkungan</option>
+                      <option value="Pengeluaran Lainnya">Pengeluaran Lainnya</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="Iuran Kas Warga">Iuran Kas Warga</option>
+                      <option value="Donasi & Sumbangan Sukarela">Donasi & Sumbangan Sukarela</option>
+                      <option value="Pemasukan Sewa Fasilitas Umum">Pemasukan Sewa Fasilitas Umum</option>
+                      <option value="Pemasukan Lainnya">Pemasukan Lainnya</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Metode Penyimpanan Kas</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setNewMutasi({ ...newMutasi, metodeKas: 'BANK' })}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    className={`py-2 px-3 rounded-xl border text-center font-bold transition flex items-center justify-center gap-1.5 ${
                       newMutasi.metodeKas === 'BANK'
-                        ? 'bg-blue-50 border-blue-500 text-blue-700'
-                        : 'bg-slate-50 border-slate-200 text-slate-600'
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+                        : 'border-slate-200 bg-white text-slate-600'
                     }`}
                   >
-                    🏦 Rekening / QRIS
+                    <Building size={14} /> Bank / QRIS
                   </button>
                   <button
                     type="button"
                     onClick={() => setNewMutasi({ ...newMutasi, metodeKas: 'TUNAI' })}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    className={`py-2 px-3 rounded-xl border text-center font-bold transition flex items-center justify-center gap-1.5 ${
                       newMutasi.metodeKas === 'TUNAI'
-                        ? 'bg-amber-50 border-amber-500 text-amber-700'
-                        : 'bg-slate-50 border-slate-200 text-slate-600'
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+                        : 'border-slate-200 bg-white text-slate-600'
                     }`}
                   >
-                    💵 Uang Tunai (Fisik)
+                    <CreditCard size={14} /> Kas Tunai (Fisik)
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">Nominal (Rp) *</label>
-                <input
-                  type="number"
-                  required
-                  value={newMutasi.nominal}
-                  onChange={(e) => setNewMutasi({ ...newMutasi, nominal: e.target.value })}
-                  placeholder="Contoh: 350000"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">Penanggung Jawab / PIC</label>
-                  <input
-                    type="text"
-                    value={newMutasi.picPengurus}
-                    onChange={(e) => setNewMutasi({ ...newMutasi, picPengurus: e.target.value })}
-                    placeholder="Contoh: Bendahara / Seksi Kebersihan"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">No. Bukti Nota / Kwitansi</label>
-                  <input
-                    type="text"
-                    value={newMutasi.noBuktiNota}
-                    onChange={(e) => setNewMutasi({ ...newMutasi, noBuktiNota: e.target.value })}
-                    placeholder="Contoh: NOTA-PJU-0809"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">Rincian Keperluan Transaksi *</label>
+                <label className="block font-semibold text-slate-700 mb-1">Rincian Keterangan *</label>
                 <textarea
                   required
                   rows={2}
+                  placeholder="Contoh: Pembelian 3 bohlam lampu LED jalan Blok C"
                   value={newMutasi.keterangan}
                   onChange={(e) => setNewMutasi({ ...newMutasi, keterangan: e.target.value })}
-                  placeholder="Contoh: Pembelian 3 buah lampu LED Philips 20W dan kabel untuk PJU gang C"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600 text-slate-800"
                 />
               </div>
 
-              <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 text-[11px] text-blue-800 space-y-1">
-                <div className="font-bold flex items-center gap-1">
-                  <ShieldCheck size={14} className="text-blue-600" />
-                  <span>Transparansi Otomatis:</span>
-                </div>
-                <p>
-                  Pengeluaran ini akan langsung tercatat di buku kas digital RT dan otomatis dapat dilihat oleh seluruh warga di aplikasi mobile RtHub.
-                </p>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Nomor Nota / Bukti Fisik (Opsional)</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: NOTA-TB-08812"
+                  value={newMutasi.noBuktiNota}
+                  onChange={(e) => setNewMutasi({ ...newMutasi, noBuktiNota: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600 text-slate-800"
+                />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  disabled={isSubmitting}
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
+                  className="px-4 py-2 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-2"
+                  className="px-5 py-2 rounded-full bg-[#065F46] hover:bg-emerald-800 text-white font-bold shadow-sm transition flex items-center gap-1.5"
                 >
-                  {isSubmitting && <Loader2 size={14} className="animate-spin" />}
-                  <span>{isSubmitting ? 'Menyimpan...' : 'Simpan & Publikasikan'}</span>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan & Publikasikan</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -766,62 +1049,50 @@ export const DashboardOverview: React.FC<DashboardProps> = ({ user }) => {
         </div>
       )}
 
-      {/* Modal Undangan WhatsApp untuk Warga */}
+      {/* ============================================================== */}
+      {/* MODAL UNDANG WARGA KE WHATSAPP                                 */}
+      {/* ============================================================== */}
       {showInviteModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
-                  <MessageCircle size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Pesan Ajakan Pendaftaran Warga</h3>
-                  <p className="text-xs text-slate-500">Siap disebarkan ke grup WhatsApp {rtLabel}</p>
-                </div>
-              </div>
-              <button 
+              <h3 className="text-base font-bold text-slate-900">Sebar Undangan Warga</h3>
+              <button
                 onClick={() => setShowInviteModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold transition"
               >
-                <X size={18} />
+                ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-600">
-              Salin teks di bawah ini dan bagikan ke grup WhatsApp warga Anda agar seluruh warga dapat langsung mengunduh aplikasi dan mendaftarkan anggota keluarganya:
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Kirimkan teks resmi pendaftaran warga ke grup WhatsApp lingkungan ({rtLabel}) agar warga dapat mengunduh aplikasi dan mendaftarkan rumahnya.
             </p>
 
-            {/* Box Preview Teks WhatsApp */}
-            <div className="bg-slate-900 text-emerald-400 p-4 rounded-xl text-xs font-mono leading-relaxed max-h-72 overflow-y-auto whitespace-pre-wrap border border-slate-800 shadow-inner">
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-[11px] font-mono text-slate-700 max-h-36 overflow-y-auto">
               {generateWaInviteText(user)}
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2 pt-2">
               <button
-                type="button"
                 onClick={() => {
                   navigator.clipboard.writeText(generateWaInviteText(user));
-                  showAlert.toastSuccess('Pesan ajakan warga berhasil disalin ke clipboard! Silakan paste di grup WhatsApp.');
+                  showAlert.success('Tersalin!', 'Teks undangan berhasil disalin ke clipboard.');
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2"
+                className="px-4 py-2 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5"
               >
-                <Copy size={15} />
-                <span>Salin Pesan (Clipboard)</span>
+                <Copy size={13} />
+                <span>Salin Teks</span>
               </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const url = `https://wa.me/?text=${encodeURIComponent(generateWaInviteText(user))}`;
-                  window.open(url, '_blank');
-                }}
-                className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm"
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(generateWaInviteText(user))}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-5 py-2 rounded-full bg-[#065F46] hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition"
               >
-                <MessageCircle size={15} />
-                <span>Buka WhatsApp & Kirim</span>
-                <ExternalLink size={13} />
-              </button>
+                <MessageCircle size={14} />
+                <span>Kirim ke WhatsApp</span>
+              </a>
             </div>
           </div>
         </div>

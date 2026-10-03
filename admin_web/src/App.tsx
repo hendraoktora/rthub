@@ -109,7 +109,7 @@ export default function App() {
   const pageInfo = getPageInfo();
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
+    <div className="flex h-screen bg-[#F0F2F5] overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
@@ -119,9 +119,16 @@ export default function App() {
       />
       
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header title={pageInfo.title} subtitle={pageInfo.subtitle} user={user} />
+        <Header 
+          title={pageInfo.title} 
+          subtitle={pageInfo.subtitle} 
+          user={user} 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onLogout={handleLogout}
+        />
         
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto px-6 py-6 lg:px-8">
           {activeTab === 'superadmin_overview' && <SuperadminOverview onNavigateTab={setActiveTab} />}
           {activeTab === 'superadmin_rt' && <SuperadminDashboard />}
           {activeTab === 'uang_masuk' && <SuperadminUangMasuk />}

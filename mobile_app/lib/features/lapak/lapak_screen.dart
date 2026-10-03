@@ -462,12 +462,12 @@ class _LapakScreenState extends State<LapakScreen> {
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 14,
-                  childAspectRatio: _mine ? 0.60 : 0.66,
+                  childAspectRatio: _mine ? 0.60 : 0.68,
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final product = filtered[index];
-                    final owner = product.isOwnedBy(_user) && _maySell;
+                    final owner = _mine && product.isOwnedBy(_user) && _maySell;
                     return StaggeredEntry(
                       key: ValueKey('${product.id}-$_refreshEpoch'),
                       index: index.clamp(0, 6),

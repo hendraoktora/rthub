@@ -2115,63 +2115,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFC7E8D8)),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Row(
-                                      children: [
-                                        Icon(Icons.verified_outlined, size: 12, color: Color(0xFF087252)),
-                                        SizedBox(width: 4),
-                                        Text('Kas Active (PG)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF087252))),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      hubRupiah(_data.kas?['saldoKasDigital'] ?? _data.kas?['saldoKas']),
-                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF0F5132)),
-                                    ),
-                                    const Text('Bisa ditarik ke bank', style: TextStyle(fontSize: 9, color: AppTheme.textSecondary)),
-                                  ],
-                                ),
-                              ),
-                              Container(height: 28, width: 1, color: const Color(0xFFC7E8D8)),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Row(
-                                      children: [
-                                        Icon(Icons.payments_outlined, size: 12, color: Color(0xFF2563EB)),
-                                        SizedBox(width: 4),
-                                        Text('Uang Tunai (Cash)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      hubRupiah(_data.kas?['saldoKasTunai'] ?? 0),
-                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF1E40AF)),
-                                    ),
-                                    const Text('Fisik di bendahara', style: TextStyle(fontSize: 9, color: AppTheme.textSecondary)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                         if (_isBendahara) ...[
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
@@ -2297,10 +2242,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        tx['kategori']?.toString() ??
-                                            (incoming
-                                                ? 'Pemasukan'
-                                                : 'Pengeluaran'),
+                                        (tx['kategori']?.toString() ??
+                                                (incoming
+                                                    ? 'Pemasukan'
+                                                    : 'Pengeluaran'))
+                                            .replaceAll('Iuran Warga (Duitku PG)', 'Iuran Kas Warga')
+                                            .replaceAll('(Duitku PG)', '')
+                                            .trim(),
                                         style: const TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w800,

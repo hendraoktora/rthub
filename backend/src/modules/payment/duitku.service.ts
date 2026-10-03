@@ -619,7 +619,7 @@ export class DuitkuService {
         rtId: transaksi.tagihan.rumah.rtId,
         createdById: transaksi.userId,
         tipe: TipeKas.PEMASUKAN,
-        kategori: 'Iuran Warga (Duitku PG)',
+        kategori: 'Iuran Kas Warga',
         nominal: transaksi.nominalPokok,
         saldoBerjalan: newSaldo,
         keterangan: `Pembayaran ${transaksi.tagihan.masterTagihan.namaTagihan} Periode ${transaksi.tagihan.periodeBulan}/${transaksi.tagihan.periodeTahun} - Rumah ${transaksi.tagihan.rumah.noRumah} (Ref: ${reference || merchantOrderId})`,

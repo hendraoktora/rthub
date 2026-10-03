@@ -316,19 +316,27 @@ class _LapakScreenState extends State<LapakScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      _mine ? 'Lapak saya' : 'Jelajahi sekitar',
+                      _mine ? 'Lapak saya' : 'Katalog UMKM Warga',
                       style: const TextStyle(
-                        fontSize: 23,
+                        fontSize: 22,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -.7,
+                        letterSpacing: -.6,
                       ),
                     ),
                   ),
-                  Text(
-                    '${filtered.length} produk',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${filtered.length} produk',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
                   ),
                 ],
@@ -448,24 +456,27 @@ class _LapakScreenState extends State<LapakScreen> {
             ),
           if (filtered.isNotEmpty)
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              sliver: SliverList(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: _mine ? 0.60 : 0.66,
+                ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final product = filtered[index];
                     final owner = product.isOwnedBy(_user) && _maySell;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: StaggeredEntry(
-                        key: ValueKey('${product.id}-$_refreshEpoch'),
-                        index: index.clamp(0, 6),
-                        child: LapakProductCard(
-                          product: product,
-                          onTap: () => _detail(product),
-                          onEdit: owner ? () => _edit(product) : null,
-                          onDelete: owner ? () => _delete(product) : null,
-                          onPromote: owner ? () => _promote(product) : null,
-                        ),
+                    return StaggeredEntry(
+                      key: ValueKey('${product.id}-$_refreshEpoch'),
+                      index: index.clamp(0, 6),
+                      child: LapakProductCard(
+                        product: product,
+                        onTap: () => _detail(product),
+                        onEdit: owner ? () => _edit(product) : null,
+                        onDelete: owner ? () => _delete(product) : null,
+                        onPromote: owner ? () => _promote(product) : null,
                       ),
                     );
                   },

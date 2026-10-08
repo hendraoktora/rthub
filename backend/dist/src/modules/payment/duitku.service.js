@@ -66,7 +66,7 @@ let DuitkuService = DuitkuService_1 = class DuitkuService {
         this.env = (this.config.get('DUITKU_ENV') || 'sandbox').toLowerCase();
         this.callbackUrl =
             this.config.get('DUITKU_CALLBACK_URL') ||
-                'https://api.rthub.id/api/payment/duitku/callback';
+                'https://api.rthub.id/payment/duitku/callback';
         this.returnUrl =
             this.config.get('DUITKU_RETURN_URL') ||
                 'https://rthub.id/payment-success';

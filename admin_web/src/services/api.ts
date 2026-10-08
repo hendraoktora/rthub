@@ -201,6 +201,20 @@ export const api = {
     return res.json();
   },
 
+  async boostLapak(id: string, data: { durationDays: number; scope?: string; packageType?: string }) {
+    const token = this.getToken();
+    const res = await fetch(`${API_BASE_URL}/lapak/${id}/boost`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Gagal mengaktifkan promosi iklan sponsor');
+    return res.json();
+  },
+
   async checkoutAds(data: {
     lapakId?: string;
     productTitle?: string;

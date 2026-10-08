@@ -127,7 +127,7 @@ __decorate([
 ], PaymentController.prototype, "checkStatus", null);
 exports.PaymentController = PaymentController = __decorate([
     (0, swagger_1.ApiTags)('Payment Gateway (Duitku)'),
-    (0, common_1.Controller)('payment'),
+    (0, common_1.Controller)(['payment', 'api/payment']),
     __metadata("design:paramtypes", [duitku_service_1.DuitkuService])
 ], PaymentController);
 //# sourceMappingURL=payment.controller.js.map

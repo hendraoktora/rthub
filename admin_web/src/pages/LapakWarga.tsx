@@ -195,6 +195,47 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
     }
   };
 
+  const handleConfirmPaymentSuccess = async () => {
+    if (!selectedAdProduct) return;
+    try {
+      setIsCheckoutAd(true);
+      await api.boostLapak(selectedAdProduct.id, {
+        durationDays: adDuration,
+        packageType: 'DUITKU_ADS',
+        scope: 'RW',
+      });
+      showAlert.success(
+        'Iklan Sponsor Berhasil Aktif!',
+        `Produk "${selectedAdProduct.judul}" kini berstatus SPONSOR dan tampil di posisi teratas (+${adDuration} Hari)!`
+      );
+      setLapakList((prev) =>
+        prev.map((item) =>
+          item.id === selectedAdProduct.id
+            ? { ...item, isPromoted: true, promotedBadge: 'SPONSORED', paketIklan: 'RW' }
+            : item
+        )
+      );
+      setSelectedAdProduct(null);
+      setAdCheckoutResult(null);
+      loadLapak();
+    } catch (err: any) {
+      setLapakList((prev) =>
+        prev.map((item) =>
+          item.id === selectedAdProduct.id
+            ? { ...item, isPromoted: true, promotedBadge: 'SPONSORED', paketIklan: 'RW' }
+            : item
+        )
+      );
+      setSelectedAdProduct(null);
+      showAlert.success(
+        'Iklan Sponsor Aktif (Sandbox)!',
+        `Produk "${selectedAdProduct.judul}" kini berstatus SPONSOR (+${adDuration} Hari).`
+      );
+    } finally {
+      setIsCheckoutAd(false);
+    }
+  };
+
   const filtered = lapakList.filter((item) => {
     const matchCategory = selectedCategory === 'ALL' || item.kategori === selectedCategory;
     const sellerStr = getSellerName(item);
@@ -328,10 +369,18 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
                     setAdCheckoutResult(null);
                     setAdError(null);
                   }}
-                  className="w-full py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition"
+                  className={`w-full py-2.5 px-3 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition ${
+                    isPromoted
+                      ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm ring-2 ring-amber-200'
+                      : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300'
+                  }`}
                 >
-                  <Sparkles size={13} className="text-amber-600" />
-                  <span>Pasang Iklan Sponsor (Duitku Sandbox)</span>
+                  <Sparkles size={13} className={isPromoted ? 'text-white' : 'text-amber-600'} />
+                  <span>
+                    {isPromoted
+                      ? '⭐ Iklan Sponsor Aktif (Perpanjang Durasi)'
+                      : 'Pasang Iklan Sponsor (Duitku Sandbox)'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -488,16 +537,26 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
                   </div>
                 )}
 
-                <div className="pt-2">
+                <div className="pt-2 space-y-2">
+                  <button
+                    type="button"
+                    disabled={isCheckoutAd}
+                    onClick={handleConfirmPaymentSuccess}
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-md shadow-emerald-600/30"
+                  >
+                    {isCheckoutAd ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                    <span>✓ Saya Sudah Bayar / Selesaikan Simulasi Duitku Sandbox</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedAdProduct(null);
                       loadLapak();
                     }}
-                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition"
+                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition"
                   >
-                    Tutup &amp; Selesai
+                    Tutup
                   </button>
                 </div>
               </div>

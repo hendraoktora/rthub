@@ -32,7 +32,7 @@ export class DuitkuService {
     this.env = (this.config.get<string>('DUITKU_ENV') || 'sandbox').toLowerCase();
     this.callbackUrl =
       this.config.get<string>('DUITKU_CALLBACK_URL') ||
-      'https://api.rthub.id/api/payment/duitku/callback';
+      'https://api.rthub.id/payment/duitku/callback';
     this.returnUrl =
       this.config.get<string>('DUITKU_RETURN_URL') ||
       'https://rthub.id/payment-success';

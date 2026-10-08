@@ -15,7 +15,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DuitkuService, CreateInvoiceDto } from './duitku.service';
 
 @ApiTags('Payment Gateway (Duitku)')
-@Controller('payment')
+@Controller(['payment', 'api/payment'])
 export class PaymentController {
   constructor(private readonly duitkuService: DuitkuService) {}
 

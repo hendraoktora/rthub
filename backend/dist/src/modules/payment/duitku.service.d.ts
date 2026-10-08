@@ -28,6 +28,10 @@ export declare class DuitkuService {
         callbackUrl: string;
         returnUrl: string;
     };
+    private readonly defaultSandboxMerchantCode;
+    private readonly defaultSandboxApiKey;
+    private readonly defaultSandboxBaseUrl;
+    private executeDuitkuInquiry;
     createInvoice(userId: string, dto: CreateInvoiceDto): Promise<{
         success: boolean;
         isSimulation: boolean;

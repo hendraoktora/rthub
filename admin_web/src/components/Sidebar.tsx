@@ -40,17 +40,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role,
     { id: 'addons_rt', label: 'Lisensi & Langganan RT Pro', icon: Crown, roles: ['SUPERADMIN'] },
 
     // RT Operational items
-    { id: 'dashboard', label: 'Buku Kas & Keuangan RT', icon: LayoutGrid, roles: ['ADMIN_RT', 'BENDAHARA', 'BENDAHARA_RT'] },
+    { id: 'dashboard', label: 'Buku Kas & Transparansi RT', icon: LayoutGrid, roles: ['ADMIN_RT', 'BENDAHARA', 'BENDAHARA_RT', 'WARGA'] },
+    { id: 'lapak_warga', label: 'Lapak UMKM Warga', icon: Store, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT', 'BENDAHARA', 'BENDAHARA_RT', 'SECURITY', 'WARGA'] },
     { id: 'warga', label: 'Data Warga & Rumah', icon: Users, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT'] },
     { id: 'tagihan', label: 'Tagihan & Billing IPL', icon: Receipt, roles: ['ADMIN_RT', 'BENDAHARA', 'BENDAHARA_RT'] },
-    { id: 'agenda_rt', label: 'Agenda Kegiatan RT', icon: Calendar, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT'] },
-    { id: 'berita_rt', label: 'Informasi & Pengumuman', icon: Megaphone, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT'] },
-    { id: 'ronda', label: 'Jadwal Ronda Warga', icon: Moon, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT'] },
-    { id: 'lapor_rt', label: 'Lapor & Keluhan RT', icon: MessageSquarePlus, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT', 'BENDAHARA', 'BENDAHARA_RT', 'SECURITY'] },
-    { id: 'lapak_warga', label: 'Lapak UMKM Warga', icon: Store, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT', 'BENDAHARA', 'BENDAHARA_RT', 'SECURITY'] },
+    { id: 'agenda_rt', label: 'Agenda Kegiatan RT', icon: Calendar, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT', 'WARGA'] },
+    { id: 'berita_rt', label: 'Informasi & Pengumuman', icon: Megaphone, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT', 'WARGA'] },
+    { id: 'ronda', label: 'Jadwal Ronda Warga', icon: Moon, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT', 'WARGA'] },
+    { id: 'lapor_rt', label: 'Lapor & Keluhan RT', icon: MessageSquarePlus, roles: ['ADMIN_RT', 'SEKRETARIS', 'SEKRETARIS_RT', 'BENDAHARA', 'BENDAHARA_RT', 'SECURITY', 'WARGA'] },
     { id: 'setting_iuran', label: 'Pengaturan Iuran & Rekening', icon: Sliders, roles: ['BENDAHARA', 'BENDAHARA_RT'] },
     { id: 'security', label: 'Absensi & Lapor Patroli', icon: Shield, roles: ['SECURITY'] },
-    { id: 'panic_alert', label: '🚨 Panic Alert Warga', icon: ShieldAlert, roles: ['ADMIN_RT', 'SECURITY', 'BENDAHARA', 'BENDAHARA_RT'] },
+    { id: 'panic_alert', label: '🚨 Panic Alert Warga', icon: ShieldAlert, roles: ['ADMIN_RT', 'SECURITY', 'BENDAHARA', 'BENDAHARA_RT', 'WARGA'] },
   ];
 
   const allowedItems = menuItems.filter((item) => item.roles.includes(role));

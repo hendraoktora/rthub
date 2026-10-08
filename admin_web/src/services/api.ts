@@ -201,6 +201,28 @@ export const api = {
     return res.json();
   },
 
+  async checkoutAds(data: {
+    lapakId?: string;
+    productTitle?: string;
+    durasiHari?: number;
+    amount?: number;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    paymentMethodCode?: string;
+  }) {
+    const res = await fetch(`https://api.rthub.id/payment/checkout-ads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Gagal membuat tagihan iklan via Duitku');
+    }
+    return res.json();
+  },
+
   async getAllRtSummary() {
     const token = this.getToken();
     const res = await fetch(`${API_BASE_URL}/wilayah/rt-summary-all`, {

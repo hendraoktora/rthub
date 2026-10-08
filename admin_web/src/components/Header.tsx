@@ -21,6 +21,8 @@ export const Header: React.FC<HeaderProps> = ({
   const isBendahara = user?.role === 'BENDAHARA' || user?.role === 'BENDAHARA_RT';
   const isSekretaris = user?.role === 'SEKRETARIS' || user?.role === 'SEKRETARIS_RT';
 
+  const isWarga = user?.role === 'WARGA';
+
   // Navigation pills in the top bar (matches Pinterest top nav pill menu)
   const navPills = isSuperadmin
     ? [
@@ -29,6 +31,14 @@ export const Header: React.FC<HeaderProps> = ({
         { id: 'uang_masuk', label: 'Arus Kas' },
         { id: 'revenue', label: 'Laporan MRR' },
         { id: 'addons_rt', label: 'Lisensi Pro' },
+      ]
+    : isWarga
+    ? [
+        { id: 'lapak_warga', label: 'Lapak UMKM' },
+        { id: 'lapor_rt', label: 'Lapor RT' },
+        { id: 'agenda_rt', label: 'Agenda RT' },
+        { id: 'berita_rt', label: 'Pengumuman' },
+        { id: 'dashboard', label: 'Buku Kas RT' },
       ]
     : [
         { id: 'dashboard', label: 'Dashboard' },

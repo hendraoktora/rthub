@@ -20,6 +20,7 @@ import { AgendaManagement } from './pages/AgendaManagement';
 import { BeritaManagement } from './pages/BeritaManagement';
 import { Login } from './pages/Login';
 import { LandingPage } from './pages/LandingPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { api, UserSession } from './services/api';
 
 export default function App() {
@@ -35,6 +36,7 @@ export default function App() {
       else if (savedUser.role === 'SEKRETARIS') setActiveTab('warga');
       else if (savedUser.role === 'BENDAHARA') setActiveTab('dashboard');
       else if (savedUser.role === 'SECURITY') setActiveTab('security');
+      else if (savedUser.role === 'WARGA') setActiveTab('lapak_warga');
       else setActiveTab('dashboard');
     }
   }, []);
@@ -47,21 +49,28 @@ export default function App() {
 
   if (!user) {
     if (publicView === 'landing') {
-      return <LandingPage onGoToLogin={() => setPublicView('login')} />;
+      return (
+        <ErrorBoundary>
+          <LandingPage onGoToLogin={() => setPublicView('login')} />
+        </ErrorBoundary>
+      );
     }
 
     return (
-      <Login
-        onBack={() => setPublicView('landing')}
-        onLogin={(loggedUser) => {
-          setUser(loggedUser);
-          if (loggedUser.role === 'SUPERADMIN') setActiveTab('superadmin_overview');
-          else if (loggedUser.role === 'SEKRETARIS') setActiveTab('warga');
-          else if (loggedUser.role === 'BENDAHARA') setActiveTab('dashboard');
-          else if (loggedUser.role === 'SECURITY') setActiveTab('security');
-          else setActiveTab('dashboard');
-        }}
-      />
+      <ErrorBoundary>
+        <Login
+          onBack={() => setPublicView('landing')}
+          onLogin={(loggedUser) => {
+            setUser(loggedUser);
+            if (loggedUser.role === 'SUPERADMIN') setActiveTab('superadmin_overview');
+            else if (loggedUser.role === 'SEKRETARIS') setActiveTab('warga');
+            else if (loggedUser.role === 'BENDAHARA') setActiveTab('dashboard');
+            else if (loggedUser.role === 'SECURITY') setActiveTab('security');
+            else if (loggedUser.role === 'WARGA') setActiveTab('lapak_warga');
+            else setActiveTab('dashboard');
+          }}
+        />
+      </ErrorBoundary>
     );
   }
 
@@ -129,24 +138,25 @@ export default function App() {
         />
         
         <main className="flex-1 overflow-y-auto px-6 py-6 lg:px-8">
-          {activeTab === 'superadmin_overview' && <SuperadminOverview onNavigateTab={setActiveTab} />}
-          {activeTab === 'superadmin_rt' && <SuperadminDashboard />}
-          {activeTab === 'uang_masuk' && <SuperadminUangMasuk />}
-          {activeTab === 'revenue' && <SuperadminRevenue />}
-          {activeTab === 'addons_rt' && <SuperadminAddons />}
-          {activeTab === 'dashboard' && <DashboardOverview user={user} />}
-          {activeTab === 'agenda_rt' && <AgendaManagement user={user} />}
-          {activeTab === 'berita_rt' && <BeritaManagement user={user} />}
-          {activeTab === 'warga' && <WargaManagement user={user} />}
-          {activeTab === 'pengurus' && <PengurusManagement user={user} />}
-          {activeTab === 'ronda' && <RondaManagement user={user} />}
-          {activeTab === 'tagihan' && <TagihanBilling user={user} />}
-          {activeTab === 'setting_iuran' && <MasterTagihanSetting user={user} />}
-          {activeTab === 'lapor_rt' && <LaporRT user={user} />}
-          {activeTab === 'lapak_warga' && <LapakWarga user={user} />}
-          {activeTab === 'security' && <SecurityAbsensiLaporan user={user} />}
-          {activeTab === 'panic_alert' && <PanicAlertBroadcast user={user} />}
-          {activeTab === 'revenue' && <SuperadminRevenue />}
+          <ErrorBoundary>
+            {activeTab === 'superadmin_overview' && <SuperadminOverview onNavigateTab={setActiveTab} />}
+            {activeTab === 'superadmin_rt' && <SuperadminDashboard />}
+            {activeTab === 'uang_masuk' && <SuperadminUangMasuk />}
+            {activeTab === 'revenue' && <SuperadminRevenue />}
+            {activeTab === 'addons_rt' && <SuperadminAddons />}
+            {activeTab === 'dashboard' && <DashboardOverview user={user} />}
+            {activeTab === 'agenda_rt' && <AgendaManagement user={user} />}
+            {activeTab === 'berita_rt' && <BeritaManagement user={user} />}
+            {activeTab === 'warga' && <WargaManagement user={user} />}
+            {activeTab === 'pengurus' && <PengurusManagement user={user} />}
+            {activeTab === 'ronda' && <RondaManagement user={user} />}
+            {activeTab === 'tagihan' && <TagihanBilling user={user} />}
+            {activeTab === 'setting_iuran' && <MasterTagihanSetting user={user} />}
+            {activeTab === 'lapor_rt' && <LaporRT user={user} />}
+            {activeTab === 'lapak_warga' && <LapakWarga user={user} />}
+            {activeTab === 'security' && <SecurityAbsensiLaporan user={user} />}
+            {activeTab === 'panic_alert' && <PanicAlertBroadcast user={user} />}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

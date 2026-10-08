@@ -193,7 +193,7 @@ async function main() {
                 rtId: rt.id,
                 createdById: bendaharaId,
                 tipe: client_1.TipeKas.PEMASUKAN,
-                kategori: 'Iuran Warga (Duitku PG)',
+                kategori: 'Iuran Kas Warga',
                 nominal: 2500000,
                 saldoBerjalan: 2500000,
                 keterangan: 'Saldo awal kas digital RT 04 (Simulasi Sandbox)',

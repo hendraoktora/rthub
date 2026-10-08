@@ -211,6 +211,19 @@ export const api = {
     customerPhone?: string;
     paymentMethodCode?: string;
   }) {
+    // 1. Coba Vercel Serverless Duitku Sandbox endpoint langsung
+    try {
+      const vRes = await fetch('/api/checkout-ads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (vRes.ok) {
+        return await vRes.json();
+      }
+    } catch (_) {}
+
+    // 2. Fallback ke server utama
     const res = await fetch(`https://api.rthub.id/payment/checkout-ads`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

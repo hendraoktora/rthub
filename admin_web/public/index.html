@@ -967,17 +967,28 @@ function handleGoToLogin() {
       };
 
       try {
-        let response = await fetch('https://api.rthub.id/payment/checkout-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (response.status === 404) {
-          response = await fetch('https://api.rthub.id/api/payment/checkout-subscription', {
+        let response = null;
+        try {
+          response = await fetch('/api/checkout-subscription', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           });
+        } catch (_) {}
+
+        if (!response || !response.ok) {
+          response = await fetch('https://api.rthub.id/payment/checkout-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (response.status === 404) {
+            response = await fetch('https://api.rthub.id/api/payment/checkout-subscription', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+          }
         }
 
         const data = await response.json();

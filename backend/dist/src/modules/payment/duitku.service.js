@@ -546,31 +546,43 @@ let DuitkuService = DuitkuService_1 = class DuitkuService {
         return { status: 'SUCCESS', message: 'Callback Duitku berhasil diproses & dana kas RT telah dicatat.' };
     }
     async checkTransactionStatus(merchantOrderId) {
-        if (!this.isConfigured()) {
+        const buildCheckPayload = (mCode, key) => {
+            const sig = crypto.createHash('md5').update(`${mCode}${merchantOrderId}${key}`).digest('hex');
             return {
+                merchantCode: mCode,
                 merchantOrderId,
-                statusCode: '00',
-                statusMessage: 'SUCCESS (Simulation Mode)',
+                signature: sig,
             };
-        }
-        const rawSig = `${this.merchantCode}${merchantOrderId}${this.apiKey}`;
-        const signature = crypto.createHash('md5').update(rawSig).digest('hex');
-        const payload = {
-            merchantCode: this.merchantCode,
-            merchantOrderId,
-            signature,
         };
+        let result = null;
         try {
+            const activeMCode = this.merchantCode || this.defaultSandboxMerchantCode;
+            const activeKey = this.apiKey || this.defaultSandboxApiKey;
+            const payload = buildCheckPayload(activeMCode, activeKey);
             const response = await fetch(`${this.baseUrl}/merchant/transactionStatus`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
-            return await response.json();
+            result = await response.json().catch(() => null);
         }
-        catch (err) {
-            throw new common_1.BadRequestException(`Gagal cek status transaksi Duitku: ${err.message}`);
+        catch (_) { }
+        if (result && (result.statusCode === '00' || result.statusCode === '01')) {
+            return result;
         }
+        try {
+            const sbPayload = buildCheckPayload(this.defaultSandboxMerchantCode, this.defaultSandboxApiKey);
+            const sbRes = await fetch(`${this.defaultSandboxBaseUrl}/merchant/transactionStatus`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(sbPayload),
+            });
+            const sbResult = await sbRes.json().catch(() => null);
+            if (sbResult)
+                return sbResult;
+        }
+        catch (_) { }
+        return result || { statusCode: '01', statusMessage: 'PROCESS' };
     }
     async getPaymentChannels() {
         return [

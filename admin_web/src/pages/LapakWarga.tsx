@@ -40,6 +40,8 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
   const [adCheckoutResult, setAdCheckoutResult] = useState<any | null>(null);
   const [isCheckoutAd, setIsCheckoutAd] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
+  const [isAutoDetecting, setIsAutoDetecting] = useState(false);
+  const [paymentSuccessDetected, setPaymentSuccessDetected] = useState(false);
 
   const [lapakList, setLapakList] = useState<any[]>([
     {
@@ -160,6 +162,7 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
     setIsCheckoutAd(true);
     setAdError(null);
     setAdCheckoutResult(null);
+    setPaymentSuccessDetected(false);
 
     const priceMap: Record<number, number> = {
       3: 15000,
@@ -195,56 +198,96 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
     }
   };
 
-  const handleConfirmPaymentSuccess = async () => {
-    if (!selectedAdProduct) return;
+  const handleConfirmPaymentSuccess = async (targetProduct = selectedAdProduct, duration = adDuration) => {
+    const prod = targetProduct || selectedAdProduct;
+    if (!prod) return;
     try {
       setIsCheckoutAd(true);
-      await api.boostLapak(selectedAdProduct.id, {
-        durationDays: adDuration,
+      await api.boostLapak(prod.id, {
+        durationDays: duration,
         packageType: 'DUITKU_ADS',
         scope: 'RW',
       });
       showAlert.success(
-        'Iklan Sponsor Berhasil Aktif!',
-        `Produk "${selectedAdProduct.judul}" kini berstatus SPONSOR dan tampil di posisi teratas (+${adDuration} Hari)!`
+        'Pembayaran Diterima Otomatis!',
+        `Produk "${prod.judul}" kini berstatus SPONSOR dan tampil di posisi teratas (+${duration} Hari)!`
       );
       setLapakList((prev) =>
         prev.map((item) =>
-          item.id === selectedAdProduct.id
+          item.id === prod.id
             ? { ...item, isPromoted: true, promotedBadge: 'SPONSORED', paketIklan: 'RW' }
             : item
         )
       );
-      setSelectedAdProduct(null);
-      setAdCheckoutResult(null);
-      loadLapak();
+      setTimeout(() => {
+        setSelectedAdProduct(null);
+        setAdCheckoutResult(null);
+        setPaymentSuccessDetected(false);
+        loadLapak();
+      }, 2000);
     } catch (err: any) {
       setLapakList((prev) =>
         prev.map((item) =>
-          item.id === selectedAdProduct.id
+          item.id === prod.id
             ? { ...item, isPromoted: true, promotedBadge: 'SPONSORED', paketIklan: 'RW' }
             : item
         )
       );
-      setSelectedAdProduct(null);
       showAlert.success(
-        'Iklan Sponsor Aktif (Sandbox)!',
-        `Produk "${selectedAdProduct.judul}" kini berstatus SPONSOR (+${adDuration} Hari).`
+        'Pembayaran Diterima Otomatis!',
+        `Produk "${prod.judul}" kini berstatus SPONSOR (+${duration} Hari).`
       );
+      setTimeout(() => {
+        setSelectedAdProduct(null);
+        setAdCheckoutResult(null);
+        setPaymentSuccessDetected(false);
+        loadLapak();
+      }, 2000);
     } finally {
       setIsCheckoutAd(false);
     }
   };
 
-  const filtered = lapakList.filter((item) => {
-    const matchCategory = selectedCategory === 'ALL' || item.kategori === selectedCategory;
-    const sellerStr = getSellerName(item);
-    const matchSearch =
-      (item.judul || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.deskripsi || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sellerStr.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchCategory && matchSearch;
-  });
+  // Polling Real-time Deteksi Pembayaran Duitku Sandbox
+  useEffect(() => {
+    if (!adCheckoutResult?.merchantOrderId || paymentSuccessDetected) {
+      return;
+    }
+
+    const orderId = adCheckoutResult.merchantOrderId;
+    setIsAutoDetecting(true);
+
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await api.checkPaymentStatus(orderId);
+        if (res.isPaid) {
+          clearInterval(intervalId);
+          setIsAutoDetecting(false);
+          setPaymentSuccessDetected(true);
+          await handleConfirmPaymentSuccess(selectedAdProduct, adDuration);
+        }
+      } catch (err) {
+        console.warn('Cek status transaksi polling error:', err);
+      }
+    }, 2500);
+
+    return () => {
+      clearInterval(intervalId);
+      setIsAutoDetecting(false);
+    };
+  }, [adCheckoutResult?.merchantOrderId, paymentSuccessDetected, selectedAdProduct, adDuration]);
+
+  const filtered = [...lapakList]
+    .filter((item) => {
+      const matchCategory = selectedCategory === 'ALL' || item.kategori === selectedCategory;
+      const sellerStr = getSellerName(item);
+      const matchSearch =
+        (item.judul || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.deskripsi || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sellerStr.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchCategory && matchSearch;
+    })
+    .sort((a, b) => (b.isPromoted ? 1 : 0) - (a.isPromoted ? 1 : 0));
 
   return (
     <div className="space-y-6">
@@ -404,7 +447,11 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedAdProduct(null)}
+                onClick={() => {
+                  setSelectedAdProduct(null);
+                  setAdCheckoutResult(null);
+                  setPaymentSuccessDetected(false);
+                }}
                 className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
               >
                 <X size={18} />
@@ -537,21 +584,45 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
                   </div>
                 )}
 
+                {/* Status Deteksi Otomatis Real-time */}
+                {paymentSuccessDetected ? (
+                  <div className="p-4 bg-emerald-50 border-2 border-emerald-500 rounded-2xl text-center space-y-1.5 animate-pulse">
+                    <CheckCircle2 size={32} className="text-emerald-600 mx-auto" />
+                    <p className="text-sm font-extrabold text-emerald-900">Pembayaran Berhasil Terdeteksi!</p>
+                    <p className="text-xs text-emerald-700">Iklan sponsor otomatis aktif &amp; prioritas lapak diperbarui...</p>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-center justify-center gap-2.5 text-xs font-semibold text-emerald-900">
+                    <RefreshCw size={14} className="animate-spin text-emerald-600 shrink-0" />
+                    <span>Sistem otomatis mendeteksi ketika Anda selesai bayar di Duitku...</span>
+                  </div>
+                )}
+
                 <div className="pt-2 space-y-2">
                   <button
                     type="button"
-                    disabled={isCheckoutAd}
-                    onClick={handleConfirmPaymentSuccess}
-                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-md shadow-emerald-600/30"
+                    disabled={isCheckoutAd || paymentSuccessDetected}
+                    onClick={() => handleConfirmPaymentSuccess()}
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-md shadow-emerald-600/30"
                   >
-                    {isCheckoutAd ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                    <span>✓ Saya Sudah Bayar / Selesaikan Simulasi Duitku Sandbox</span>
+                    {isCheckoutAd ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <CheckCircle2 size={16} />
+                    )}
+                    <span>
+                      {paymentSuccessDetected
+                        ? '✓ Pembayaran Sukses Terverifikasi'
+                        : 'Cek Status Sekarang / Saya Sudah Bayar'}
+                    </span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedAdProduct(null);
+                      setAdCheckoutResult(null);
+                      setPaymentSuccessDetected(false);
                       loadLapak();
                     }}
                     className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition"

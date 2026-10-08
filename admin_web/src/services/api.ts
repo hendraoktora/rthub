@@ -250,6 +250,38 @@ export const api = {
     return res.json();
   },
 
+  async checkPaymentStatus(merchantOrderId: string): Promise<{ isPaid: boolean; statusCode?: string; statusMessage?: string; raw?: any }> {
+    // 1. Cek via Vercel Serverless direct Duitku inquiry
+    try {
+      const vRes = await fetch(`/api/check-status?merchantOrderId=${encodeURIComponent(merchantOrderId)}`);
+      if (vRes.ok) {
+        const data = await vRes.json();
+        return {
+          isPaid: data.isPaid === true || data.statusCode === '00',
+          statusCode: data.statusCode,
+          statusMessage: data.statusMessage,
+          raw: data,
+        };
+      }
+    } catch (_) {}
+
+    // 2. Fallback via backend endpoint
+    try {
+      const res = await fetch(`https://api.rthub.id/payment/status/${encodeURIComponent(merchantOrderId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          isPaid: data.statusCode === '00',
+          statusCode: data.statusCode,
+          statusMessage: data.statusMessage,
+          raw: data,
+        };
+      }
+    } catch (_) {}
+
+    return { isPaid: false, statusCode: '01' };
+  },
+
   async getAllRtSummary() {
     const token = this.getToken();
     const res = await fetch(`${API_BASE_URL}/wilayah/rt-summary-all`, {

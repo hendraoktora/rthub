@@ -101,10 +101,10 @@
           },
           {
             "@type": "Question",
-            "name": "Berapa biaya langganan paket RT Pro?",
+            "name": "Berapa biaya langganan paket RT Basic dan RT Pro?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Setiap RT baru mendapatkan masa uji coba gratis (Trial) selama 7 hari. Setelah masa trial, paket RT Pro dapat diaktifkan dengan biaya terjangkau Rp 99.000 per bulan per RT (sekitar Rp 3.300/hari untuk seluruh warga satu lingkungan RT)."
+              "text": "Paket RT Basic dapat dicoba gratis dan aktif khusus di bulan pertama pendaftaran (30 hari pertama). Setelah masa aktif bulan pertama berakhir, pengurus lingkungan dapat mengaktifkan paket RT Pro seharga Rp 99.000 per bulan per RT untuk terus menikmati seluruh fitur administrasi RT secara lengkap."
             }
           }
         ]
@@ -241,13 +241,14 @@ function handleGoToLogin() {
         </div>
         <div class="pricing-caption">BIAYA LAYANAN DIBAYAR PER TRANSAKSI OLEH WARGA ATAU PAKET ADD-ON RT</div>
         <div class="pricing-grid">
-          <!-- Card 1: RT Basic (Komunitas) -->
+          <!-- Card 1: RT Basic (Bulan Pertama) -->
           <article class="price-card" data-reveal>
-            <div class="plan-name">RT Basic (Komunitas)</div>
-            <p class="plan-description">Aplikasi manajemen RT digital gratis selamanya untuk seluruh RT se-Indonesia.</p>
-            <div class="price">Rp 0 <small>/ selamanya</small></div>
-            <div class="price-period">Kas RT Warga 100% Utuh Langsung ke Rekening/QRIS RT</div>
+            <div class="plan-name">RT Basic (Bulan Pertama)</div>
+            <p class="plan-description">Uji coba lengkap ekosistem pengelolaan RT digital gratis dan aktif khusus di bulan pertama pendaftaran.</p>
+            <div class="price">Rp 0 <small>/ bulan pertama</small></div>
+            <div class="price-period">Hanya aktif di bulan ke-1 • Selanjutnya beralih ke Paket Pro</div>
             <ul class="plan-features">
+              <li><strong>Masa Aktif 30 Hari (Khusus Bulan Pertama)</strong></li>
               <li>Dashboard Buku Kas &amp; Mutasi RT Transparan</li>
               <li>Data Warga, Rumah &amp; Kartu Keluarga (KK)</li>
               <li>Tagihan Iuran IPL Otomatis (QRIS &amp; VA)</li>
@@ -256,12 +257,12 @@ function handleGoToLogin() {
               <li>Siskamling Panic SOS Darurat ke Seluruh HP</li>
               <li>Siaran Peringatan Gempa Realtime BMKG</li>
               <li>Streaming Pantauan CCTV Lingkungan Multi-Pos</li>
-              <li>Penarikan Kas RT ke Bank (Biaya Transfer Rp 6.000)</li>
-              <li class="unavailable">Pelayanan Surat Pengantar RT/RW Digital</li>
-              <li class="unavailable">Pembayaran Tunai Resi Barcode Digital Warga</li>
-              <li class="unavailable">Ekspor Buku Kas Akuntansi LPJ Excel &amp; PDF</li>
+              <li>Kas RT 100% Langsung Masuk Rekening/QRIS RT</li>
+              <li class="unavailable">Pelayanan Surat Pengantar RT/RW Digital (Paket Pro)</li>
+              <li class="unavailable">Pembayaran Tunai Resi Barcode Digital (Paket Pro)</li>
+              <li class="unavailable">Ekspor LPJ &amp; Laporan Akuntansi Excel/PDF (Paket Pro)</li>
             </ul>
-            <button class="btn btn-secondary magnetic" onclick="handleGoToLogin()">Mulai Gratis Sekarang</button>
+            <button class="btn btn-secondary magnetic" onclick="handleGoToLogin()">Coba Gratis Bulan Pertama</button>
           </article>
 
           <!-- Card 2: RT Pro (Paket Unggulan) -->

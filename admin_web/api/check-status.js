@@ -23,14 +23,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const merchantCode = 'DS35894';
-    const apiKey = '7df0c7c17a6838e0944554f2c5c265d8';
+    const merchantCode = 'D24902';
+    const apiKey = '9c5f5c48f3cfb2013eedba2372360a94';
     const signature = crypto
       .createHash('md5')
       .update(`${merchantCode}${merchantOrderId}${apiKey}`)
       .digest('hex');
 
-    const duitkuRes = await fetch('https://sandbox.duitku.com/webapi/api/merchant/transactionStatus', {
+    const duitkuRes = await fetch('https://passport.duitku.com/webapi/api/merchant/transactionStatus', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

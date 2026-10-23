@@ -93,7 +93,10 @@ export class DuitkuService {
       itemDetails,
     } = options;
 
+    const finalMethod = (!methodCode || methodCode === 'SP') ? 'SQ' : methodCode;
+
     const buildPayload = (mCode: string, key: string) => {
+      const targetMethod = mCode.startsWith('D') && finalMethod === 'SP' ? 'SQ' : finalMethod;
       const sig = crypto
         .createHash('md5')
         .update(`${mCode}${merchantOrderId}${amount}${key}`)
@@ -102,7 +105,7 @@ export class DuitkuService {
       return {
         merchantCode: mCode,
         paymentAmount: amount,
-        paymentMethod: methodCode,
+        paymentMethod: targetMethod,
         merchantOrderId,
         productDetails,
         email: customerEmail,
@@ -711,10 +714,10 @@ export class DuitkuService {
   async getPaymentChannels() {
     return [
       {
-        code: 'SP',
-        name: 'QRIS (Semua E-Wallet & Mobile Banking)',
+        code: 'SQ',
+        name: 'QRIS (Nusapay - Semua E-Wallet & Mobile Banking)',
         category: 'QRIS',
-        icon: 'https://images.duitku.com/icon/qris.png',
+        icon: 'https://images.duitku.com/hotlink-ok/SQ.PNG',
         feeType: 'PERCENTAGE',
         fee: '0.7%',
         desc: 'GoPay, OVO, Dana, ShopeePay, LinkAja, BCA Mobile, Livin, BRImo, dll',

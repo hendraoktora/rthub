@@ -36,7 +36,7 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
   // Modal Pasang Iklan Sponsor Duitku
   const [selectedAdProduct, setSelectedAdProduct] = useState<any | null>(null);
   const [adDuration, setAdDuration] = useState<number>(7);
-  const [adPaymentMethod, setAdPaymentMethod] = useState<string>('SP');
+  const [adPaymentMethod, setAdPaymentMethod] = useState<string>('SQ');
   const [adCheckoutResult, setAdCheckoutResult] = useState<any | null>(null);
   const [isCheckoutAd, setIsCheckoutAd] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
@@ -187,11 +187,11 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
       const res = await api.checkoutAds(payload);
       setAdCheckoutResult(res);
       showAlert.success(
-        'Invoice Duitku Siap!',
-        `Silakan selesaikan pembayaran Rp ${nominal.toLocaleString('id-ID')} via Duitku Sandbox.`
+        'Invoice QRIS Siap!',
+        `Silakan selesaikan pembayaran Rp ${nominal.toLocaleString('id-ID')} via QRIS Duitku.`
       );
     } catch (err: any) {
-      setAdError(err.message || 'Gagal membuat tagihan Duitku Sandbox');
+      setAdError(err.message || 'Gagal membuat tagihan Duitku');
       showAlert.error('Gagal Checkout Iklan', err.message || 'Terjadi gangguan gateway');
     } finally {
       setIsCheckoutAd(false);
@@ -422,7 +422,7 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
                   <span>
                     {isPromoted
                       ? '⭐ Iklan Sponsor Aktif (Perpanjang Durasi)'
-                      : 'Pasang Iklan Sponsor (Duitku Sandbox)'}
+                      : 'Pasang Iklan Sponsor (QRIS Duitku)'}
                   </span>
                 </button>
               </div>
@@ -442,7 +442,7 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Pasang Iklan Sponsor UMKM</h3>
-                  <p className="text-[11px] text-slate-500">Integrasi Duitku Sandbox Payment Gateway</p>
+                  <p className="text-[11px] text-slate-500">Pembayaran Resmi QRIS via Duitku Gateway</p>
                 </div>
               </div>
               <button
@@ -502,17 +502,17 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Metode Pembayaran (Duitku Sandbox)</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Metode Pembayaran</label>
                   <select
                     value={adPaymentMethod}
                     onChange={(e) => setAdPaymentMethod(e.target.value)}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-500"
                   >
-                    <option value="SP">QRIS (ShopeePay / GoPay / OVO / Dana / LinkAja)</option>
-                    <option value="BC">BCA Virtual Account (Sandbox)</option>
-                    <option value="M2">Mandiri Virtual Account (Sandbox)</option>
-                    <option value="BR">BRI Virtual Account (Sandbox)</option>
-                    <option value="I1">BNI Virtual Account (Sandbox)</option>
+                    <option value="SQ">QRIS (Nusapay - Semua E-Wallet &amp; Mobile Banking)</option>
+                    <option value="M2">Mandiri Virtual Account</option>
+                    <option value="BR">BRI Virtual Account (BRIVA)</option>
+                    <option value="I1">BNI Virtual Account</option>
+                    <option value="BT">Permata Virtual Account</option>
                   </select>
                 </div>
 
@@ -530,7 +530,7 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
                     className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm"
                   >
                     {isCheckoutAd && <Loader2 size={14} className="animate-spin" />}
-                    <span>{isCheckoutAd ? 'Menghubungi Duitku...' : 'Bayar via Duitku Sandbox'}</span>
+                    <span>{isCheckoutAd ? 'Menghubungi Duitku...' : 'Bayar via QRIS Duitku'}</span>
                   </button>
                 </div>
               </form>
@@ -549,17 +549,17 @@ export const LapakWarga: React.FC<LapakProps> = ({ user }) => {
 
                 {adCheckoutResult.qrString ? (
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block mx-auto space-y-2">
-                    <p className="text-[11px] font-semibold text-slate-600">Scan QRIS Sandbox Duitku:</p>
+                    <p className="text-[11px] font-semibold text-slate-600">Scan QRIS Resmi RtHub:</p>
                     <div className="p-2 bg-white rounded-xl border border-slate-200 inline-block">
                       <img
                         src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
                           adCheckoutResult.qrString
                         )}`}
-                        alt="QRIS Sandbox"
-                        className="w-44 h-44 mx-auto"
+                        alt="QRIS Duitku"
+                        className="w-48 h-48 mx-auto"
                       />
                     </div>
-                    <p className="text-[10px] text-slate-400">Gunakan simulator Duitku untuk tes bayar</p>
+                    <p className="text-[10px] text-slate-400">Scan dengan BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana, ShopeePay</p>
                   </div>
                 ) : adCheckoutResult.vaNumber ? (
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">

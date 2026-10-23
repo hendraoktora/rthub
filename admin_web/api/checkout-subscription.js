@@ -19,15 +19,16 @@ export default async function handler(req, res) {
 
   try {
     const body = req.body || {};
-    const merchantCode = 'DS35894';
-    const apiKey = '7df0c7c17a6838e0944554f2c5c265d8';
+    const merchantCode = 'D24902';
+    const apiKey = '9c5f5c48f3cfb2013eedba2372360a94';
     const nominalTotal = Math.round(Number(body.amount) || 99000);
     const planName = body.planName || 'Paket RT Pro (Langganan 1 Bulan)';
-    const rtName = body.rtName || 'RT 004 / RW 004 Kota Baru';
+    const rtName = body.rtName || 'RT Komunitas';
     const customerName = body.customerName || 'Pengurus RT';
     const customerEmail = body.customerEmail || 'support@rthub.id';
     const customerPhone = body.customerPhone || '085155163110';
-    const methodCode = body.paymentMethodCode || 'SP'; // SP = QRIS
+    let methodCode = body.paymentMethodCode || 'SQ'; // SQ = Nusapay QRIS (Production)
+    if (methodCode === 'SP') methodCode = 'SQ';
 
     const merchantOrderId = `SUB-${Date.now()}`;
     const productDetails = `${planName} - ${rtName}`;
@@ -64,7 +65,7 @@ export default async function handler(req, res) {
       expiryPeriod: 1440,
     };
 
-    const duitkuRes = await fetch('https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry', {
+    const duitkuRes = await fetch('https://passport.duitku.com/webapi/api/merchant/v2/inquiry', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -82,12 +83,12 @@ export default async function handler(req, res) {
         amount: nominalTotal,
         paymentMethod: methodCode,
         statusCode: result.statusCode,
-        message: 'Invoice langganan RT Pro berhasil diterbitkan via Duitku Sandbox.',
+        message: 'Invoice langganan RT Pro Rp 99.000 berhasil diterbitkan via Duitku QRIS.',
       });
     }
 
     return res.status(400).json({
-      message: `Gagal membuat checkout Duitku Sandbox: ${result?.statusMessage || result?.statusCode || 'Respon tidak valid'}`,
+      message: `Gagal membuat checkout Duitku: ${result?.statusMessage || result?.statusCode || 'Respon tidak valid'}`,
     });
   } catch (err) {
     return res.status(500).json({ message: err.message || 'Internal Server Error' });

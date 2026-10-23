@@ -1,0 +1,27 @@
+# Robots.txt for RtHub Indonesia (https://rthub.id)
+User-agent: *
+Allow: /
+Allow: /landing.html
+Allow: /privacy-policy.html
+Allow: /terms.html
+Allow: /rthub-latest.apk
+Disallow: /api/
+Disallow: /brain/
+
+# Allow AI Search & Discovery Crawlers (AEO / AIO)
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+Sitemap: https://rthub.id/sitemap.xml
